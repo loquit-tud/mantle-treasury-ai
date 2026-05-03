@@ -4,7 +4,7 @@
  * On Pages (quorum.pages.dev) → explicit backend tunnel URL.
  */
 const BACKEND_URL = import.meta.env.VITE_API_URL
-  || (window.location.hostname === 'localhost' ? '' : 'https://ministers-disciplines-hire-peers.trycloudflare.com');
+  || (window.location.hostname === 'localhost' ? '' : 'https://mantle-treasury-ai-production.up.railway.app');
 
 export function apiUrl(path: string): string {
   return `${BACKEND_URL}${path}`;
@@ -15,5 +15,5 @@ export function wsUrl(): string {
   if (window.location.hostname === 'localhost') {
     return `ws://${window.location.host}/ws`;
   }
-  return 'wss://ministers-disciplines-hire-peers.trycloudflare.com/ws';
+  return 'wss://mantle-treasury-ai-production.up.railway.app/ws';
 }
