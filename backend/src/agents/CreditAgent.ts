@@ -25,7 +25,7 @@ import type { RevenueTracker } from '../services/RevenueTracker';
 import type { DebtRestructuring } from '../services/DebtRestructuring';
 
 // LLM Configuration
-const CREDIT_SYSTEM_PROMPT = `You are the Credit Agent for AgentTreasury, an autonomous DAO CFO system.
+const CREDIT_SYSTEM_PROMPT = `You are the Credit Agent for Quorum, an autonomous DAO CFO system.
 
 Your role:
 - Evaluate on-chain credit profiles for DeFi borrowers

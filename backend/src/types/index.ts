@@ -1,5 +1,5 @@
 /**
- * AgentTreasury Core Types
+ * Quorum Core Types
  */
 
 // Agent Types
@@ -106,14 +106,14 @@ export interface CreditTier {
   name: string;
 }
 
-// WDK Types
-export interface WDKWallet {
+// Wallet Types
+export interface AgentWallet {
   address: string;
   balance: string;
   chainId: number;
 }
 
-export interface WDKTransaction {
+export interface AgentTransaction {
   to: string;
   value: string;
   data?: string;

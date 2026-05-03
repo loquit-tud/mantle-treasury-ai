@@ -21,7 +21,7 @@ const logLevel = process.env.LOG_LEVEL || 'info';
 const logger = winston.createLogger({
   level: logLevel,
   defaultMeta: {
-    service: 'agenttreasury-core',
+    service: 'quorum-core',
   },
   transports: [
     // Console transport

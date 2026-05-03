@@ -24,7 +24,7 @@ import { saveTreasuryState, loadTreasuryState } from '../services/StatePersisten
 import { sendWriteTx } from '../services/TransactionService';
 
 // LLM Configuration
-const TREASURY_SYSTEM_PROMPT = `You are the Treasury Agent for AgentTreasury, an autonomous DAO CFO system.
+const TREASURY_SYSTEM_PROMPT = `You are the Treasury Agent for Quorum, an autonomous DAO CFO system.
 
 Your role:
 - Manage a multi-million dollar USDt treasury vault on Mantle Network
@@ -510,7 +510,7 @@ export class TreasuryAgent {
 
   /**
    * Scan remote chains for better yield and bridge if advantageous.
-   * Uses CrossChainBridge service to compare Aave APY across Arbitrum/Ethereum/Polygon.
+   * Uses CrossChainBridge service to compare yield APY across supported chains.
    */
   private async scanCrossChainYield(): Promise<void> {
     try {

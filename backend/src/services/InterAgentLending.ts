@@ -8,7 +8,7 @@
  *   4. Both sides record the inter-agent loan for tracking
  *
  * On-chain integration: capital allocations trigger `proposeWithdrawal` on-chain
- * so the transfer is recorded in the TreasuryVault contract (Arbitrum One).
+ * so the transfer is recorded in the TreasuryVault contract (Mantle Network).
  */
 
 import EventBus from '../orchestrator/EventBus';

@@ -54,7 +54,7 @@ const RESTRUCTURE_THRESHOLD = 0.5;
 /** Proposals expire after 24h if not acted on */
 const PROPOSAL_TTL_MS = 24 * 3600_000;
 
-const RESTRUCTURING_SYSTEM_PROMPT = `You are the Debt Restructuring Agent for AgentTreasury.
+const RESTRUCTURING_SYSTEM_PROMPT = `You are the Debt Restructuring Agent for Quorum.
 
 Your role: When a loan is at risk of default, you propose restructured terms that:
 1. Extend the repayment period to reduce pressure

@@ -1,5 +1,5 @@
 /**
- * AgentTreasury Core - Backend Entry Point
+ * Quorum - Backend Entry Point
  * Multi-agent system for DAO treasury management
  */
 
@@ -95,9 +95,9 @@ app.use(cors({
       }
       return callback(null, true); // allow in dev only
     }
-    // Allow all *.agent-treasury.pages.dev subdomains + localhost
-    if (origin.endsWith('.agent-treasury.pages.dev') ||
-        origin === 'https://agent-treasury.pages.dev' ||
+    // Allow all *.quorum.pages.dev subdomains + localhost
+    if (origin.endsWith('.quorum.pages.dev') ||
+        origin === 'https://quorum.pages.dev' ||
         origin.startsWith('http://localhost:')) {
       return callback(null, true);
     }
@@ -112,7 +112,7 @@ app.use(express.json());
 function requireApiKey(req: express.Request, res: express.Response, next: express.NextFunction): void {
   const secret = process.env.API_SECRET;
   if (!secret) {
-    // No secret configured: allow (dev/hackathon mode)
+    // No secret configured: allow in dev mode
     return next();
   }
   const provided = req.headers['x-api-key'];
@@ -195,7 +195,7 @@ async function initializeAgents(): Promise<void> {
       });
     }
 
-    // Initialize agents with WDK account + ethers provider for contracts
+    // Initialize agents with wallet account + ethers provider for contracts
     treasuryAgent = new TreasuryAgent(config, provider, wdk, wdkAccount, llmClient);
     creditAgent = new CreditAgent(config, provider, wdk, wdkAccount, llmClient);
 
@@ -1265,7 +1265,7 @@ async function main(): Promise<void> {
 
   // Start server
   server.listen(PORT, () => {
-    logger.info(`AgentTreasury Core API running on port ${PORT}`);
+    logger.info(`Quorum API running on port ${PORT}`);
     logger.info(`WebSocket server ready at ws://localhost:${PORT}/ws`);
   });
 }

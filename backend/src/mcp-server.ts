@@ -1,5 +1,5 @@
 /**
- * AgentTreasury MCP Server — stdio transport
+ * Quorum MCP Server — stdio transport
  *
  * Exposes Treasury + Credit tools via MCP protocol for OpenClaw integration.
  * Proxies requests to the running backend API (default http://localhost:3001).
@@ -43,7 +43,7 @@ async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 // ---------------------------------------------------------------------------
 
 const server = new McpServer({
-  name: 'agent-treasury',
+  name: 'quorum',
   version: '1.0.0',
 });
 
@@ -335,7 +335,7 @@ server.tool(
 
 server.tool(
   'health_check',
-  'Check if the AgentTreasury backend is running and agents are active',
+  'Check if the Quorum backend is running and agents are active',
   {},
   async () => {
     const data = await apiGet<{ status: string; agents: Record<string, string> }>('/health');

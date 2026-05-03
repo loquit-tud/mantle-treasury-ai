@@ -1,8 +1,8 @@
 {
-  "name": "agent-treasury",
+  "name": "quorum",
   "version": "1.0.0",
   "private": true,
-  "description": "AgentTreasury CORE — Autonomous DAO CFO (Tether Hackathon Galactica: WDK Edition)",
+  "description": "Quorum — Autonomous DAO CFO for Mantle Network",
   "scripts": {
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
@@ -17,10 +17,7 @@
     "demo:voiceover": "node scripts/add-voiceover.mjs"
   },
   "keywords": [
-    "tether",
-    "hackathon",
-    "wdk",
-    "openclaw",
+    "mantle",
     "dao",
     "treasury",
     "agents"

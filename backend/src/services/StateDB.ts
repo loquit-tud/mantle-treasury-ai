@@ -26,7 +26,7 @@ import type { CreditProfile, Loan, YieldPosition } from '../types';
 // ── Database path ─────────────────────────────────────────────────────────────
 
 const DATA_DIR = path.resolve(__dirname, '../../data');
-const DB_PATH = path.join(DATA_DIR, 'agent-treasury.db');
+const DB_PATH = path.join(DATA_DIR, 'quorum.db');
 
 // ── Singleton ─────────────────────────────────────────────────────────────────
 

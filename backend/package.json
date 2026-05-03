@@ -1,5 +1,5 @@
 {
-  "name": "agenttreasury-backend",
+  "name": "quorum-backend",
   "version": "1.0.0",
   "description": "Multi-agent treasury management system for DAOs",
   "main": "dist/index.js",

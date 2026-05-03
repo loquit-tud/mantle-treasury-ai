@@ -1,4 +1,4 @@
-# AGENTS — AgentTreasury Agent Roster
+# AGENTS — Quorum Agent Roster
 
 ## Active Agents
 

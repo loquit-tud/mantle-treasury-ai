@@ -10,7 +10,7 @@ On-chain credit scoring and micro-lending for DAO participants.
 2. Query existing loan history from CreditLine contract
 3. Calculate base score (formula: 500 base + tx factors + volume + repayment history - defaults)
 4. Enhance score with LLM analysis (adjustment ±50 points)
-5. Update on-chain credit profile via WDK transaction
+5. Update on-chain credit profile
 
 ### Credit Tiers
 | Tier | Score | Credit Limit | APR |

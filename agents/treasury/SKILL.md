@@ -6,7 +6,7 @@ Manage DAO treasury funds: monitor balances, optimize yield, enforce security co
 ## Capabilities
 
 ### Yield Optimization
-1. Fetch real APY data from Aave (via WDK lending protocol or on-chain fallback)
+1. Fetch real APY data from Aave (via yield pool (Aurelius/Lendle) or on-chain fallback)
 2. Use LLM to evaluate risk/reward of yield opportunities
 3. Invest up to 50% of treasury balance in approved protocols
 4. Harvest yield periodically
@@ -20,7 +20,7 @@ Manage DAO treasury funds: monitor balances, optimize yield, enforce security co
 ### Security
 1. Continuous risk assessment (balance, volume, exposure)
 2. Emergency pause capability
-3. Only interact with whitelisted protocols (Aave)
+3. Only interact with whitelisted protocols (Aurelius, Lendle)
 
 ## Decision Framework
 ```

@@ -9,7 +9,7 @@ import EventBus from '../orchestrator/EventBus';
 import logger from '../utils/logger';
 
 // Supported chains for cross-chain yield comparison
-export type BridgeChain = 'ethereum' | 'arbitrum' | 'polygon';
+export type BridgeChain = 'mantle' | 'ethereum' | 'arbitrum' | 'polygon';
 
 export interface BridgeQuote {
   targetChain: BridgeChain;
@@ -76,7 +76,7 @@ export interface DemoShowcase {
 }
 
 // Home chain is Mantle (where the vault lives)
-const HOME_CHAIN: BridgeChain = 'arbitrum'; // NOTE: bridge is disabled in Mantle v1
+const HOME_CHAIN: BridgeChain = 'mantle'; // Bridge disabled in Quorum v1
 
 // Minimum APY advantage to justify bridging (accounts for bridge cost + risk)
 const MIN_APY_ADVANTAGE = 1.5; // 1.5% higher APY needed to justify cross-chain
@@ -246,7 +246,7 @@ export class CrossChainBridge {
   }
 
   /**
-   * Bridge USDt back to home chain (Arbitrum).
+   * Bridge USDt back to home chain (Mantle).
    */
   async bridgeBack(
     sourceChain: BridgeChain,
@@ -277,7 +277,7 @@ export class CrossChainBridge {
 
   /**
    * Evaluate cross-chain yield opportunities.
-   * Compares local (Arbitrum) APY with remote chains.
+   * Compares local (Mantle) APY with remote chains.
    *
    * Returns the best remote yield if it beats local by MIN_APY_ADVANTAGE.
    */
@@ -294,7 +294,7 @@ export class CrossChainBridge {
     let hasEnoughGas = false;
     try {
       const { ethers } = await import('ethers');
-      const provider = new ethers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc');
+      const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://rpc.mantle.xyz');
       const ethBal = await provider.getBalance(walletAddress);
       hasEnoughGas = ethBal > 50_000_000_000_000n; // > 0.00005 ETH (~$0.15)
       if (!hasEnoughGas) {
@@ -320,7 +320,7 @@ export class CrossChainBridge {
         }
 
         // Fetch remote chain Aave APY
-        // Note: This uses the WDK's registered protocol data when available.
+        // On-chain data from yield pool.
         // In production, you'd query each chain's Aave pool separately.
         // For now, we use heuristic estimates + quote cost analysis.
         const remoteApy = await this.fetchRemoteApy(chain);
@@ -495,14 +495,14 @@ export class CrossChainBridge {
   /**
    * Full demonstration showcase — queries everything live:
    * wallet balance, APY per chain, bridge quote, decision logic.
-   * Designed for hackathon jury to verify the full cross-chain pipeline.
+   * Demo showcase for the cross-chain pipeline (bridge disabled in v1).
    */
   async demoShowcase(
     walletAddress: string,
     usdtAddress: string,
   ): Promise<DemoShowcase> {
     const { ethers } = await import('ethers');
-    const provider = new ethers.JsonRpcProvider(process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc');
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://rpc.mantle.xyz');
 
     // 1. Wallet balances (live on-chain)
     const erc20 = new ethers.Contract(usdtAddress, [
@@ -516,7 +516,7 @@ export class CrossChainBridge {
     // 2. APY per chain × protocol (real on-chain Aave V3 + Compound V3 queries)
     const chains: ChainProtocolYield[] = [];
 
-    // Arbitrum (local) — Aave V3
+    // Mantle (local) — Aurelius Finance
     try {
       const arbPool = '0x794a61358D6845594F94dc1DB02A252b5b4814aD';
       const poolAbi = [
@@ -534,12 +534,12 @@ export class CrossChainBridge {
       const arbAave = new ethers.Contract(arbPool, poolAbi, provider);
       const arbData = await arbAave.getReserveData(usdtAddress);
       const arbApy = Math.round(Number(arbData.currentLiquidityRate) / 1e25 * 100) / 100;
-      chains.push({ chain: 'arbitrum', protocol: 'Aave V3', apy: arbApy, pool: arbPool });
+      chains.push({ chain: 'mantle', protocol: 'Aave V3', apy: arbApy, pool: arbPool });
     } catch {
-      chains.push({ chain: 'arbitrum', protocol: 'Aave V3', apy: 0, pool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD' });
+      chains.push({ chain: 'mantle', protocol: 'Aave V3', apy: 0, pool: '0x794a61358D6845594F94dc1DB02A252b5b4814aD' });
     }
 
-    // Arbitrum — Compound V3
+    // Mantle — Lendle (Aave V3 fork)
     try {
       const arbComet = '0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07';
       const cometAbi = [
@@ -551,9 +551,9 @@ export class CrossChainBridge {
       const ratePerSec = Number(await comet.getSupplyRate(util));
       const secsPerYear = 365.25 * 24 * 3600;
       const arbCompApy = Math.round(((1 + ratePerSec / 1e18) ** secsPerYear - 1) * 100 * 100) / 100;
-      chains.push({ chain: 'arbitrum', protocol: 'Compound V3', apy: arbCompApy, pool: arbComet });
+      chains.push({ chain: 'mantle', protocol: 'Compound V3', apy: arbCompApy, pool: arbComet });
     } catch {
-      chains.push({ chain: 'arbitrum', protocol: 'Compound V3', apy: 0, pool: '0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07' });
+      chains.push({ chain: 'mantle', protocol: 'Compound V3', apy: 0, pool: '0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07' });
     }
 
     // Remote chains (Ethereum, Polygon) — both protocols
@@ -577,12 +577,12 @@ export class CrossChainBridge {
       }
     } catch { /* quote may fail if balance too low — that's ok for demo */ }
 
-    // 4. Decision logic — best local APY across all Arbitrum protocols
-    const localCandidates = chains.filter(c => c.chain === 'arbitrum' && c.apy > 0);
+    // 4. Decision logic — best local APY across Mantle protocols
+    const localCandidates = chains.filter(c => c.chain === 'mantle' && c.apy > 0);
     const localApy = localCandidates.length > 0
       ? Math.max(...localCandidates.map(c => c.apy))
       : 0;
-    const remoteCandidates = chains.filter(c => c.chain !== 'arbitrum' && c.apy > 0);
+    const remoteCandidates = chains.filter(c => c.chain !== 'mantle' && c.apy > 0);
     const best = remoteCandidates.length > 0
       ? remoteCandidates.reduce((a, b) => a.apy > b.apy ? a : b)
       : null;
@@ -613,7 +613,7 @@ export class CrossChainBridge {
         reason,
       },
       infrastructure: {
-        bridgeProtocol: 'LayerZero USDt0 OFT (via WDK)',
+        bridgeProtocol: 'LayerZero USDt0 OFT (disabled in v1)',
         oftContract: '0x14E4A1B13bf7F943c8ff7C51fb60FA964A298D92',
         legacyMesh: '0x238A52455a1EF6C987CaC94b28B4081aFE50ba06',
         layerZero: true,

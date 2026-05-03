@@ -1,7 +1,7 @@
 /**
  * API configuration — resolves the backend URL.
  * On localhost:3001 (served by backend) → relative path.
- * On Pages (agent-treasury.pages.dev) → explicit backend tunnel URL.
+ * On Pages (quorum.pages.dev) → explicit backend tunnel URL.
  */
 const BACKEND_URL = import.meta.env.VITE_API_URL
   || (window.location.hostname === 'localhost' ? '' : 'https://treasury.proceedgate.dev');

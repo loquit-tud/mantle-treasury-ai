@@ -68,7 +68,7 @@ class AaveLendingProtocol {
 }
 
 /**
- * WalletAccount — wraps ethers.Wallet, providing the interface previously supplied by Tether WDK.
+ * WalletAccount — wraps ethers.Wallet as agent wallet service.
  * Drop-in replacement: same getAddress() / sendTransaction() / getLendingProtocol() API.
  */
 export class WalletAccount {

@@ -1,4 +1,4 @@
-# AgentTreasury — Agent Configuration
+# Quorum — Agent Configuration
 
 This directory contains the OpenClaw-compatible agent workspace.
 

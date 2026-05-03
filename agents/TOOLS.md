@@ -1,9 +1,9 @@
 # TOOLS — Available MCP Tools
 
-> All tools below are exposed via the `agent-treasury` MCP server (`backend/src/mcp-server.ts`).
+> All tools below are exposed via the `quorum` MCP server (`backend/src/mcp-server.ts`).
 > The server proxies to the running backend API and requires no additional setup.
 
-## Treasury Tools (MCP server: agent-treasury)
+## Treasury Tools (MCP server: quorum)
 
 | Tool | Description |
 |------|-------------|
@@ -15,7 +15,7 @@
 | `treasury_get_yield_opportunities` | Scan DeFi protocols for yield |
 | `treasury_emergency_pause` | Guardian: freeze all vault operations |
 
-## Credit Tools (MCP server: agent-treasury)
+## Credit Tools (MCP server: quorum)
 
 | Tool | Description |
 |------|-------------|
@@ -25,7 +25,7 @@
 | `credit_repay` | Repay an active loan |
 | `credit_get_loans` | List active loans for an address |
 
-## Dashboard / System Tools (MCP server: agent-treasury)
+## Dashboard / System Tools (MCP server: quorum)
 
 | Tool | Description |
 |------|-------------|
