@@ -1,7 +1,7 @@
 /**
  * AgentDialogue — Inter-agent LLM dialogue orchestrator
  * 
- * Every ~45s, Treasury and Credit agents hold a "board meeting" where they
+ * Every ~5 min, Treasury and Credit agents hold a "board meeting" where they
  * discuss the current state of the system. Each agent speaks through the LLM,
  * sees the other's perspective, and they reach consensus. The full dialogue is
  * emitted via EventBus and appears live on the dashboard.
@@ -117,12 +117,12 @@ export class AgentDialogue {
       );
     }, 30_000);
 
-    // Then every 180 seconds — fits Groq free-tier 30 RPM
+    // Then every 300 seconds — safe margin for Groq free-tier 30 RPM
     this.dialogueInterval = setInterval(() => {
       this.runDialogueRound().catch(err =>
         logger.error('Dialogue round failed', { err })
       );
-    }, 180_000);
+    }, 300_000);
   }
 
   /**
