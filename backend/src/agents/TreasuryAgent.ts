@@ -1,16 +1,14 @@
 /**
- * TreasuryAgent - Manages DAO treasury funds
- * Uses WDK for wallet operations and Aave lending
+ * TreasuryAgent - Manages DAO treasury funds on Mantle Network
+ * Uses ethers.Wallet for wallet operations and Aurelius Finance (Aave V3 fork) for yield
  */
 
 import { ethers } from 'ethers';
-import type WDK from '@tetherto/wdk';
 import { LLMClient } from '../services/LLMClient';
 import EventBus from '../orchestrator/EventBus';
 import { getAaveLending } from '../services/wdk';
 import type { WdkAccount } from '../services/wdk';
 import { CrossChainBridge } from '../services/CrossChainBridge';
-import type { WalletAccountEvm } from '@tetherto/wdk-wallet-evm';
 import logger from '../utils/logger';
 import {
   AgentStatus,
@@ -29,8 +27,8 @@ import { sendWriteTx } from '../services/TransactionService';
 const TREASURY_SYSTEM_PROMPT = `You are the Treasury Agent for AgentTreasury, an autonomous DAO CFO system.
 
 Your role:
-- Manage a multi-million dollar USDt treasury vault on Ethereum
-- Optimize yield across DeFi protocols (Aave, Compound)
+- Manage a multi-million dollar USDt treasury vault on Mantle Network
+- Optimize yield across DeFi protocols (Aurelius Finance, Lendle)
 - Enforce security constraints: max 10k USDt/day withdrawal, 1k USDt per tx
 - Protect funds via multi-sig, timelocks, and risk assessment
 
@@ -72,7 +70,7 @@ const ERC20_IFACE = new ethers.Interface(ERC20_ABI);
 const CONSTRAINTS = {
   MAX_DAILY_VOLUME: ethers.parseUnits('10000', 6), // 10k USDt
   MAX_SINGLE_TX: ethers.parseUnits('1000', 6),      // 1k USDt
-  ALLOWED_PROTOCOLS: ['aave'],
+  ALLOWED_PROTOCOLS: ['aurelius'],
   REBALANCE_THRESHOLD: 5, // 5% APY difference triggers rebalance
   MIN_YIELD_ALLOCATION: 10, // Min 10% of treasury in yield
   MAX_YIELD_ALLOCATION: 50, // Max 50% of treasury in yield
@@ -102,7 +100,7 @@ export class TreasuryAgent {
   constructor(
     config: AgentConfig,
     provider: ethers.Provider,
-    _wdk: WDK,
+    _account: WdkAccount,
     wdkAccount: WdkAccount,
     llmClient: LLMClient,
   ) {
@@ -111,11 +109,11 @@ export class TreasuryAgent {
     this.wdkAccount = wdkAccount;
     this.llm = llmClient;
     this.crossChainBridge = new CrossChainBridge(wdkAccount);
-    // WDK handles wallet/signing; ethers reads contract state
+    // Agent wallet handles signing; ethers reads contract state
     this.vaultContract = new ethers.Contract(
       config.treasuryVaultAddress,
       TREASURY_VAULT_ABI,
-      provider // read-only; writes go through WDK
+      provider // read-only; writes go through agent wallet
     );
 
     this.setupEventListeners();
@@ -138,7 +136,7 @@ export class TreasuryAgent {
     // Restore persisted state if available, otherwise seed defaults
     const persisted = loadTreasuryState();
     if (persisted) {
-      // Filter out legacy fiction (e.g. Compound V3 — no WDK module exists)
+      // Filter out legacy fiction (e.g. Compound V3 — no longer supported)
       this.yieldPositions = persisted.yieldPositions.filter(
         p => !p.protocol.toLowerCase().includes('compound')
       );
@@ -159,7 +157,7 @@ export class TreasuryAgent {
       });
     } else {
       // No persisted state and no fixtures — start clean.
-      // Yield positions accumulate only from real WDK Aave supply() calls.
+      // Yield positions accumulate only from real supply() calls.
       logger.info('No persisted yield positions — starting empty (on-chain only)');
     }
 
@@ -436,7 +434,7 @@ export class TreasuryAgent {
         await new Promise(r => setTimeout(r, 3000));
       }
 
-      // Sweep any USDt sitting in WDK wallet into the vault
+      // Sweep any USDt sitting in agent wallet into the vault
       await this.sweepWalletToVault();
 
       await new Promise(r => setTimeout(r, 3000));
@@ -556,18 +554,8 @@ export class TreasuryAgent {
         status: 'executed',
       });
 
-      // Execute bridge if RPCs are configured
-      if (this.config.ethereumRpcUrl || this.config.polygonRpcUrl) {
-        const result = await this.crossChainBridge.bridge(
-          bestRemote.chain,
-          bridgeAmount,
-          walletAddress,
-          this.config.usdtAddress,
-        );
-        if (result) {
-          this.remember('cross_chain_bridge', `Bridged ${Number(bridgeAmount) / 1e6} USDt to ${bestRemote.chain} for ${bestRemote.apy}% APY (tx: ${result.hash})`);
-        }
-      }
+      // Cross-chain bridge disabled on Mantle v1 — yield comparison only
+
     } catch (err) {
       logger.error('Cross-chain yield scan failed', {
         error: err instanceof Error ? err.message : String(err),
@@ -670,12 +658,12 @@ export class TreasuryAgent {
   }
 
   /**
-   * Fetch yield opportunities — tries WDK Aave lending first, then on-chain Aave V3.
+   * Fetch yield opportunities — queries yield pool (Aurelius/Lendle), then on-chain Aave V3.
    */
   async fetchYieldOpportunities(): Promise<YieldOpportunity[]> {
     const opportunities: YieldOpportunity[] = [];
 
-    // 1. Try WDK Aave lending protocol (uses registered @tetherto/wdk-protocol-lending-aave-evm)
+    // 1. Query yield pool account data (Aurelius Finance / Lendle on Mantle)
     try {
       const aave = getAaveLending(this.wdkAccount);
       if (aave) {
@@ -683,19 +671,19 @@ export class TreasuryAgent {
         // { totalCollateralBase, totalDebtBase, availableBorrowsBase, healthFactor, ... }
         const accountData = await aave.getAccountData();
         if (accountData) {
-          logger.info('WDK Aave accountData retrieved', {
+          logger.info('Yield pool accountData retrieved', {
             totalCollateral: accountData.totalCollateralBase.toString(),
             totalDebt: accountData.totalDebtBase.toString(),
             healthFactor: accountData.healthFactor.toString(),
           });
         }
-        // WDK Aave SDK does NOT expose getReserveData() — APY is fetched via on-chain fallback below.
+        // getReserveData() fetched via on-chain call below.
       }
     } catch (err) {
-      logger.debug('WDK Aave data unavailable, using on-chain fallback', { err });
+      logger.debug('Yield pool data unavailable, using on-chain fallback', { err });
     }
 
-    // 2. On-chain Aave V3 Pool — correct ABI for getReserveData (returns full struct)
+    // 2. On-chain yield pool (Aave V3 compatible: Aurelius / Lendle) — getReserveData
     try {
       if (this.config.aavePoolAddress) {
         const poolAbi = [
@@ -725,44 +713,24 @@ export class TreasuryAgent {
         const apy = rawRate / 1e25; // ray (27 dec) → percentage
         if (apy > 0 && apy < 50) {
           opportunities.push({
-            protocol: 'aave',
+            protocol: 'aurelius',
             apy: Math.round(apy * 100) / 100,
             tvl: '0',
             risk: 'low',
           });
-          logger.info('Aave V3 on-chain yield data', { rawRate, apy: opportunities[0].apy });
+          logger.info('Yield pool on-chain yield data', { rawRate, apy: opportunities[0].apy });
         } else {
           logger.debug('Aave liquidityRate parsed to unreasonable APY', { rawRate, apy });
         }
       }
     } catch (err) {
-      logger.debug('On-chain Aave V3 query failed', { err });
+      logger.debug('On-chain yield pool query failed', { err });
     }
 
-    // 3. Compound V3 (Comet) on Arbitrum — real on-chain supply rate
-    try {
-      const arbCometAddress = '0xd98Be00b5D27fc98112BdE293e487f8D4cA57d07'; // Compound V3 USDT Comet on Arbitrum
-      const cometAbi = [
-        'function getSupplyRate(uint256 utilization) view returns (uint64)',
-        'function getUtilization() view returns (uint256)',
-      ];
-      const comet = new ethers.Contract(arbCometAddress, cometAbi, this.provider);
-      const utilization = await comet.getUtilization();
-      const ratePerSec = Number(await comet.getSupplyRate(utilization));
-      const secsPerYear = 365.25 * 24 * 3600;
-      const compApy = Math.round(((1 + ratePerSec / 1e18) ** secsPerYear - 1) * 100 * 100) / 100;
-      if (compApy > 0 && compApy < 50) {
-        opportunities.push({
-          protocol: 'compound',
-          apy: compApy,
-          tvl: '0',
-          risk: 'low',
-        });
-        logger.info('Compound V3 on-chain yield data', { ratePerSec, apy: compApy });
-      }
-    } catch (err) {
-      logger.debug('On-chain Compound V3 query failed', { err });
-    }
+    // 3. Lendle (Mantle-native lending) — on-chain supply rate query
+    // Note: Lendle uses a similar Aave V3 interface; pool address set via AAVE_POOL_ADDRESS
+    // Currently falls back to Aurelius pool above if addresses are the same.
+    // Add a separate LENDLE_POOL_ADDRESS env var if you want to compare both.
 
     // 4. No fallback — if no live on-chain data, return empty (no fake APY)
     if (opportunities.length === 0) {
@@ -836,7 +804,7 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
   }
 
   /**
-   * Propose a yield investment — send tx through WDK
+   * Propose a yield investment via yield pool or vault contract
    */
   async proposeYieldInvestment(
     protocol: string,
@@ -854,31 +822,30 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
       const displayName = protocol.charAt(0).toUpperCase() + protocol.slice(1) + ' V3';
       let hash: string | undefined;
 
-      // Primary: WDK Aave lending supply (real DeFi interaction)
+      // Primary: yield pool supply (Aurelius / Lendle on Mantle)
       try {
         const aave = getAaveLending(this.wdkAccount);
         if (aave) {
-          // Step 1: Approve USDt spending by Aave pool
+          // Step 1: Approve USDt spending by yield pool
           if (this.config.aavePoolAddress) {
-            const evmAccount = this.wdkAccount as unknown as WalletAccountEvm;
-            const approveResult = await evmAccount.approve({
+            const approveResult = await this.wdkAccount.approve({
               token: this.config.usdtAddress,
               spender: this.config.aavePoolAddress,
               amount,
             });
-            logger.info('WDK approve for Aave supply succeeded', { hash: approveResult.hash });
+            logger.info('Approve for yield pool supply succeeded', { hash: approveResult.hash });
           }
 
-          // Step 2: Supply to Aave via WDK lending protocol
+          // Step 2: Supply to yield pool (Aurelius / Lendle on Mantle)
           const supplyResult = await aave.supply({
             token: this.config.usdtAddress,
             amount,
           });
           hash = supplyResult.hash;
-          logger.info('WDK Aave supply succeeded', { protocol, amount: amount.toString(), hash });
+          logger.info('Yield supply succeeded', { protocol, amount: amount.toString(), hash });
         }
       } catch (aaveErr) {
-        logger.warn('WDK Aave supply failed, falling back to vault investInYield', {
+        logger.warn('Yield pool supply failed, falling back to vault investInYield', {
           error: aaveErr instanceof Error ? aaveErr.message : String(aaveErr),
         });
       }
@@ -942,7 +909,7 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
   }
 
   /**
-   * Check and execute pending transactions via WDK
+   * Check and execute pending transactions via agent wallet
    */
   async checkPendingTransactions(): Promise<void> {
     try {
@@ -1148,7 +1115,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
   }
 
   /**
-   * Emergency pause — send via WDK
+   * Emergency pause — send via agent wallet
    */
   async emergencyPause(): Promise<void> {
     try {
@@ -1169,7 +1136,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
   }
 
   /**
-   * Emergency unpause — send via WDK
+   * Emergency unpause — send via agent wallet
    */
   async emergencyUnpause(): Promise<void> {
     try {
@@ -1190,7 +1157,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
   }
 
   /**
-   * Propose a withdrawal — sends propose tx through WDK
+   * Propose a withdrawal via agent wallet
    */
   async proposeWithdrawal(to: string, amount: bigint): Promise<string | null> {
     try {
@@ -1214,7 +1181,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
       };
 
       EventBus.emitEvent('treasury:withdrawal_proposed', 'treasury', decision);
-      logger.info('Withdrawal proposed via WDK', { to, amount: amount.toString(), hash });
+      logger.info('Withdrawal proposed', { to, amount: amount.toString(), hash });
       return hash;
     } catch (error) {
       logger.error('Withdrawal proposal failed', { error });
@@ -1223,23 +1190,23 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
   }
 
   /**
-   * Harvest yield from a protocol — tries WDK Aave withdraw first, then vault contract, then off-chain tracking.
+   * Harvest yield from a protocol — tries yield pool withdraw first, then vault contract, then off-chain tracking.
    */
   async harvestYield(protocol: string, expectedAmount: bigint): Promise<string | null> {
-    // 1. Try WDK Aave withdraw (direct DeFi interaction, most reliable)
+    // 1. Try yield pool withdraw (Aurelius / Lendle on Mantle)
     try {
       const aave = getAaveLending(this.wdkAccount);
-      if (aave && protocol.toLowerCase().includes('aave')) {
+      if (aave && (protocol.toLowerCase().includes('aave') || protocol.toLowerCase().includes('aurelius'))) {
         const withdrawResult = await aave.withdraw({
           token: this.config.usdtAddress,
           amount: expectedAmount,
         });
         const hash = withdrawResult?.hash;
         if (hash) {
-          logger.info('WDK Aave withdraw succeeded', { protocol, amount: expectedAmount.toString(), hash });
+          logger.info('Yield pool withdraw succeeded', { protocol, amount: expectedAmount.toString(), hash });
           EventBus.emitEvent('treasury:yield_harvested', 'treasury', {
             action: 'harvest_yield',
-            reasoning: `Harvested ${ethers.formatUnits(expectedAmount, 6)} USDt from ${protocol} via WDK`,
+            reasoning: `Harvested ${ethers.formatUnits(expectedAmount, 6)} USDt from ${protocol}`,
             protocol,
             expectedAmount: expectedAmount.toString(),
             txHash: hash,
@@ -1248,9 +1215,9 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
           return hash;
         }
       }
-    } catch (wdkErr) {
-      logger.warn('WDK Aave withdraw failed, falling back to vault contract', {
-        error: wdkErr instanceof Error ? wdkErr.message : String(wdkErr),
+    } catch (withdrawErr) {
+      logger.warn('Yield pool withdraw failed, falling back to vault contract', {
+        error: withdrawErr instanceof Error ? withdrawErr.message : String(withdrawErr),
       });
     }
 
@@ -1309,7 +1276,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
   }
 
   /**
-   * Sweep any USDt balance sitting in the WDK wallet into the Treasury Vault.
+   * Sweep any USDt balance sitting in the agent wallet into the Treasury Vault.
    * Runs every monitor cycle — no-op if wallet is empty.
    */
   private async sweepWalletToVault(): Promise<void> {
@@ -1321,7 +1288,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
       const MIN_SWEEP = ethers.parseUnits('0.01', 6); // 0.01 USDt minimum
       if (walletBalance < MIN_SWEEP) return;
 
-      logger.info('Sweeping WDK wallet USDt into vault', {
+      logger.info('Sweeping agent wallet USDt into vault', {
         wallet: walletAddress,
         amount: ethers.formatUnits(walletBalance, 6),
       });
@@ -1340,7 +1307,7 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
       const amount = ethers.formatUnits(walletBalance, 6);
       EventBus.emitEvent('treasury:sweep', 'treasury', {
         action: 'wallet_sweep',
-        reasoning: `Swept ${amount} USDt from WDK wallet (${walletAddress}) into treasury vault.`,
+        reasoning: `Swept ${amount} USDt from agent wallet (${walletAddress}) into treasury vault.`,
         data: { wallet: walletAddress, amount, txHash },
         txHash,
         status: 'executed',

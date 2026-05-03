@@ -20,7 +20,7 @@ contract Deploy is Script {
         // 2. Deploy CreditLine (linked to vault)
         CreditLine credit = new CreditLine(usdt, address(vault));
 
-        // 3. Grant AGENT_ROLE to the WDK-managed agent address
+        // 3. Grant AGENT_ROLE to the agent wallet address
         vault.grantRole(vault.AGENT_ROLE(), agentAddress);
         vault.grantRole(vault.EXECUTOR_ROLE(), agentAddress);
         credit.grantRole(credit.AGENT_ROLE(), agentAddress);

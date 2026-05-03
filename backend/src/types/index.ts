@@ -180,10 +180,7 @@ export interface AgentConfig {
   creditLineAddress: string;
   usdtAddress: string;
   aavePoolAddress?: string;
-  /** Ethereum mainnet RPC for cross-chain bridge + yield comparison */
-  ethereumRpcUrl?: string;
-  /** Polygon RPC for cross-chain bridge + yield comparison */
-  polygonRpcUrl?: string;
+
 }
 
 // Risk Assessment

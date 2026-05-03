@@ -1,20 +1,14 @@
 /**
- * CrossChainBridge — WDK USDt0 bridge integration (LayerZero-based)
+ * CrossChainBridge — cross-chain yield comparison (bridge disabled on Mantle v1)
  *
- * Enables the Treasury Agent to:
- * 1. Compare yield opportunities across chains (Arbitrum, Ethereum, Polygon)
- * 2. Bridge USDt to the best-yield chain
- * 3. Supply on the remote chain
- * 4. Bridge profits back
- *
- * Uses @tetherto/wdk-protocol-bridge-usdt0-evm over LayerZero.
+ * Cross-chain bridging is not active on Mantle v1. This service provides chain yield comparison only.
  */
 
 import type { WdkAccount } from './wdk';
 import EventBus from '../orchestrator/EventBus';
 import logger from '../utils/logger';
 
-// Supported chains for cross-chain yield (WDK bridge targets)
+// Supported chains for cross-chain yield comparison
 export type BridgeChain = 'ethereum' | 'arbitrum' | 'polygon';
 
 export interface BridgeQuote {
@@ -81,8 +75,8 @@ export interface DemoShowcase {
   };
 }
 
-// Home chain is Arbitrum (where the vault lives)
-const HOME_CHAIN: BridgeChain = 'arbitrum';
+// Home chain is Mantle (where the vault lives)
+const HOME_CHAIN: BridgeChain = 'arbitrum'; // NOTE: bridge is disabled in Mantle v1
 
 // Minimum APY advantage to justify bridging (accounts for bridge cost + risk)
 const MIN_APY_ADVANTAGE = 1.5; // 1.5% higher APY needed to justify cross-chain
@@ -109,10 +103,11 @@ export class CrossChainBridge {
   }
 
   /**
-   * Get bridge protocol handle from WDK account.
+   * Get bridge protocol handle from agent wallet.
    * Returns null if not registered.
    */
-  private getBridge() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getBridge(): any | null {
     try {
       return this.wdkAccount.getBridgeProtocol('usdt0');
     } catch {

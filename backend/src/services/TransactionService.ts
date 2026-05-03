@@ -1,7 +1,7 @@
 /**
  * Shared write-transaction helper used by both TreasuryAgent and CreditAgent.
- * Primary path: WDK account (Tether WDK — both addresses now have AGENT_ROLE).
- * Fallback: ethers Wallet (deployer key).
+ * Primary path: WalletAccount (ethers.Wallet-backed).
+ * Fallback: DEPLOYER_PRIVATE_KEY.
  */
 
 import { ethers } from 'ethers';
@@ -16,29 +16,27 @@ export async function sendWriteTx(
   data: string,
   label: string,
 ): Promise<string> {
-  // Primary path: WDK (Tether Wallet Development Kit — the hackathon SDK)
+  // Primary path: agent wallet (ethers.Wallet-backed WalletAccount)
   try {
-    // WDK EVM's EvmTransaction supports `data` but the base Transaction type does not,
-    // so we cast. value must be bigint (not string).
-    const result = await wdkAccount.sendTransaction({ to, value: 0n, data } as Parameters<typeof wdkAccount.sendTransaction>[0]);
-    const hash: string = result.hash ?? String(result);
-    logger.info(`[WDK] ${label} succeeded`, { hash });
+    const result = await wdkAccount.sendTransaction({ to, value: 0n, data });
+    const hash = result.hash;
+    logger.info(`[wallet] ${label} succeeded`, { hash });
     return hash;
-  } catch (wdkErr) {
-    logger.warn(`[WDK] ${label} failed, falling back to ethers`, {
-      error: wdkErr instanceof Error ? wdkErr.message : String(wdkErr),
+  } catch (walletErr) {
+    logger.warn(`[wallet] ${label} failed, falling back to DEPLOYER_PRIVATE_KEY`, {
+      error: walletErr instanceof Error ? walletErr.message : String(walletErr),
     });
   }
 
-  // Fallback: ethers Wallet (deployer key)
+  // Fallback: deployer private key
   if (privateKey) {
     const signer = new ethers.Wallet(privateKey, provider as ethers.JsonRpcProvider);
     const tx = await signer.sendTransaction({ to, data });
     const receipt = await tx.wait();
     const hash = receipt!.hash;
-    logger.info(`[ethers-fallback] ${label} succeeded`, { hash });
+    logger.info(`[deployer-fallback] ${label} succeeded`, { hash });
     return hash;
   }
 
-  throw new Error(`${label}: both WDK and ethers failed`);
+  throw new Error(`${label}: transaction failed — no wallet available`);
 }

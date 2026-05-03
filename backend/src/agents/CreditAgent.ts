@@ -1,10 +1,9 @@
 /**
  * CreditAgent - On-chain credit scoring and lending
- * Uses WDK for wallet operations, ethers for contract reads
+ * Uses agent wallet for on-chain writes, ethers for contract reads
  */
 
 import { ethers } from 'ethers';
-import type WDK from '@tetherto/wdk';
 import type { WdkAccount } from '../services/wdk';
 import { LLMClient } from '../services/LLMClient';
 import { predictDefault, type DefaultPrediction } from '../services/DefaultPredictor';
@@ -70,7 +69,7 @@ const CREDIT_TIERS: CreditTier[] = [
   { minScore: 0, limit: ethers.parseUnits('500', 6).toString(), rate: 1500, name: 'Poor' },
 ];
 
-// ABI helpers for WDK encoding
+// ABI helpers for contract encoding
 const CREDIT_LINE_IFACE = new ethers.Interface(CREDIT_LINE_ABI);
 const ERC20_IFACE = new ethers.Interface([
   'function approve(address spender, uint256 amount) returns (bool)',
@@ -112,7 +111,7 @@ export class CreditAgent {
   constructor(
     config: AgentConfig,
     provider: ethers.Provider,
-    _wdk: WDK,
+    _account: WdkAccount,
     wdkAccount: WdkAccount,
     llmClient: LLMClient,
   ) {
@@ -508,7 +507,7 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
   }
 
   /**
-   * Update on-chain credit profile via WDK (fallback: ethers signer)
+   * Update on-chain credit profile via agent wallet
    */
   async updateOnChainProfile(
     address: string,
@@ -804,7 +803,7 @@ Respond in JSON: {"decision": "APPROVE" or "DECLINE", "durationDays": <number 7-
   }
 
   /**
-   * Process loan repayment via WDK (fallback: ethers signer)
+   * Process loan repayment via agent wallet
    */
   async processRepayment(loanId: number, amount: bigint): Promise<{ ok: boolean; error?: string }> {
     try {

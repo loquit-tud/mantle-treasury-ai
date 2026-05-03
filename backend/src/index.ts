@@ -42,16 +42,14 @@ const config: AgentConfig = {
   llmFallbackModel: process.env.LLM_FALLBACK_MODEL || undefined,
   llmFallbackBaseUrl: process.env.LLM_FALLBACK_BASE_URL || undefined,
   llmFallbackName: process.env.LLM_FALLBACK_NAME || undefined,
-  seedPhrase: process.env.WDK_SEED_PHRASE || '',
+  seedPhrase: process.env.AGENT_SEED_PHRASE || '',
   privateKey: process.env.DEPLOYER_PRIVATE_KEY || '',
-  rpcUrl: process.env.RPC_URL || 'https://arbitrum-one-rpc.publicnode.com',
-  chainId: parseInt(process.env.CHAIN_ID || '42161'),
+  rpcUrl: process.env.RPC_URL || 'https://rpc.mantle.xyz',
+  chainId: parseInt(process.env.CHAIN_ID || '5000'),
   treasuryVaultAddress: process.env.TREASURY_VAULT_ADDRESS || '',
   creditLineAddress: process.env.CREDIT_LINE_ADDRESS || '',
   usdtAddress: process.env.USDT_ADDRESS || '',
   aavePoolAddress: process.env.AAVE_POOL_ADDRESS,
-  ethereumRpcUrl: process.env.ETHEREUM_RPC_URL,
-  polygonRpcUrl: process.env.POLYGON_RPC_URL,
 };
 
 // Validate configuration
@@ -150,26 +148,23 @@ const wsClients = new Set<import('ws').WebSocket>();
  */
 async function initializeAgents(): Promise<void> {
   try {
-    // Initialize WDK with seed phrase
+    // Initialize agent wallet
     const wdk = await initWdk({
       seedPhrase: config.seedPhrase,
       rpcUrl: config.rpcUrl,
       aavePoolAddress: config.aavePoolAddress,
-      ethereumRpcUrl: config.ethereumRpcUrl,
-      polygonRpcUrl: config.polygonRpcUrl,
     });
 
     const wdkAccount = await getAccount(wdk);
 
-    // Detect WDK ↔ ethers address mismatch (informational — both have AGENT_ROLE)
+    // Log agent wallet address
     const wdkAddr = await getWdkAddress(wdk);
     if (config.privateKey) {
       const ethersAddr = new ethers.Wallet(config.privateKey).address;
       if (wdkAddr.toLowerCase() !== ethersAddr.toLowerCase()) {
         logger.info(
-          `WDK address (${wdkAddr}) ≠ DEPLOYER_PRIVATE_KEY address (${ethersAddr}). ` +
-          `WDK is primary signer (has AGENT_ROLE on both contracts). ` +
-          `ethers Wallet is fallback signer.`
+          `Agent wallet (${wdkAddr}) ≠ DEPLOYER_PRIVATE_KEY address (${ethersAddr}). ` +
+          `Agent wallet is primary signer. DEPLOYER_PRIVATE_KEY is fallback signer.`
         );
       }
     }

@@ -14,10 +14,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@tetherto/wdk": "^1.0.0-beta.6",
-    "@tetherto/wdk-protocol-bridge-usdt0-evm": "^1.0.0-beta.2",
-    "@tetherto/wdk-protocol-lending-aave-evm": "^1.0.0-beta.3",
-    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.8",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.6.2",
     "cors": "^2.8.5",

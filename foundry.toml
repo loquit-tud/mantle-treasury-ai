@@ -17,5 +17,5 @@ tab_width = 4
 bracket_spacing = true
 
 [rpc_endpoints]
-sepolia = "${SEPOLIA_RPC_URL}"
-arbitrum = "${ARBITRUM_RPC_URL}"
+mantle = "${MANTLE_RPC_URL}"
+mantle_sepolia = "${MANTLE_SEPOLIA_RPC_URL}"
