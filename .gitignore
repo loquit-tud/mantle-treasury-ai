@@ -1,0 +1,98 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# WDK
+wdk-data.json
+
+# Testing
+coverage/
+.nyc_output/
+
+# Hardhat/Foundry
+cache/
+artifacts/
+forge-cache/
+out/
+broadcast/
+contracts/out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache/
+.temp/
+tmp/
+
+# Build artifacts & debug outputs
+build*.log
+deploy*.log
+backend-*.log
+tsc*.txt
+tsc-*.txt
+build-out.txt
+dashboard_dump.json
+.wrangler/
+
+# Runtime state
+.state/
+.state_backfill/
+backend/data/
+
+# Junk images & archives
+*.jpg
+*.zip
+clean_revenue.json
+
+# Deploy scripts (contain creds)
+deploy-remote.ps1
+ops/
+
+# Internal docs / hackathon artifacts
+HACKATHON_PLAN.md
+DEMO_SCRIPT.md
+DEMO_VOICEOVER.txt
+PROJECT_REVIEW.md
+ONCHAIN_PROOF.md
+*.webp
+
+# Demo & recording scripts
+scripts/demo-*.ps1
+scripts/demo-*.html
+scripts/obs-*.ps1
+scripts/record-*.mjs
+scripts/add-voiceover.mjs
+
+# Training scripts (one-time use)
+backend/src/services/train-*.ts
+
+# Tunnel config (local)
+cloudflared.yml

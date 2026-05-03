@@ -1,0 +1,3 @@
+/api/*  https://treasury.proceedgate.dev/api/:splat  200
+/health  https://treasury.proceedgate.dev/health  200
+/ws  https://treasury.proceedgate.dev/ws  200

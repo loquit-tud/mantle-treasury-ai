@@ -1,0 +1,125 @@
+### AgentTreasury API — Manual Testing
+### Base URL: http://localhost:3001
+
+@base = http://localhost:3001
+@testAddress = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+### ==================== Health ====================
+
+### Health check
+GET {{base}}/health
+
+### ==================== Dashboard ====================
+
+### Get dashboard data
+GET {{base}}/api/dashboard
+
+### ==================== Treasury ====================
+
+### Get treasury state
+GET {{base}}/api/treasury
+
+### Sync treasury state
+POST {{base}}/api/treasury/sync
+
+### Emergency pause
+POST {{base}}/api/emergency/pause
+
+### ==================== Credit ====================
+
+### Get credit profile (must evaluate first)
+GET {{base}}/api/credit/{{testAddress}}
+
+### Evaluate credit (creates/updates profile)
+POST {{base}}/api/credit/{{testAddress}}/evaluate
+
+### Get user loans
+GET {{base}}/api/credit/{{testAddress}}/loans
+
+### Get all active loans
+GET {{base}}/api/loans
+
+### ==================== Borrow & Repay ====================
+
+### Borrow 100 USDt (amount in wei, 6 decimals)
+POST {{base}}/api/credit/{{testAddress}}/borrow
+Content-Type: application/json
+
+{
+  "amount": "100000000"
+}
+
+### Repay loan #0 — 50 USDt
+POST {{base}}/api/credit/{{testAddress}}/repay
+Content-Type: application/json
+
+{
+  "loanId": 0,
+  "amount": "50000000"
+}
+
+### ==================== Yield ====================
+
+### Get yield opportunities
+GET {{base}}/api/yield/opportunities
+
+### Invest in yield
+
+### ==================== Cross-Chain Bridge ====================
+
+### Bridge status — shows active bridges, totals, last scan
+GET {{base}}/api/bridge/status
+
+### Cross-chain yield scan — queries real Aave APY on Ethereum + Polygon + Arbitrum
+### Compares remote chains vs local APY and recommends bridge if >= 1.5% advantage
+POST {{base}}/api/bridge/scan-yield
+
+### Bridge quote — estimate LayerZero fee before executing
+### targetChain: "ethereum" | "polygon" | "arbitrum"
+### amount: USDt in 6 decimals (100000000 = 100 USDt)
+POST {{base}}/api/bridge/quote
+Content-Type: application/json
+
+{
+  "targetChain": "ethereum",
+  "amount": "100000000"
+}
+
+### Execute bridge — sends USDt to target chain via LayerZero
+POST {{base}}/api/bridge/execute
+Content-Type: application/json
+
+{
+  "targetChain": "ethereum",
+  "amount": "100000000"
+}
+POST {{base}}/api/yield/invest
+Content-Type: application/json
+
+{
+  "protocol": "aave",
+  "amount": "1000000000",
+  "apy": 4.5
+}
+
+### ==================== Withdrawal ====================
+
+### Propose withdrawal
+POST {{base}}/api/treasury/withdrawal/propose
+Content-Type: application/json
+
+{
+  "to": "{{testAddress}}",
+  "amount": "500000000"
+}
+
+### ==================== Decisions ====================
+
+### Get all recent decisions
+GET {{base}}/api/decisions
+
+### Get treasury decisions only
+GET {{base}}/api/decisions?type=treasury
+
+### Get credit decisions only
+GET {{base}}/api/decisions?type=credit
