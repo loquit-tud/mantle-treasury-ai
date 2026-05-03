@@ -9,7 +9,7 @@ import CrossChain from './pages/CrossChain';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />, // App as Layout
+    element: <App />,
     children: [
       {
         index: true,
@@ -33,4 +33,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename: '/mantle-treasury-ai' });

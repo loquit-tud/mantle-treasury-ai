@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   Shield,
-  Zap,
   LineChart,
   ArrowRight,
   Activity,
@@ -83,7 +82,7 @@ export default function Landing() {
             <Shield className="w-8 h-8 text-green-400" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">
-                AgentTreasury <span className="text-green-400">CORE</span>
+                Quorum <span className="text-green-400">AI</span>
               </h1>
             </div>
           </div>
@@ -112,8 +111,7 @@ export default function Landing() {
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
           <h2 className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-tight">
-          <h2 className="text-5xl sm:text-7xl font-extrabold tracking-tight leading-tight">
-            AgentTreasury CORE <br/>
+            Quorum <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-600">
               Autonomous CFO for DAOs
             </span>
@@ -299,10 +297,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 gap-4">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-gray-600" />
-            <span>AgentTreasury CORE &copy; 2026</span>
+            <span>Quorum &copy; 2026</span>
           </div>
           <div className="flex items-center gap-4">
-            <span>AgentTreasury CORE</span>
+            <span>Quorum — Autonomous DAO CFO on Mantle</span>
           </div>
         </div>
       </footer>

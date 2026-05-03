@@ -4,6 +4,7 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/mantle-treasury-ai/',
   plugins: [react()],
   resolve: {
     alias: {

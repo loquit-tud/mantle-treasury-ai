@@ -27,10 +27,10 @@ export default function App() {
                 <Shield className="w-7 h-7 text-green-400" />
                 <div>
                   <h1 className="text-lg font-bold tracking-tight">
-                    AgentTreasury <span className="text-green-400">CORE</span>
+                    Quorum <span className="text-green-400">AI</span>
                   </h1>
                   <p className="text-xs text-gray-500 hidden sm:block">
-                    Autonomous DAO CFO &mdash; Tether Hackathon Galactica
+                    Autonomous DAO CFO &mdash; Mantle Network
                   </p>
                 </div>
               </div>
@@ -91,8 +91,8 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-gray-800 mt-auto bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-600 gap-2">
-          <span>AgentTreasury CORE &mdash; Tether Hackathon Galactica: WDK Edition</span>
-          <span>Powered by WDK + OpenClaw</span>
+          <span>Quorum &mdash; Autonomous DAO CFO on Mantle</span>
+          <span>Powered by Mantle Network</span>
         </div>
       </footer>
     </div>

@@ -1,5 +1,5 @@
 /**
- * useDashboard Hook - Fetch and manage dashboard data
+ * useDashboard Hook - Fetches live data from backend API
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,39 +18,27 @@ export function useDashboard(): UseDashboardReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await fetch(apiUrl('/api/dashboard'));
-      const result = await response.json();
-
-      if (result.success) {
-        setData(result.data);
-      } else {
-        setError(result.error || 'Failed to fetch dashboard data');
-      }
+      const res = await fetch(apiUrl('/api/dashboard'));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setData(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Network error');
+      setError(err instanceof Error ? err.message : 'Failed to fetch dashboard');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-
-    // Poll every 5 seconds
-    const interval = setInterval(fetchData, 5000);
-
+    fetchDashboard();
+    const interval = setInterval(fetchDashboard, 15000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchDashboard]);
 
-  return {
-    data,
-    isLoading,
-    error,
-    refresh: fetchData,
-  };
+  return { data, isLoading, error, refresh: fetchDashboard };
 }
+
