@@ -55,7 +55,6 @@ const config: AgentConfig = {
 // Validate configuration
 function validateConfig(): boolean {
   const required = [
-    'seedPhrase',
     'treasuryVaultAddress',
     'creditLineAddress',
     'usdtAddress',
@@ -95,8 +94,9 @@ app.use(cors({
       }
       return callback(null, true); // allow in dev only
     }
-    // Allow all *.quorum.pages.dev subdomains + localhost
-    if (origin.endsWith('.quorum.pages.dev') ||
+    // Allow GitHub Pages, quorum.pages.dev subdomains + localhost
+    if (origin.endsWith('.github.io') ||
+        origin.endsWith('.quorum.pages.dev') ||
         origin === 'https://quorum.pages.dev' ||
         origin.startsWith('http://localhost:')) {
       return callback(null, true);
