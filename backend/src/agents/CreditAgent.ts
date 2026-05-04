@@ -1260,7 +1260,10 @@ Respond in JSON: {"decision": "APPROVE" or "DECLINE", "durationDays": <number 7-
    * Get all active loans
    */
   getAllActiveLoans(): Loan[] {
-    return Array.from(this.loans.values()).filter(l => l.active && !this.cancelledLoanIds.has(l.id));
+    const DUMMY_ADDRESS = '0x0000000000000000000000000000000000000001';
+    return Array.from(this.loans.values()).filter(
+      l => l.active && !this.cancelledLoanIds.has(l.id) && l.borrower.toLowerCase() !== DUMMY_ADDRESS
+    );
   }
 
   /**
