@@ -123,8 +123,15 @@ export function AgentChat({ lastMessage, initialDialogues }: { lastMessage: unkn
             <div className="w-16 h-16 rounded-full bg-purple-500/5 border border-purple-500/20 flex items-center justify-center mb-3 animate-pulse">
               <MessageSquare className="w-7 h-7 text-purple-500/40" />
             </div>
-            <p className="text-sm text-gray-500">Agents will begin debating shortly...</p>
-            <p className="text-[11px] text-gray-600 mt-1">Board Meetings run every 5 minutes</p>
+            <p className="text-sm font-semibold text-gray-400">Agents standing by...</p>
+            <p className="text-[11px] text-gray-500 mt-1 max-w-[220px] leading-relaxed">
+              Three AI advisors will debate capital allocation & risk once the countdown reaches 0:00
+            </p>
+            <div className="flex items-center gap-3 mt-4">
+              <span className="flex items-center gap-1.5 text-[10px] text-cyan-500/80"><span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />Treasury</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-emerald-500/80"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Credit</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-amber-500/80"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Risk</span>
+            </div>
           </div>
         ) : (
           messages.map((msg, i) => {

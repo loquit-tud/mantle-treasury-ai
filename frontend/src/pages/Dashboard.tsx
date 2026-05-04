@@ -141,6 +141,20 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [lastFetch]);
 
+  // Next Board Meeting countdown (300s cycle, resets on dialogue event)
+  const [lastDialogueAt, setLastDialogueAt] = useState<number>(Date.now());
+  const [meetingSecsLeft, setMeetingSecsLeft] = useState(300);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - lastDialogueAt) / 1000);
+      setMeetingSecsLeft(Math.max(0, 300 - (elapsed % 300)));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [lastDialogueAt]);
+
+  // Inline confirm for Emergency Pause
+  const [confirmingPause, setConfirmingPause] = useState(false);
+
   // Normalize raw EventBus events ({ type, source, payload }) into AgentDecision shape
   const normalizeDecision = (raw: Record<string, unknown>): AgentDecision => {
     if (raw.action && raw.agentType) return raw as unknown as AgentDecision;
@@ -220,6 +234,11 @@ export default function Dashboard() {
       if (event?.id) {
         setDecisions((prev) => [...prev, event].slice(-50));
       }
+      // Reset board meeting countdown on dialogue events
+      const evtType = (msg.data as { type?: string }).type;
+      if (evtType === 'dialogue:turn' || evtType === 'dialogue:consensus') {
+        setLastDialogueAt(Date.now());
+      }
     }
   }, [lastMessage]);
 
@@ -248,8 +267,62 @@ export default function Dashboard() {
     });
   }
 
+  // Onboarding banner (dismiss once per session)
+  const [showOnboarding, setShowOnboarding] = useState(() => !sessionStorage.getItem('onboarding-dismissed'));
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+
+      {/* ── First-Visit Onboarding Banner ── */}
+      {showOnboarding && (
+        <div className="relative bg-gradient-to-r from-green-900/20 to-cyan-900/20 border border-green-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center shrink-0 text-xl">👋</div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-white mb-0.5">Welcome to Mission Control</p>
+            <p className="text-xs text-gray-400">
+              You're watching <strong className="text-green-400">3 live AI agents</strong> manage a DAO treasury on Mantle.
+              The <strong className="text-cyan-400">Board Meeting</strong> countdown shows when they'll debate next.
+              <strong className="text-purple-400"> KPI cards</strong> show real on-chain data. Hover any <span className="inline-flex items-center gap-0.5 text-gray-300 font-mono text-[10px] bg-gray-800 border border-gray-700 rounded px-1">?</span> for explanations.
+            </p>
+          </div>
+          <button
+            onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboarding-dismissed', '1'); }}
+            className="shrink-0 text-xs text-gray-500 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-600"
+          >
+            Got it ✓
+          </button>
+        </div>
+      )}
+
+      {/* ── Next Board Meeting Countdown ── */}
+      <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 px-5 py-4 rounded-2xl border transition-all duration-500 ${
+        meetingSecsLeft <= 30
+          ? 'bg-purple-900/30 border-purple-500/50 shadow-[0_0_20px_-5px_rgba(168,85,247,0.4)]'
+          : 'bg-gray-900/60 border-gray-700'
+      }`}>
+        <div className="flex items-center gap-3 flex-1">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${meetingSecsLeft <= 30 ? 'bg-purple-500/20 border border-purple-500/50 countdown-glow' : 'bg-gray-800 border border-gray-700'}`}>
+            <span className="text-base">🗳️</span>
+          </div>
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-widest ${meetingSecsLeft <= 30 ? 'text-purple-300' : 'text-gray-400'}`}>
+              {meetingSecsLeft <= 30 ? '⚡ Board Meeting Imminent!' : 'Next Board Meeting'}
+            </p>
+            <p className="text-[11px] text-gray-500">All 3 agents will debate capital allocation &amp; risk</p>
+          </div>
+        </div>
+        <div className={`font-mono text-4xl font-black tabular-nums tracking-tight ${meetingSecsLeft <= 30 ? 'text-purple-300' : 'text-white'}`}>
+          {String(Math.floor(meetingSecsLeft / 60)).padStart(2, '0')}
+          <span className="opacity-60 text-2xl">:</span>
+          {String(meetingSecsLeft % 60).padStart(2, '0')}
+        </div>
+        <div className="hidden sm:flex flex-col items-end gap-1 text-[10px] text-gray-600">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500/60" />Treasury Agent</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500/60" />Credit Agent</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500/60" />Risk Agent</span>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
@@ -278,17 +351,31 @@ export default function Dashboard() {
                <RefreshCw className={`w-4 h-4 text-green-400 ${syncing ? 'animate-spin' : ''}`} />
                {syncing ? 'Syncing...' : 'Sync Treasury'}
              </button>
-             <button
-               onClick={() => {
-                 if (window.confirm('Are you sure you want to pause all agent activities? This action requires multi-sig to resume.')) {
-                   pauseAgents();
-                 }
-               }}
-               className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-all hover:scale-105"
-             >
-               <PauseCircle className="w-4 h-4" />
-               Emergency Pause
-             </button>
+             {confirmingPause ? (
+               <div className="flex items-center gap-2 bg-red-900/20 border border-red-500/40 rounded-lg px-3 py-2 animate-in fade-in duration-150">
+                 <span className="text-xs text-red-300 font-medium">Pause all agents?</span>
+                 <button
+                   onClick={() => { pauseAgents(); setConfirmingPause(false); }}
+                   className="text-xs bg-red-500 hover:bg-red-400 px-3 py-1 rounded font-bold text-white transition-colors"
+                 >
+                   Yes, Pause
+                 </button>
+                 <button
+                   onClick={() => setConfirmingPause(false)}
+                   className="text-xs text-gray-400 hover:text-white px-2 py-1 transition-colors"
+                 >
+                   Cancel
+                 </button>
+               </div>
+             ) : (
+               <button
+                 onClick={() => setConfirmingPause(true)}
+                 className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-all hover:scale-105"
+               >
+                 <PauseCircle className="w-4 h-4" />
+                 Emergency Pause
+               </button>
+             )}
          </div>
       </div>
 
@@ -311,18 +398,21 @@ export default function Dashboard() {
         <KPICard
           icon={<DollarSign className="w-5 h-5 text-cyan-400" />}
           label="Treasury Balance"
+          tooltip="Total USDt held in the TreasuryVault smart contract on Mantle. Real on-chain capital managed by AI agents."
           value={`$${(Number(treasury.balance) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDt`}
           sub="Vault holdings"
         />
         <KPICard
           icon={<BarChart3 className="w-5 h-5 text-blue-400" />}
           label="Daily Volume"
+          tooltip="Total USDt moved in/out of the vault today — deposits, loan disbursements, and yield harvests combined."
           value={`$${(Number(treasury.dailyVolume) / 1e6).toLocaleString('en-US')} USDt`}
           sub="In / Out today"
         />
         <KPICard
           icon={<TrendingUp className="w-5 h-5 text-purple-400" />}
           label="Yield Positions"
+          tooltip="Active yield strategies (Aave V3). Treasury Agent auto-compounds returns. APY = annual percentage yield."
           value={String(treasury.yieldPositions.length)}
           sub={
             treasury.yieldPositions.length > 0
@@ -338,6 +428,7 @@ export default function Dashboard() {
         <KPICard
           icon={<Users className="w-5 h-5 text-yellow-400" />}
           label="Credit Profiles"
+          tooltip="Unique borrower wallets scored by the Credit Agent. Scores 500–1000 determine loan eligibility and interest rate."
           value={String(data?.creditProfiles?.length ?? 0)}
           sub={`${data?.activeLoans?.length ?? 0} active loans`}
         />
@@ -702,19 +793,27 @@ function KPICard({
   label,
   value,
   sub,
+  tooltip,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub: string;
+  tooltip?: string;
 }) {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:bg-gray-750 transition-colors shadow-sm">
+    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-600 transition-all shadow-sm group">
       <div className="flex items-center gap-3 mb-3">
         {icon}
-        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold flex-1">
           {label}
         </span>
+        {tooltip && (
+          <div className="tooltip-wrap">
+            <span className="w-4 h-4 rounded-full bg-gray-700 border border-gray-600 text-[9px] font-bold text-gray-400 flex items-center justify-center cursor-help hover:border-gray-500 hover:text-gray-300 transition-colors">?</span>
+            <div className="tooltip-box">{tooltip}</div>
+          </div>
+        )}
       </div>
       <p className="text-2xl font-black text-white tracking-tight">{value}</p>
       <p className="text-xs text-gray-500 mt-2 font-medium">{sub}</p>

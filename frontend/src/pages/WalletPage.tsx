@@ -72,9 +72,10 @@ export default function WalletPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [ethBal, setEthBal] = useState<string | null>(null);
   const [usdtBal, setUsdtBal] = useState<string | null>(null);
+  const [showNoWalletCard, setShowNoWalletCard] = useState(false);
 
   const connectWallet = useCallback(async () => {
-    if (!window.ethereum) { alert('Please install MetaMask'); return; }
+    if (!window.ethereum) { setShowNoWalletCard(true); return; }
     try {
       localStorage.removeItem('wallet-disconnected');
       await ensureCorrectChain();
@@ -240,7 +241,7 @@ export default function WalletPage() {
   const handleRepay = async (loanId: number) => {
     const target = lookupAddress || address;
     if (!target || !repayAmount || isNaN(Number(repayAmount)) || Number(repayAmount) <= 0) return;
-    if (!window.ethereum) { alert('Please install MetaMask'); return; }
+    if (!window.ethereum) { setShowNoWalletCard(true); return; }
     setIsRepaying(true);
     setRepayResult(null);
     try {
@@ -315,7 +316,7 @@ export default function WalletPage() {
     
     // Check if window.ethereum exists
     if (!window.ethereum) {
-        alert("Please install MetaMask to use this feature.");
+        setShowNoWalletCard(true);
         return;
     }
 
@@ -380,6 +381,60 @@ export default function WalletPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              {/* ── No Wallet Onboarding Card ── */}
+              {showNoWalletCard && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowNoWalletCard(false)}>
+                  <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">🦊</div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">MetaMask Required</h3>
+                        <p className="text-xs text-gray-400">To interact with the vault, you need a Web3 wallet</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
+                        <span className="text-lg shrink-0">1️⃣</span>
+                        <div>
+                          <p className="text-sm font-semibold text-white">Install MetaMask</p>
+                          <p className="text-xs text-gray-400">Free browser extension — works in Chrome, Firefox, Brave</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
+                        <span className="text-lg shrink-0">2️⃣</span>
+                        <div>
+                          <p className="text-sm font-semibold text-white">Add Mantle Network</p>
+                          <p className="text-xs text-gray-400">RPC: rpc.mantle.xyz · Chain ID: 5000 · Symbol: MNT</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
+                        <span className="text-lg shrink-0">3️⃣</span>
+                        <div>
+                          <p className="text-sm font-semibold text-white">Connect &amp; Explore</p>
+                          <p className="text-xs text-gray-400">You can view the live dashboard without connecting — only deposits &amp; loans require a wallet</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <a
+                        href="https://metamask.io/download/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-sm transition-colors"
+                      >
+                        Install MetaMask →
+                      </a>
+                      <button
+                        onClick={() => setShowNoWalletCard(false)}
+                        className="px-4 py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:text-white text-sm transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
          <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Your Portfolio</h2>
             <p className="text-sm text-gray-400">Manage your connected wallet, credit, and vault deposits.</p>
