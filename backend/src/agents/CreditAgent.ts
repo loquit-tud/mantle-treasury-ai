@@ -23,6 +23,7 @@ import { sendWriteTx } from '../services/TransactionService';
 import { generateProof, verifyProof, getBestProvableTier } from '../services/ZKCreditProof';
 import type { RevenueTracker } from '../services/RevenueTracker';
 import type { DebtRestructuring } from '../services/DebtRestructuring';
+import type { RiskAgent } from './RiskAgent';
 
 // LLM Configuration
 const CREDIT_SYSTEM_PROMPT = `You are the Credit Agent for Quorum, an autonomous DAO CFO system.
@@ -107,6 +108,7 @@ export class CreditAgent {
   private cancelledLoanIds: Set<number> = new Set([6]);
   private revenueTracker: RevenueTracker | null = null;
   private debtRestructuring: DebtRestructuring | null = null;
+  private riskAgent: RiskAgent | null = null;
 
   constructor(
     config: AgentConfig,
@@ -136,6 +138,11 @@ export class CreditAgent {
   /** Inject DebtRestructuring (set from index.ts after construction) */
   setDebtRestructuring(restructuring: DebtRestructuring): void {
     this.debtRestructuring = restructuring;
+  }
+
+  /** Inject RiskAgent for veto checks and data sharing */
+  setRiskAgent(agent: RiskAgent): void {
+    this.riskAgent = agent;
   }
 
   /**
@@ -331,6 +338,9 @@ export class CreditAgent {
       // Store locally
       this.profiles.set(address.toLowerCase(), profile);
 
+      // Share with RiskAgent for portfolio-level monitoring
+      this.riskAgent?.ingestProfile(address, profile, history);
+
       // Emit decision
       const decision: AgentDecision = {
         id: `credit-${Date.now()}`,
@@ -361,11 +371,16 @@ export class CreditAgent {
    */
   async fetchCreditHistory(address: string): Promise<CreditHistory> {
     try {
-      // Real on-chain data
-      const [txCount, balance] = await Promise.all([
+      const ERC20_BALANCE_ABI = ['function balanceOf(address account) view returns (uint256)'];
+      const usdtContract = new ethers.Contract(this.config.usdtAddress, ERC20_BALANCE_ABI, this.provider);
+
+      const [txCount, usdtBalance] = await Promise.all([
         this.provider.getTransactionCount(address),
-        this.provider.getBalance(address),
+        usdtContract.balanceOf(address) as Promise<bigint>,
       ]);
+
+      // USDt has 6 decimals — convert to whole USD
+      const volumeUSD = Number(usdtBalance / BigInt(1e6));
 
       // Check existing profile on contract
       let repaidLoans = 0;
@@ -380,13 +395,25 @@ export class CreditAgent {
         // No existing profile
       }
 
-      // Estimate account age from first block interaction
-      // (simplified: use tx count as proxy)
-      const accountAge = Math.min(txCount * 2, 730); // rough estimate in days
-
-      // Volume estimate from balance (ETH → USD rough conversion for scoring)
-      const ethBalance = Number(ethers.formatEther(balance));
-      const volumeUSD = Math.floor(ethBalance * 2500); // rough ETH/USD
+      // Real account age: query first tx timestamp from Mantle explorer API
+      let accountAge = 0;
+      try {
+        const explorerUrl = this.config.chainId === 5003
+          ? 'https://api-sepolia.mantlescan.xyz/api'
+          : 'https://api.mantlescan.xyz/api';
+        const resp = await fetch(
+          `${explorerUrl}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc`
+        );
+        const data = await resp.json() as { status: string; result: Array<{ timeStamp: string }> };
+        if (data.status === '1' && data.result?.length > 0) {
+          const firstTxTimestamp = Number(data.result[0].timeStamp);
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          accountAge = Math.floor((nowSeconds - firstTxTimestamp) / 86400);
+        }
+      } catch {
+        // Fallback: heuristic from tx count
+        accountAge = Math.min(txCount * 2, 730);
+      }
 
       return {
         transactionCount: txCount,
@@ -560,6 +587,41 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
           status: 'executed',
         });
         return null;
+      }
+
+      // RiskAgent veto — portfolio-level risk gate
+      if (this.riskAgent?.isVetoed(addrLower)) {
+        logger.warn(`Borrow rejected: RiskAgent vetoed ${address}`);
+        EventBus.emitEvent('credit:borrow_rejected_risk_veto', 'credit', {
+          action: 'borrow_rejected',
+          reasoning: `Borrow rejected — RiskAgent vetoed borrower ${address} due to portfolio risk limits.`,
+          data: { address, amount: amount.toString(), reason: 'risk_veto' },
+          status: 'executed',
+        });
+        return null;
+      }
+
+      // Collateral check — borrower must have locked >= loan amount in CollateralLock contract
+      if (this.config.collateralLockAddress) {
+        try {
+          const collateralAbi = ['function hasCollateral(address borrower, uint256 requiredAmount) view returns (bool)'];
+          const collateralContract = new ethers.Contract(this.config.collateralLockAddress, collateralAbi, this.provider);
+          const hasSufficientCollateral = await collateralContract.hasCollateral(address, amount);
+          if (!hasSufficientCollateral) {
+            logger.warn(`Borrow rejected: insufficient collateral for ${address}`, { required: amount.toString() });
+            EventBus.emitEvent('credit:borrow_rejected_collateral', 'credit', {
+              action: 'borrow_rejected',
+              reasoning: `Borrow rejected — borrower ${address} must deposit ${ethers.formatUnits(amount, 6)} USDt collateral before borrowing.`,
+              data: { address, amount: amount.toString(), reason: 'insufficient_collateral' },
+              status: 'executed',
+            });
+            return null;
+          }
+          logger.info(`Collateral verified for ${address}`, { amount: amount.toString() });
+        } catch (err) {
+          logger.warn('Collateral check failed — rejecting loan for safety', { err: err instanceof Error ? err.message : String(err) });
+          return null;
+        }
       }
 
       // Get or evaluate credit profile

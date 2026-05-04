@@ -50,6 +50,7 @@ const config: AgentConfig = {
   creditLineAddress: process.env.CREDIT_LINE_ADDRESS || '',
   usdtAddress: process.env.USDT_ADDRESS || '',
   aavePoolAddress: process.env.AAVE_POOL_ADDRESS,
+  collateralLockAddress: process.env.COLLATERAL_LOCK_ADDRESS,
 };
 
 // Validate configuration
@@ -209,9 +210,10 @@ async function initializeAgents(): Promise<void> {
     creditAgent.setRevenueTracker(revenueTracker);
     creditAgent.setDebtRestructuring(debtRestructuring);
 
-    // Start risk & compliance agent (advisory only)
-    riskAgent = new RiskAgent(config);
+    // Start risk & compliance agent (portfolio monitoring + borrow veto)
+    riskAgent = new RiskAgent(config, provider);
     riskAgent.start();
+    creditAgent.setRiskAgent(riskAgent);
 
     // Start inter-agent dialogue orchestrator
     agentDialogue = new AgentDialogue(config, treasuryAgent, creditAgent, llmClient, riskAgent);
@@ -592,6 +594,15 @@ app.get('/api/yield/opportunities', async (_req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to fetch yield opportunities' });
   }
+});
+
+// Risk metrics
+app.get('/api/risk/metrics', (_req, res) => {
+  if (!riskAgent) {
+    res.status(503).json({ success: false, error: 'RiskAgent not initialized' });
+    return;
+  }
+  res.json({ success: true, data: riskAgent.getMetrics() });
 });
 
 // Emergency pause

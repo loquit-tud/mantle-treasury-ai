@@ -21,6 +21,7 @@ import type { CreditProfile, Loan, DefaultPrediction } from '../types';
 const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0x51A80e33E227029bB201C4891B62Eb8530F223c3';
 const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE';
 const CREDIT_LINE_ADDRESS = import.meta.env.VITE_CREDIT_LINE_ADDRESS || '0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c';
+const COLLATERAL_LOCK_ADDRESS = import.meta.env.VITE_COLLATERAL_LOCK_ADDRESS || '0x73136630885C6b74bAe6AdC56e8D17D055f3F2f6';
 const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '5000');
 const CHAIN_NAME = import.meta.env.VITE_CHAIN_NAME || 'Mantle Mainnet';
 const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://rpc.mantle.xyz';
@@ -212,10 +213,38 @@ export default function WalletPage() {
   const handleBorrow = async () => {
     const target = lookupAddress || address;
     if (!target || !borrowAmount || isNaN(Number(borrowAmount)) || Number(borrowAmount) <= 0) return;
+    if (!window.ethereum) { setShowNoWalletCard(true); return; }
     setIsBorrowing(true);
     setBorrowResult(null);
     try {
-      const wei = parseUnits(borrowAmount, 6).toString();
+      await ensureCorrectChain();
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const parsedAmount = parseUnits(borrowAmount, 6);
+
+      // Step 1: Deposit 100% USDt collateral into CollateralLock
+      if (COLLATERAL_LOCK_ADDRESS) {
+        const COLLATERAL_ABI = [
+          'function depositCollateral(uint256 amount) external',
+          'function hasCollateral(address borrower, uint256 requiredAmount) view returns (bool)',
+        ];
+        const collateralContract = new Contract(COLLATERAL_LOCK_ADDRESS, COLLATERAL_ABI, signer);
+
+        const alreadyHas = await collateralContract.hasCollateral(target, parsedAmount);
+        if (!alreadyHas) {
+          const usdtContract = new Contract(USDT_ADDRESS, ERC20_ABI, signer);
+          const allowance = await usdtContract.allowance(target, COLLATERAL_LOCK_ADDRESS);
+          if (allowance < parsedAmount) {
+            const approveTx = await usdtContract.approve(COLLATERAL_LOCK_ADDRESS, parsedAmount);
+            await approveTx.wait();
+          }
+          const depositTx = await collateralContract.depositCollateral(parsedAmount);
+          await depositTx.wait();
+        }
+      }
+
+      // Step 2: Request loan from backend
+      const wei = parsedAmount.toString();
       const res = await fetch(apiUrl(`/api/credit/${target}/borrow`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -223,16 +252,16 @@ export default function WalletPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setBorrowResult({ success: true, message: `Borrowed ${borrowAmount} USDt — Loan #${data.data.id}` });
+        setBorrowResult({ success: true, message: `Collateral locked + Borrowed ${borrowAmount} USDt — Loan #${data.data.id}` });
         setBorrowAmount('');
-        // Refresh credit + loans
         checkCreditScore();
         fetchLoans();
       } else {
-        setBorrowResult({ success: false, message: data.error || 'Borrow declined' });
+        setBorrowResult({ success: false, message: data.error || 'Borrow declined (collateral deposited — contact support)' });
       }
-    } catch {
-      setBorrowResult({ success: false, message: 'Network error' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Transaction error';
+      setBorrowResult({ success: false, message: msg.includes('user rejected') ? 'Transaction cancelled' : msg });
     } finally {
       setIsBorrowing(false);
     }
@@ -691,9 +720,10 @@ export default function WalletPage() {
                                     className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                  >
                                     {isBorrowing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowDownCircle className="w-3.5 h-3.5" />}
-                                    {isBorrowing ? 'Processing...' : 'Borrow'}
+                                    {isBorrowing ? 'Locking collateral...' : 'Lock & Borrow'}
                                  </button>
                               </div>
+                              <p className="mt-2 text-[10px] text-gray-500">100% USDt collateral is locked on-chain before the loan is issued. Returned on full repayment.</p>
                               {borrowResult && (
                                 <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-green-950/30 border border-green-900/50 text-green-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                    {borrowResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}

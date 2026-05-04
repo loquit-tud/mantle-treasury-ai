@@ -1257,8 +1257,11 @@ Respond in JSON: {"adjustment": <-20 to +10>, "factors": [{"name": "<id>", "desc
    * Get protocol address
    */
   private getProtocolAddress(protocol: string): string {
+    const pool = this.config.aavePoolAddress || ethers.ZeroAddress;
     const addresses: Record<string, string> = {
-      aave: this.config.aavePoolAddress || ethers.ZeroAddress,
+      aave: pool,
+      aurelius: pool,
+      lendle: pool,
     };
 
     return addresses[protocol.toLowerCase()] || ethers.ZeroAddress;

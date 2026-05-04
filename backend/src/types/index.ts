@@ -180,6 +180,7 @@ export interface AgentConfig {
   creditLineAddress: string;
   usdtAddress: string;
   aavePoolAddress?: string;
+  collateralLockAddress?: string;
 
 }
 
