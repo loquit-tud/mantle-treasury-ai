@@ -1,9 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
-import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
-import WalletPage from './pages/WalletPage';
-import Analytics from './pages/Analytics';
 
 export const router = createBrowserRouter([
   {
@@ -12,19 +8,27 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Landing />,
+        lazy: async () => ({
+          Component: (await import('./pages/Landing')).default,
+        }),
       },
       {
         path: 'dashboard',
-        element: <Dashboard />,
+        lazy: async () => ({
+          Component: (await import('./pages/Dashboard')).default,
+        }),
       },
       {
         path: 'wallet',
-        element: <WalletPage />,
+        lazy: async () => ({
+          Component: (await import('./pages/WalletPage')).default,
+        }),
       },
       {
         path: 'analytics',
-        element: <Analytics />,
+        lazy: async () => ({
+          Component: (await import('./pages/Analytics')).default,
+        }),
       },
     ],
   },

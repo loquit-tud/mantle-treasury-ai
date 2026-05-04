@@ -201,6 +201,13 @@
   opacity: 1;
 }
 
+.tooltip-wrap:focus-within .tooltip-box,
+.tooltip-wrap.tooltip-open .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ── Countdown ring glow ── */
 @keyframes countdown-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0.4); }

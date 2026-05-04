@@ -137,7 +137,7 @@ export default function Landing() {
             3 AI agents that <strong className="text-white">hold, lend, and manage USDt on-chain</strong> without human intervention — powered by OpenClaw
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="animate-fade-in-up animate-delay-300 flex flex-wrap items-center justify-center gap-3">
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
               AI & RWA Track · Path B (Application)
             </span>
@@ -221,17 +221,61 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { step: '01', icon: '🏦', title: 'Deposit USDt', desc: 'Send USDt to the TreasuryVault smart contract on Mantle. Funds are secured by auditable Solidity code.', color: 'cyan' },
-              { step: '02', icon: '🤖', title: 'Agents Analyse', desc: 'Treasury, Credit, and Risk agents read on-chain state every cycle and prepare proposals.', color: 'emerald' },
-              { step: '03', icon: '🗳️', title: 'Board Meeting Vote', desc: '3 LLM-powered agents debate via structured turns. Consensus reached in ≤4 turns using Groq LLaMA.', color: 'purple' },
-              { step: '04', icon: '⛓️', title: 'Execute On-Chain', desc: 'Winning decision executed directly on Mantle. Every action is recorded as an immutable on-chain event.', color: 'amber' },
+              {
+                step: '01',
+                icon: '🏦',
+                title: 'Deposit USDt',
+                desc: 'Send USDt to the TreasuryVault smart contract on Mantle. Funds are secured by auditable Solidity code.',
+                styles: {
+                  card: 'hover:border-cyan-500/40',
+                  iconWrap: 'bg-cyan-500/10 border-cyan-500/30',
+                  badgeWrap: 'bg-cyan-500/20 border-cyan-500/40',
+                  badgeText: 'text-cyan-400',
+                },
+              },
+              {
+                step: '02',
+                icon: '🤖',
+                title: 'Agents Analyse',
+                desc: 'Treasury, Credit, and Risk agents read on-chain state every cycle and prepare proposals.',
+                styles: {
+                  card: 'hover:border-emerald-500/40',
+                  iconWrap: 'bg-emerald-500/10 border-emerald-500/30',
+                  badgeWrap: 'bg-emerald-500/20 border-emerald-500/40',
+                  badgeText: 'text-emerald-400',
+                },
+              },
+              {
+                step: '03',
+                icon: '🗳️',
+                title: 'Board Meeting Vote',
+                desc: '3 LLM-powered agents debate via structured turns. Consensus reached in ≤4 turns using Groq LLaMA.',
+                styles: {
+                  card: 'hover:border-purple-500/40',
+                  iconWrap: 'bg-purple-500/10 border-purple-500/30',
+                  badgeWrap: 'bg-purple-500/20 border-purple-500/40',
+                  badgeText: 'text-purple-400',
+                },
+              },
+              {
+                step: '04',
+                icon: '⛓️',
+                title: 'Execute On-Chain',
+                desc: 'Winning decision executed directly on Mantle. Every action is recorded as an immutable on-chain event.',
+                styles: {
+                  card: 'hover:border-amber-500/40',
+                  iconWrap: 'bg-amber-500/10 border-amber-500/30',
+                  badgeWrap: 'bg-amber-500/20 border-amber-500/40',
+                  badgeText: 'text-amber-400',
+                },
+              },
             ].map((s, i) => (
-              <div key={i} className={`relative flex flex-col items-center text-center p-6 rounded-2xl bg-gray-900/60 border border-gray-800 hover:border-${s.color}-500/40 transition-all duration-300 hover:-translate-y-1 group`}>
-                <div className={`w-12 h-12 rounded-full bg-${s.color}-500/10 border border-${s.color}-500/30 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform`}>
+              <div key={i} className={`relative flex flex-col items-center text-center p-6 rounded-2xl bg-gray-900/60 border border-gray-800 transition-all duration-300 hover:-translate-y-1 group ${s.styles.card}`}>
+                <div className={`w-12 h-12 rounded-full border flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform ${s.styles.iconWrap}`}>
                   {s.icon}
                 </div>
-                <div className={`absolute -top-3 -right-3 w-7 h-7 rounded-full bg-${s.color}-500/20 border border-${s.color}-500/40 flex items-center justify-center`}>
-                  <span className={`text-[10px] font-black text-${s.color}-400`}>{s.step}</span>
+                <div className={`absolute -top-3 -right-3 w-7 h-7 rounded-full border flex items-center justify-center ${s.styles.badgeWrap}`}>
+                  <span className={`text-[10px] font-black ${s.styles.badgeText}`}>{s.step}</span>
                 </div>
                 <h4 className="text-sm font-bold text-white mb-2">{s.title}</h4>
                 <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>

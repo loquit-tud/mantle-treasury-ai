@@ -801,6 +801,8 @@ function KPICard({
   sub: string;
   tooltip?: string;
 }) {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-600 transition-all shadow-sm group">
       <div className="flex items-center gap-3 mb-3">
@@ -809,8 +811,22 @@ function KPICard({
           {label}
         </span>
         {tooltip && (
-          <div className="tooltip-wrap">
-            <span className="w-4 h-4 rounded-full bg-gray-700 border border-gray-600 text-[9px] font-bold text-gray-400 flex items-center justify-center cursor-help hover:border-gray-500 hover:text-gray-300 transition-colors">?</span>
+          <div className={`tooltip-wrap ${isTooltipOpen ? 'tooltip-open' : ''}`}>
+            <button
+              type="button"
+              className="w-4 h-4 rounded-full bg-gray-700 border border-gray-600 text-[9px] font-bold text-gray-400 flex items-center justify-center cursor-help hover:border-gray-500 hover:text-gray-300 transition-colors"
+              aria-label={`Explain ${label}`}
+              aria-expanded={isTooltipOpen}
+              onClick={() => setIsTooltipOpen((v) => !v)}
+              onBlur={() => setIsTooltipOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setIsTooltipOpen(false);
+                }
+              }}
+            >
+              ?
+            </button>
             <div className="tooltip-box">{tooltip}</div>
           </div>
         )}
