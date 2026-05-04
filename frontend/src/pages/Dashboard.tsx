@@ -14,7 +14,6 @@ import {
   Shield,
   ArrowLeft,
 } from 'lucide-react';
-import { BonusFeatures } from '../components/BonusFeatures';
 import { AgentChat } from '../components/AgentChat';
 import { FundFlowDiagram } from '../components/FundFlowDiagram';
 import { DecisionTimeline } from '../components/DecisionTimeline';
@@ -767,8 +766,6 @@ export default function Dashboard() {
         </Panel>
       </div>
 
-      {/* ── Bonus Features Section ── */}
-      <BonusFeatures />
 
       {/* Loading overlay */}
       {isLoading && !data && (
