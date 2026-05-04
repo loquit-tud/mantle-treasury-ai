@@ -25,7 +25,7 @@ export function useDashboard(): UseDashboardReturn {
       const res = await fetch(apiUrl('/api/dashboard'));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      setData(json);
+      setData(json.data ?? json);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard');
     } finally {

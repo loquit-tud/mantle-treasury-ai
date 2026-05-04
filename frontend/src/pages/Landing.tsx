@@ -88,28 +88,28 @@ export default function Landing() {
   const balanceUSDt = stats ? (Number(stats.balance) / 1e6) : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="min-h-screen bg-[#07000f] text-white flex flex-col">
       {/* Navbar */}
       <header className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-green-400" />
+            <Shield className="w-8 h-8 text-violet-400" />
             <div>
               <h1 className="font-display text-xl font-bold tracking-tight">
-                Quorum <span className="text-green-400">AI</span>
+                Quorum <span className="text-violet-400">AI</span>
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {stats?.healthy && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
                 Live
               </span>
             )}
             <Link
               to="/dashboard"
-              className="inline-flex items-center justify-center rounded-lg bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+              className="inline-flex items-center justify-center rounded-lg bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-colors"
             >
               Launch App
             </Link>
@@ -119,21 +119,50 @@ export default function Landing() {
 
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-12 relative overflow-hidden">
-        {/* Animated grid background */}
-        <div className="hero-grid absolute inset-0 pointer-events-none" />
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-green-900/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-cyan-900/10 rounded-full blur-[100px] pointer-events-none" />
+        {/* Animated blob backgrounds */}
+        <div className="animate-float-1 absolute top-[5%] left-[5%] w-[700px] h-[700px] bg-violet-800/20 rounded-full blur-[150px] pointer-events-none" />
+        <div className="animate-float-2 absolute top-[15%] right-[5%] w-[550px] h-[550px] bg-fuchsia-800/15 rounded-full blur-[130px] pointer-events-none" />
+        <div className="animate-float-3 absolute bottom-[0%] left-[35%] w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
+        {/* Subtle grid overlay */}
+        <div className="hero-grid absolute inset-0 pointer-events-none opacity-60" />
+        {/* Floating agent activity card — right */}
+        <div className="animate-float-2 absolute top-[16%] right-[4%] hidden xl:block pointer-events-none z-20">
+          <div className="bg-[#0d0020]/90 border border-violet-500/25 rounded-2xl p-4 backdrop-blur-md shadow-2xl shadow-violet-900/30 min-w-[215px]">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              <span className="text-xs font-semibold text-violet-300">Treasury Agent</span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Allocating idle capital to Aave V3 yield pool</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs font-mono text-emerald-400">+2.31% APY locked</span>
+              <span className="text-[10px] text-gray-600">2s ago</span>
+            </div>
+          </div>
+        </div>
+        {/* Floating agent activity card — left */}
+        <div className="animate-float-3 absolute bottom-[18%] left-[4%] hidden xl:block pointer-events-none z-20">
+          <div className="bg-[#0d0020]/90 border border-fuchsia-500/25 rounded-2xl p-4 backdrop-blur-md shadow-2xl shadow-fuchsia-900/30 min-w-[200px]">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-fuchsia-400 animate-pulse" />
+              <span className="text-xs font-semibold text-fuchsia-300">Credit Agent</span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">Loan #7 approved · score 890</p>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs font-mono text-emerald-400">5% APR · 30 days</span>
+              <span className="text-[10px] text-gray-600">just now</span>
+            </div>
+          </div>
+        </div>
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
           {/* Eyebrow */}
-          <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-violet-300 text-xs font-bold uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
             Live on Mantle Mainnet
           </div>
           <h2 className="font-display animate-fade-in-up animate-delay-100 text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.1]">
             The Autonomous CFO{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-300 to-pink-400">
               for every DAO
             </span>
           </h2>
@@ -156,7 +185,7 @@ export default function Landing() {
           <div className="animate-fade-in-up animate-delay-400 pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/dashboard"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-8 py-4 text-base font-bold text-gray-950 hover:bg-green-400 transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_-5px_var(--color-green-500)]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-8 py-4 text-base font-bold text-white hover:bg-violet-500 transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-5px_rgba(124,58,237,0.55)]"
             >
               Enter Dashboard
               <ArrowRight className="w-5 h-5" />
@@ -175,7 +204,7 @@ export default function Landing() {
       </main>
 
       {/* ── Plain English / Accessibility Explainer ── */}
-      <section className="bg-gradient-to-r from-gray-900 via-gray-900 to-gray-900 border-y border-gray-800 py-6">
+      <section className="bg-gradient-to-r from-violet-950/30 via-[#0d0020] to-fuchsia-950/20 border-y border-violet-900/30 py-6">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center gap-6 justify-between">
             <div className="flex items-center gap-3">
@@ -202,10 +231,10 @@ export default function Landing() {
       </section>
 
       {/* ── How It Works ── */}
-      <section className="bg-gray-950 py-20 border-b border-gray-800">
+      <section className="bg-[#07000f] py-20 border-b border-violet-900/20">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 block">Step by Step</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2 block">Step by Step</span>
             <h3 className="font-display text-3xl font-bold text-white mb-3">How Quorum Works</h3>
             <p className="text-gray-400 max-w-xl mx-auto">Four simple steps from deposit to autonomous yield &amp; lending.</p>
           </div>
@@ -214,26 +243,26 @@ export default function Landing() {
             {[
               {
                 step: '01',
-                icon: <Banknote className="w-6 h-6 text-cyan-400" />,
+                icon: <Banknote className="w-6 h-6 text-violet-400" />,
                 title: 'Deposit USDt',
                 desc: 'Send USDt to the TreasuryVault smart contract on Mantle. Funds are secured by auditable Solidity code.',
                 styles: {
-                  card: 'hover:border-cyan-500/40',
-                  iconWrap: 'bg-cyan-500/10 border-cyan-500/30',
-                  badgeWrap: 'bg-cyan-500/20 border-cyan-500/40',
-                  badgeText: 'text-cyan-400',
+                  card: 'hover:border-violet-500/40',
+                  iconWrap: 'bg-violet-500/10 border-violet-500/30',
+                  badgeWrap: 'bg-violet-500/20 border-violet-500/40',
+                  badgeText: 'text-violet-400',
                 },
               },
               {
                 step: '02',
-                icon: <Bot className="w-6 h-6 text-emerald-400" />,
+                icon: <Bot className="w-6 h-6 text-fuchsia-400" />,
                 title: 'Agents Analyse',
                 desc: 'Treasury, Credit, and Risk agents read on-chain state every cycle and prepare proposals.',
                 styles: {
-                  card: 'hover:border-emerald-500/40',
-                  iconWrap: 'bg-emerald-500/10 border-emerald-500/30',
-                  badgeWrap: 'bg-emerald-500/20 border-emerald-500/40',
-                  badgeText: 'text-emerald-400',
+                  card: 'hover:border-fuchsia-500/40',
+                  iconWrap: 'bg-fuchsia-500/10 border-fuchsia-500/30',
+                  badgeWrap: 'bg-fuchsia-500/20 border-fuchsia-500/40',
+                  badgeText: 'text-fuchsia-400',
                 },
               },
               {
@@ -280,7 +309,7 @@ export default function Landing() {
       <section className="bg-gray-900/30 py-14 border-t border-gray-800">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-8">
-            <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-2 block">Hackathon Alignment</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2 block">Hackathon Alignment</span>
             <h3 className="font-display text-3xl font-bold text-white mb-3">AI & RWA Track Checklist</h3>
             <p className="text-gray-400 max-w-2xl mx-auto">How Quorum maps to the track rubric: real asset context, Mantle deployment, and complete product delivery.</p>
           </div>
@@ -311,7 +340,7 @@ export default function Landing() {
       </section>
 
       {/* RWA Real-World Equivalents */}
-      <section className="bg-gray-950 py-14 border-t border-gray-800">
+      <section className="bg-[#07000f] py-14 border-t border-violet-900/20">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-8">
             <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2 block">Why This Is RWA</span>
@@ -353,7 +382,7 @@ export default function Landing() {
       </section>
 
       {/* 3-Agent Architecture Section */}
-      <section className="bg-gray-950 py-20 border-t border-gray-900 relative">
+      <section className="bg-[#07000f] py-20 border-t border-violet-900/20 relative">
         <div className="max-w-7xl mx-auto px-4 z-10 relative">
           <div className="text-center mb-14">
             <h3 className="font-display text-3xl font-bold text-white mb-3">3-Agent Architecture</h3>
@@ -362,14 +391,14 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <AgentCard
-              icon={<Shield className="w-7 h-7 text-cyan-400" />}
+              icon={<Shield className="w-7 h-7 text-violet-400" />}
               title="Treasury Agent"
               subtitle="Yield & Risk Management"
               items={['Aave V3 yield optimization', 'Multi-sig withdrawals + 1h timelock', 'Daily volume caps (10k USDt)', 'Emergency pause (Guardian role)']}
               color="cyan"
             />
             <AgentCard
-              icon={<LineChart className="w-7 h-7 text-emerald-400" />}
+              icon={<LineChart className="w-7 h-7 text-fuchsia-400" />}
               title="Credit Agent"
               subtitle="Scoring & Lending"
               items={['On-chain credit scoring (500–1000)', '3-tier lending: 5% / 10% / 15% APR', 'ML default prediction (logistic regression)', 'Auto-repayment tracking + penalty interest']}
@@ -409,10 +438,10 @@ export default function Landing() {
       </section>
 
       {/* On-Chain Proof Section */}
-      <section className="bg-gray-950 py-20 border-t border-gray-800">
+      <section className="bg-[#07000f] py-20 border-t border-violet-900/20">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 block">Verified On-Chain</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-2 block">Verified On-Chain</span>
             <h3 className="font-display text-3xl font-bold text-white mb-3">Production Evidence</h3>
             <p className="text-gray-400 max-w-xl mx-auto">Track submission artifacts: verified contracts, live backend, and open-source repository.</p>
           </div>
@@ -425,11 +454,11 @@ export default function Landing() {
                 href={`https://explorer.mantle.xyz/address/${c.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 hover:border-green-500/40 transition-colors group"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 hover:border-violet-500/40 transition-colors group"
               >
                 <span className="text-sm font-medium text-gray-300 group-hover:text-white">{c.label}</span>
-                <code className="text-xs font-mono text-gray-500 group-hover:text-green-400 transition-colors">{c.address.slice(0, 6)}...{c.address.slice(-4)}</code>
-                <ExternalLink className="w-3 h-3 text-gray-600 group-hover:text-green-400" />
+                <code className="text-xs font-mono text-gray-500 group-hover:text-violet-400 transition-colors">{c.address.slice(0, 6)}...{c.address.slice(-4)}</code>
+                <ExternalLink className="w-3 h-3 text-gray-600 group-hover:text-violet-400" />
               </a>
             ))}
           </div>
@@ -442,10 +471,10 @@ export default function Landing() {
                 href={proof.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-4 px-5 py-3.5 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-green-500/30 hover:bg-gray-900/80 transition-all group"
+                className="flex items-center justify-between gap-4 px-5 py-3.5 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-violet-500/30 hover:bg-gray-900/80 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-violet-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-200">{proof.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -486,7 +515,7 @@ export default function Landing() {
                 key={tech.label}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   tech.highlight
-                    ? 'bg-green-500/10 border border-green-500/30 text-green-400'
+                    ? 'bg-violet-500/10 border border-violet-500/30 text-violet-400'
                     : 'bg-gray-900 border border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-300'
                 }`}
               >
@@ -498,7 +527,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 mt-auto bg-gray-950">
+      <footer className="border-t border-violet-900/20 mt-auto bg-[#07000f]">
         <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 gap-4">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-gray-600" />
@@ -517,11 +546,11 @@ export default function Landing() {
 
 function StatPill({ label, value, color }: { label: string; value: string; color: string }) {
   const colorMap: Record<string, string> = {
-    cyan: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-    emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    cyan: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+    emerald: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20',
     blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
     purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-    green: 'text-green-400 bg-green-500/10 border-green-500/20',
+    green: 'text-violet-300 bg-violet-500/10 border-violet-500/20',
   };
   return (
     <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${colorMap[color] ?? colorMap.cyan}`}>
@@ -533,13 +562,13 @@ function StatPill({ label, value, color }: { label: string; value: string; color
 
 function AgentCard({ icon, title, subtitle, items, color }: { icon: React.ReactNode; title: string; subtitle: string; items: string[]; color: string }) {
   const borderMap: Record<string, string> = {
-    cyan: 'hover:border-cyan-500/40',
-    emerald: 'hover:border-emerald-500/40',
+    cyan: 'hover:border-violet-500/40',
+    emerald: 'hover:border-fuchsia-500/40',
     amber: 'hover:border-amber-500/40',
   };
   const dotMap: Record<string, string> = {
-    cyan: 'bg-cyan-500',
-    emerald: 'bg-emerald-500',
+    cyan: 'bg-violet-500',
+    emerald: 'bg-fuchsia-500',
     amber: 'bg-amber-500',
   };
   return (
