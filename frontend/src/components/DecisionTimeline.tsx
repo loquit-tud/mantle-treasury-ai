@@ -67,7 +67,7 @@ export function DecisionTimeline({ decisions }: { decisions: AgentDecision[] }) 
                       <div className="mt-2 flex items-center gap-1.5">
                         <ExternalLink className="w-3 h-3 text-gray-500" />
                         <a
-                          href={`https://arbiscan.io/tx/${d.txHash}`}
+                          href={`https://mantlescan.xyz/tx/${d.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] font-mono text-blue-400 hover:text-blue-300 truncate"

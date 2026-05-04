@@ -112,7 +112,7 @@ export function WalletConnect() {
             )}
           </button>
           <a
-            href={`https://arbiscan.io/address/${address}`}
+            href={`https://mantlescan.xyz/address/${address}`}
             target="_blank"
             rel="noopener noreferrer"
             className="p-1 hover:bg-gray-700 rounded transition-colors"

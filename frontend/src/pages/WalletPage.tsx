@@ -18,12 +18,12 @@ import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
 
 // Constants using Vite Env
-const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0x5503e9d53592B7D896E135804637C1710bDD5A64';
-const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9';
-const CREDIT_LINE_ADDRESS = import.meta.env.VITE_CREDIT_LINE_ADDRESS || '0x236AB6D30F70D7aB6c272aCB3b186D925Bcae1a0';
-const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '42161');
-const CHAIN_NAME = import.meta.env.VITE_CHAIN_NAME || 'Arbitrum One';
-const RPC_URL = 'https://arb1.arbitrum.io/rpc';
+const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0x51A80e33E227029bB201C4891B62Eb8530F223c3';
+const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE';
+const CREDIT_LINE_ADDRESS = import.meta.env.VITE_CREDIT_LINE_ADDRESS || '0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c';
+const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '5000');
+const CHAIN_NAME = import.meta.env.VITE_CHAIN_NAME || 'Mantle Mainnet';
+const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://rpc.mantle.xyz';
 
 /** Ensure MetaMask is on the correct chain; auto-add if missing */
 async function ensureCorrectChain(): Promise<void> {
@@ -43,7 +43,7 @@ async function ensureCorrectChain(): Promise<void> {
           chainId: hexChainId,
           chainName: CHAIN_NAME,
           rpcUrls: [RPC_URL],
-          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
         }],
       });
     } else {

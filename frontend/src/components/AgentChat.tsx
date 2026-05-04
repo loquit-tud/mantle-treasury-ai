@@ -124,7 +124,7 @@ export function AgentChat({ lastMessage, initialDialogues }: { lastMessage: unkn
               <MessageSquare className="w-7 h-7 text-purple-500/40" />
             </div>
             <p className="text-sm text-gray-500">Agents will begin debating shortly...</p>
-            <p className="text-[11px] text-gray-600 mt-1">Board Meetings run every 45 seconds</p>
+            <p className="text-[11px] text-gray-600 mt-1">Board Meetings run every 5 minutes</p>
           </div>
         ) : (
           messages.map((msg, i) => {

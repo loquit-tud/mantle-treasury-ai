@@ -259,7 +259,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-white tracking-tight">Mission Control</h2>
             </div>
             <div className="flex items-center gap-3">
-               <p className="text-sm text-gray-400">AgentTreasury real-time overview and health</p>
+              <p className="text-sm text-gray-400">Quorum real-time overview and health</p>
                <div className="h-4 w-px bg-gray-800" />
                <AgentStatus status={agentStatus} wsConnected={isConnected || !!data} />
                <div className="h-4 w-px bg-gray-800" />

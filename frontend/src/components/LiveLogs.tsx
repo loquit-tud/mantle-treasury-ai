@@ -123,7 +123,7 @@ export function LiveLogs({ decisions = [] }: LiveLogsProps) {
                           <p className="text-xs text-gray-400">
                             <span className="text-gray-500">Tx:</span>{' '}
                             <a 
-                              href={`https://arbiscan.io/tx/${decision.txHash}`}
+                              href={`https://mantlescan.xyz/tx/${decision.txHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-400 hover:underline"

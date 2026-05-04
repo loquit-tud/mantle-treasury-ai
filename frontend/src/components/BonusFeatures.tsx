@@ -478,7 +478,7 @@ function BoardMeetingsCard() {
       ) : dialogues.length === 0 ? (
         <div className="py-8 text-center">
           <MessageSquare className="w-8 h-8 text-gray-700 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">No board meetings yet. Agents will converse every 45 seconds.</p>
+          <p className="text-sm text-gray-500">No board meetings yet. Agents will converse every 5 minutes.</p>
         </div>
       ) : (
         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
