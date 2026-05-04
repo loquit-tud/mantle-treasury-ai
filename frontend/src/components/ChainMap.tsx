@@ -1,6 +1,6 @@
 /**
- * ChainMap — Animated USD₮ flow visualization between chains
- * Shows LayerZero bridge paths with live APY data per chain
+ * ChainMap — Mantle-first USDt flow visualization across chains
+ * Shows LayerZero bridge paths and compares Mantle against external APY venues
  */
 
 import { useState, useEffect } from 'react';
@@ -83,7 +83,7 @@ export function ChainMap() {
       <div className="px-5 py-4 border-b border-gray-700 flex items-center justify-between bg-gray-800/80">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-semibold text-gray-200">Cross-Chain USD₮ Map</h3>
+          <h3 className="text-sm font-semibold text-gray-200">Mantle-First Cross-Chain USD₮ Map</h3>
         </div>
         {data?.infrastructure && (
           <span className="text-[10px] font-mono text-gray-500 bg-gray-900 px-2 py-0.5 rounded-full">

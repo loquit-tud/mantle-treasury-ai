@@ -1,5 +1,5 @@
 /**
- * CrossChain — Cross-Chain Analytics page
+ * CrossChain — Mantle-first cross-chain analytics page
  * Combines ChainMap, YieldComparison, AgentActivityFeed, and RiskRadar
  */
 
@@ -19,9 +19,9 @@ export default function CrossChain() {
       <div className="flex items-center gap-3">
         <Globe className="w-6 h-6 text-cyan-400" />
         <div>
-          <h2 className="text-xl font-bold text-white">Cross-Chain Analytics</h2>
+          <h2 className="text-xl font-bold text-white">Mantle-First Cross-Chain Analytics</h2>
           <p className="text-xs text-gray-500">
-            Live USD₮ flows, yield comparison, agent decisions & risk analysis
+            Mantle is the primary execution chain; external chains are used for cross-chain yield comparison.
           </p>
         </div>
       </div>

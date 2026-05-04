@@ -1,5 +1,5 @@
 /**
- * AgentTreasury Dashboard Entry Point
+ * Quorum Dashboard Entry Point
  */
 
 import React from 'react';

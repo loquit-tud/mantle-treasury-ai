@@ -1,5 +1,5 @@
 /**
- * YieldComparison — Bar chart comparing APY across chains + protocols
+ * YieldComparison — Mantle-first APY benchmark across chains + protocols
  * with agent recommendation overlay
  */
 
@@ -112,7 +112,7 @@ export function YieldComparison({ yieldPositions: _yieldPositions }: { yieldPosi
       <div className="px-5 py-4 border-b border-gray-700 flex items-center justify-between bg-gray-800/80">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-green-400" />
-          <h3 className="text-sm font-semibold text-gray-200">Yield Comparison</h3>
+          <h3 className="text-sm font-semibold text-gray-200">Mantle-First Yield Comparison</h3>
         </div>
         {bestChain && (
           <span className="flex items-center gap-1 text-[10px] font-semibold text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">

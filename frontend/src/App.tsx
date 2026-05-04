@@ -1,5 +1,5 @@
 /**
- * AgentTreasury Dashboard — Main App Component
+ * Quorum Dashboard — Main App Component
  */
 
 import { Shield } from 'lucide-react';
