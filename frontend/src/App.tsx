@@ -70,15 +70,7 @@ export default function App() {
               >
                  Analytics
               </NavLink>
-              <NavLink 
-                to="/cross-chain"
-                className={({ isActive }) => `
-                  whitespace-nowrap text-sm font-medium transition-colors border-b-2 px-1 py-1
-                  ${isActive ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
-                `}
-              >
-                 Cross-Chain
-              </NavLink>
+
            </nav>
         </div>
       </header>

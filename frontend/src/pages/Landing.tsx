@@ -7,7 +7,6 @@ import {
   Activity,
   Brain,
   Lock,
-  Globe,
   ExternalLink,
   CheckCircle2,
   TrendingUp,
@@ -261,7 +260,6 @@ export default function Landing() {
             <FeatureCard icon={<MessageSquare className="w-6 h-6 text-pink-400" />} title="Board Meetings (LLM)" description="Every 5 minutes, all 3 agents debate capital allocation, risk, and strategy. 4 LLM turns → synthesized consensus." />
             <FeatureCard icon={<TrendingUp className="w-6 h-6 text-green-400" />} title="Revenue-Backed Lending" description="AI agents borrow against future earnings — invoice factoring for the agent economy. 50% of projected 30d revenue." />
             <FeatureCard icon={<Layers className="w-6 h-6 text-amber-400" />} title="Debt Restructuring" description="ML detects at-risk loans → LLM negotiates new terms (extend, reduce rate, forgiveness, tranches). Fully autonomous." />
-            <FeatureCard icon={<Globe className="w-6 h-6 text-teal-400" />} title="Cross-Chain Bridge" description="Compares Aave APY across Arbitrum/Ethereum/Polygon. Bridges USDt0 via LayerZero when remote yield is ≥1.5% better." />
             <FeatureCard icon={<Users className="w-6 h-6 text-yellow-400" />} title="Idle Capital Detection" description="Reads vault balance on-chain, detects idle capital, lowers score threshold, proactively extends up to 3 loans per cycle." />
             <FeatureCard icon={<Activity className="w-6 h-6 text-red-400" />} title="Penalty & Credit Freeze" description="Tiered penalty interest (+5/10/15%). Defaulters get credit frozen — score -200, available credit zeroed until resolved." />
           </div>
@@ -335,7 +333,6 @@ export default function Landing() {
               { label: 'WebSocket (real-time)', highlight: false },
               { label: 'SQLite WAL', highlight: false },
               { label: 'Aave V3', highlight: false },
-              { label: 'LayerZero (bridge)', highlight: false },
               { label: 'Groq LLaMA 3.3 70B', highlight: false },
               { label: 'MCP Server (15 tools)', highlight: false },
               { label: 'ethers.js v6', highlight: false },
