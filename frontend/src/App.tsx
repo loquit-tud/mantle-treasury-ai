@@ -17,17 +17,17 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="min-h-screen bg-[#07000f] text-white flex flex-col">
       {/* Header / Navbar */}
-      <header className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
+      <header className="border-b border-violet-900/30 bg-[#07000f]/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4">
            {/* Top Row: Logo & Wallet */}
            <div className="py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Shield className="w-7 h-7 text-green-400" />
+                <Shield className="w-7 h-7 text-violet-400" />
                 <div>
                   <h1 className="text-lg font-bold tracking-tight">
-                    Quorum <span className="text-green-400">AI</span>
+                    Quorum <span className="text-violet-400">AI</span>
                   </h1>
                   <p className="text-xs text-gray-500 hidden sm:block">
                     Autonomous DAO CFO &mdash; Mantle Network
@@ -41,13 +41,13 @@ export default function App() {
            </div>
 
            {/* Bottom Row: Navigation Links */}
-           <nav className="flex items-center gap-6 overflow-x-auto custom-scrollbar pb-2 pt-1 border-t border-gray-800/40">
+           <nav className="flex items-center gap-6 overflow-x-auto custom-scrollbar pb-2 pt-1 border-t border-violet-900/20">
               <NavLink 
                 to="/dashboard"
                 end
                 className={({ isActive }) => `
                   whitespace-nowrap text-sm font-medium transition-colors border-b-2 px-1 py-1
-                  ${isActive ? 'border-green-400 text-green-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
+                  ${isActive ? 'border-violet-400 text-violet-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
                 `}
               >
                  Dashboard
@@ -56,7 +56,7 @@ export default function App() {
                 to="/wallet"
                 className={({ isActive }) => `
                   whitespace-nowrap text-sm font-medium transition-colors border-b-2 px-1 py-1
-                  ${isActive ? 'border-green-400 text-green-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
+                  ${isActive ? 'border-violet-400 text-violet-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
                 `}
               >
                  My Wallet
@@ -65,7 +65,7 @@ export default function App() {
                 to="/analytics"
                 className={({ isActive }) => `
                   whitespace-nowrap text-sm font-medium transition-colors border-b-2 px-1 py-1
-                  ${isActive ? 'border-green-400 text-green-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
+                  ${isActive ? 'border-violet-400 text-violet-400' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'}
                 `}
               >
                  Analytics

@@ -396,7 +396,7 @@ export default function WalletPage() {
 
   // Determine Credit Tier & Color
   const getCreditTier = (score: number) => {
-    if (score >= 800) return { label: 'Excellent', color: 'text-green-400', stroke: '#4ade80' };
+    if (score >= 800) return { label: 'Excellent', color: 'text-violet-400', stroke: '#8b5cf6' };
     if (score >= 700) return { label: 'Good', color: 'text-blue-400', stroke: '#60a5fa' };
     if (score >= 600) return { label: 'Fair', color: 'text-yellow-400', stroke: '#facc15' };
     return { label: 'Poor', color: 'text-red-400', stroke: '#f87171' };
@@ -522,7 +522,7 @@ export default function WalletPage() {
             {isConnected && (
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
                   <div className="flex items-center gap-2 mb-4">
-                     <Upload className="w-4 h-4 text-green-400" />
+                     <Upload className="w-4 h-4 text-violet-400" />
                      <h3 className="text-sm font-semibold text-white">Deposit to Treasury</h3>
                   </div>
                   <p className="text-xs text-gray-400 mb-4">Provide liquidity to the multi-sig vault. Approvals may be required.</p>
@@ -534,14 +534,14 @@ export default function WalletPage() {
                          value={depositAmount}
                          onChange={(e) => setDepositAmount(e.target.value)}
                          placeholder="Amount in USDt"
-                         className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/50 transition-all font-mono"
+                         className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all font-mono"
                        />
                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 uppercase tracking-wider">USDt</span>
                      </div>
                      <button
                         onClick={handleDeposit}
                         disabled={isDepositing || !depositAmount}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-gray-950 hover:bg-green-400 transition-all shadow-[0_0_20px_-5px_var(--color-green-500)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white hover:bg-violet-500 transition-all shadow-[0_0_20px_-5px_rgba(124,58,237,0.5)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
                      >
                        {isDepositing ? (
                          <><RefreshCw className="w-4 h-4 animate-spin" /> Depositing...</>
@@ -551,11 +551,11 @@ export default function WalletPage() {
                      </button>
                   </div>
                   {txHash && (
-                    <div className="mt-4 p-3 rounded-lg bg-green-950/30 border border-green-900/50 flex items-start gap-2">
-                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                    <div className="mt-4 p-3 rounded-lg bg-violet-950/30 border border-violet-900/50 flex items-start gap-2">
+                       <CheckCircle2 className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
                        <div className="overflow-hidden">
-                          <p className="text-xs text-green-400 font-medium mb-0.5">Deposit Successful</p>
-                          <p className="text-[10px] text-green-500/70 truncate font-mono">{txHash}</p>
+                          <p className="text-xs text-violet-400 font-medium mb-0.5">Deposit Successful</p>
+                          <p className="text-[10px] text-violet-500/70 truncate font-mono">{txHash}</p>
                        </div>
                     </div>
                   )}
@@ -653,7 +653,7 @@ export default function WalletPage() {
                          {/* ML Risk Assessment Badge */}
                          {mlPrediction && (
                            <div className={`rounded-xl p-4 border ${
-                             mlPrediction.riskBucket === 'low' ? 'bg-green-950/20 border-green-900/40' :
+                             mlPrediction.riskBucket === 'low' ? 'bg-violet-950/20 border-violet-900/40' :
                              mlPrediction.riskBucket === 'medium' ? 'bg-yellow-950/20 border-yellow-900/40' :
                              mlPrediction.riskBucket === 'high' ? 'bg-orange-950/20 border-orange-900/40' :
                              'bg-red-950/20 border-red-900/40'
@@ -662,7 +662,7 @@ export default function WalletPage() {
                                <div className="flex items-center gap-2">
                                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">ML Risk</span>
                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                   mlPrediction.riskBucket === 'low' ? 'text-green-400 bg-green-500/10' :
+                                   mlPrediction.riskBucket === 'low' ? 'text-violet-400 bg-violet-500/10' :
                                    mlPrediction.riskBucket === 'medium' ? 'text-yellow-400 bg-yellow-500/10' :
                                    mlPrediction.riskBucket === 'high' ? 'text-orange-400 bg-orange-500/10' :
                                    'text-red-400 bg-red-500/10'
@@ -725,7 +725,7 @@ export default function WalletPage() {
                               </div>
                               <p className="mt-2 text-[10px] text-gray-500">100% USDt collateral is locked on-chain before the loan is issued. Returned on full repayment.</p>
                               {borrowResult && (
-                                <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-green-950/30 border border-green-900/50 text-green-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
+                                <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-violet-950/30 border border-violet-900/50 text-violet-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                    {borrowResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                                    <span>{borrowResult.message}</span>
                                 </div>
@@ -827,7 +827,7 @@ export default function WalletPage() {
                                      <span className="text-[10px] text-gray-400 font-mono">{formatAmount(loan.repaid || '0')} / {formatAmount(loan.principal)} USDt ({repayPercent}%)</span>
                                    </div>
                                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                     <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(repayPercent, 100)}%` }} />
+                                     <div className="h-full bg-violet-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(repayPercent, 100)}%` }} />
                                    </div>
                                  </div>
                                )}
@@ -844,14 +844,14 @@ export default function WalletPage() {
                                               value={repayAmount}
                                               onChange={(e) => setRepayAmount(e.target.value)}
                                               placeholder={`Max ${formatAmount(loan.totalDue)}`}
-                                              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 font-mono"
+                                              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-violet-500/50 font-mono"
                                            />
                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-500 uppercase">USDt</span>
                                         </div>
                                         <button
                                            onClick={() => handleRepay(loan.id)}
                                            disabled={isRepaying || !repayAmount || Number(repayAmount) <= 0}
-                                           className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-2 text-sm font-bold text-gray-950 hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                           className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                            {isRepaying ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowUpCircle className="w-3.5 h-3.5" />}
                                            {isRepaying ? 'Paying...' : 'Pay'}
@@ -878,13 +878,13 @@ export default function WalletPage() {
                                             } catch { setRepayAmount(formatUnits(BigInt(loan.totalDue || loan.principal), 6)); }
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-400 hover:text-green-300 transition-colors"
+                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-400 hover:text-violet-300 transition-colors"
                                      >
                                         <ArrowUpCircle className="w-4 h-4" /> Repay This Loan
                                      </button>
                                   )}
                                   {repayResult && repayLoanId === loan.id && (
-                                     <div className={`mt-2 p-2.5 rounded-lg flex items-start gap-2 text-xs ${repayResult.success ? 'bg-green-950/30 border border-green-900/50 text-green-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
+                                     <div className={`mt-2 p-2.5 rounded-lg flex items-start gap-2 text-xs ${repayResult.success ? 'bg-violet-950/30 border border-violet-900/50 text-violet-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                         {repayResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                                         <span>{repayResult.message}</span>
                                      </div>
@@ -919,12 +919,12 @@ export default function WalletPage() {
                            {loanHistory.filter(l => !l.active).map(loan => {
                              const wasDefaulted = BigInt(loan.repaid || '0') < BigInt(loan.principal);
                              return (
-                               <div key={loan.id} className={`bg-gray-950/50 border rounded-xl p-4 ${wasDefaulted ? 'border-red-900/40' : 'border-green-900/40'}`}>
+                               <div key={loan.id} className={`bg-gray-950/50 border rounded-xl p-4 ${wasDefaulted ? 'border-red-900/40' : 'border-violet-900/40'}`}>
                                  <div className="flex items-center justify-between">
                                    <div className="flex items-center gap-2">
                                      <span className="text-sm font-bold text-white">{formatAmount(loan.principal)} USDt</span>
                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                       wasDefaulted ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                       wasDefaulted ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
                                      }`}>
                                        {wasDefaulted ? 'Defaulted' : 'Repaid'}
                                      </span>

@@ -11,8 +11,8 @@ interface ChatMessage {
 }
 
 const SPEAKER_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; avatar: string }> = {
-  treasury: { label: 'Treasury', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', avatar: '💰' },
-  credit:   { label: 'Credit',   color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', avatar: '🏦' },
+  treasury: { label: 'Treasury', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', avatar: '💰' },
+  credit:   { label: 'Credit',   color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/30', avatar: '🏦' },
   risk:     { label: 'Risk',     color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', avatar: '🛡️' },
   consensus:{ label: 'Consensus',color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30', avatar: '⚖️' },
 };
@@ -128,8 +128,8 @@ export function AgentChat({ lastMessage, initialDialogues }: { lastMessage: unkn
               Three AI advisors will debate capital allocation & risk once the countdown reaches 0:00
             </p>
             <div className="flex items-center gap-3 mt-4">
-              <span className="flex items-center gap-1.5 text-[10px] text-cyan-500/80"><span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />Treasury</span>
-              <span className="flex items-center gap-1.5 text-[10px] text-emerald-500/80"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Credit</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-violet-500/80"><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Treasury</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-fuchsia-500/80"><span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-pulse" />Credit</span>
               <span className="flex items-center gap-1.5 text-[10px] text-amber-500/80"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Risk</span>
             </div>
           </div>

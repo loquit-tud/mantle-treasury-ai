@@ -263,7 +263,7 @@ export default function Dashboard() {
     { name: 'Poor (<600)', count: 0, color: '#ef4444' },     // red-500
     { name: 'Fair (600-699)', count: 0, color: '#eab308' },  // yellow-500
     { name: 'Good (700-799)', count: 0, color: '#3b82f6' },  // blue-500
-    { name: 'Excellent (800+)', count: 0, color: '#22c55e' } // green-500
+    { name: 'Excellent (800+)', count: 0, color: '#8b5cf6' } // violet-500
   ];
   
   if (data?.creditProfiles) {
@@ -283,13 +283,13 @@ export default function Dashboard() {
 
       {/* ── First-Visit Onboarding Banner ── */}
       {showOnboarding && (
-        <div className="relative bg-gradient-to-r from-green-900/20 to-cyan-900/20 border border-green-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center shrink-0 text-xl">👋</div>
+        <div className="relative bg-gradient-to-r from-violet-900/20 to-fuchsia-900/20 border border-violet-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center shrink-0 text-xl">👋</div>
           <div className="flex-1">
             <p className="text-sm font-bold text-white mb-0.5">Welcome to Mission Control</p>
             <p className="text-xs text-gray-400">
-              You're watching <strong className="text-green-400">3 live AI agents</strong> manage a DAO treasury on Mantle.
-              The <strong className="text-cyan-400">Board Meeting</strong> countdown shows when they'll debate next.
+              You're watching <strong className="text-violet-400">3 live AI agents</strong> manage a DAO treasury on Mantle.
+              The <strong className="text-fuchsia-400">Board Meeting</strong> countdown shows when they'll debate next.
               <strong className="text-purple-400"> KPI cards</strong> show real on-chain data. Hover any <span className="inline-flex items-center gap-0.5 text-gray-300 font-mono text-[10px] bg-gray-800 border border-gray-700 rounded px-1">?</span> for explanations.
             </p>
           </div>
@@ -325,8 +325,8 @@ export default function Dashboard() {
           {String(meetingSecsLeft % 60).padStart(2, '0')}
         </div>
         <div className="hidden sm:flex flex-col items-end gap-1 text-[10px] text-gray-600">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500/60" />Treasury Agent</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500/60" />Credit Agent</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500/60" />Treasury Agent</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fuchsia-500/60" />Credit Agent</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500/60" />Risk Agent</span>
         </div>
       </div>
@@ -334,7 +334,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-green-400 transition-colors">
+              <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-violet-400 transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Home
               </Link>
               <h2 className="text-2xl font-bold text-white tracking-tight">Mission Control</h2>
@@ -356,7 +356,7 @@ export default function Dashboard() {
                disabled={syncing}
                className="inline-flex items-center gap-2 rounded-lg bg-gray-900 border border-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 hover:border-gray-700 transition-colors disabled:opacity-50"
              >
-               <RefreshCw className={`w-4 h-4 text-green-400 ${syncing ? 'animate-spin' : ''}`} />
+               <RefreshCw className={`w-4 h-4 text-violet-400 ${syncing ? 'animate-spin' : ''}`} />
                {syncing ? 'Syncing...' : 'Sync Treasury'}
              </button>
              {confirmingPause ? (
@@ -404,7 +404,7 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          icon={<DollarSign className="w-5 h-5 text-cyan-400" />}
+          icon={<DollarSign className="w-5 h-5 text-violet-400" />}
           label="Treasury Balance"
           tooltip="Total USDt held in the TreasuryVault smart contract on Mantle. Real on-chain capital managed by AI agents."
           value={`$${(Number(treasury.balance) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDt`}
@@ -447,19 +447,19 @@ export default function Dashboard() {
         {/* Health Score */}
         <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-5 h-5" style={{ color: healthData ? (healthData.score >= 80 ? '#22c55e' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }} />
+            <Shield className="w-5 h-5" style={{ color: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }} />
             <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Treasury Health Score</span>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#22c55e' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }}>
+              <span className="text-5xl font-black tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }}>
                 {healthData?.score ?? '—'}
               </span>
               <span className="text-lg text-gray-500 font-medium">/100</span>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
               !healthData ? 'bg-gray-700 text-gray-400'
-              : healthData.score >= 80 ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+              : healthData.score >= 80 ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
               : healthData.score >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
               : healthData.score >= 40 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
               : 'bg-red-500/20 text-red-400 border border-red-500/30'
@@ -473,7 +473,7 @@ export default function Dashboard() {
                   className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{
                     width: `${healthData?.score ?? 0}%`,
-                    backgroundColor: healthData ? (healthData.score >= 80 ? '#22c55e' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280'
+                    backgroundColor: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280'
                   }}
                 />
               </div>
@@ -491,7 +491,7 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Panel title="Treasury Balance History (Last 24 updates)" icon={<Activity className="w-4 h-4 text-green-400" />}>
+        <Panel title="Treasury Balance History (Last 24 updates)" icon={<Activity className="w-4 h-4 text-violet-400" />}>
           <div className="h-[250px] w-full pt-4">
             {balanceHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -554,7 +554,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Active Loans */}
-          <Panel title="Active Loans" icon={<Users className="w-4 h-4 text-emerald-400" />}>
+          <Panel title="Active Loans" icon={<Users className="w-4 h-4 text-fuchsia-400" />}>
             {(!data?.activeLoans || data.activeLoans.length === 0) ? (
               <EmptyState text="No active loans" />
             ) : (
@@ -580,7 +580,7 @@ export default function Dashboard() {
                           <div className="flex items-center gap-2">
                             {loan.borrower.slice(0, 6)}...{loan.borrower.slice(-4)}
                             {loan.loanType === 'revenue_backed' && (
-                              <span className="text-[9px] bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded-full">REV</span>
+                              <span className="text-[9px] bg-violet-900/30 text-violet-400 px-1.5 py-0.5 rounded-full">REV</span>
                             )}
                           </div>
                         </td>
@@ -609,7 +609,7 @@ export default function Dashboard() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-[10px] bg-green-900/30 text-green-400 px-2 py-1 rounded-full font-semibold">Current</span>
+                            <span className="text-[10px] bg-violet-900/30 text-violet-400 px-2 py-1 rounded-full font-semibold">Current</span>
                           )}
                         </td>
                       </tr>
@@ -622,7 +622,7 @@ export default function Dashboard() {
           </Panel>
 
           {/* Pending Transactions */}
-          <Panel title="Pending Transactions (Multi-sig)" icon={<Wallet className="w-4 h-4 text-cyan-400" />}>
+          <Panel title="Pending Transactions (Multi-sig)" icon={<Wallet className="w-4 h-4 text-violet-400" />}>
             {treasury.pendingTransactions.length === 0 ? (
               <EmptyState text="No pending transactions" />
             ) : (
@@ -642,7 +642,7 @@ export default function Dashboard() {
                         </p>
                         <p className="text-xs text-gray-500">
                           {tx.signatures} sig(s) &middot;{' '}
-                          <span className={tx.executed ? "text-green-500" : "text-yellow-500"}>
+                          <span className={tx.executed ? "text-violet-400" : "text-yellow-500"}>
                             {tx.executed ? 'Executed' : 'Pending'}
                           </span>
                         </p>
@@ -700,7 +700,7 @@ export default function Dashboard() {
 
       {/* ── Innovation: Revenue-Backed Lending + Debt Restructuring ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Panel title="Revenue-Backed Lending" icon={<TrendingUp className="w-4 h-4 text-green-400" />}>
+        <Panel title="Revenue-Backed Lending" icon={<TrendingUp className="w-4 h-4 text-violet-400" />}>
           {!revenueSummary || (revenueSummary as any).totalRevenue === '0' ? (
             <div className="text-center space-y-3">
               <EmptyState text="No revenue events tracked yet" />
@@ -711,7 +711,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
                   <p className="text-xs text-gray-500 uppercase">Total Revenue</p>
-                  <p className="text-lg font-bold text-green-400">{formatAmount((revenueSummary as any).totalRevenue)} USDt</p>
+                  <p className="text-lg font-bold text-violet-400">{formatAmount((revenueSummary as any).totalRevenue)} USDt</p>
                 </div>
                 <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
                   <p className="text-xs text-gray-500 uppercase">Tracked Agents</p>
@@ -722,17 +722,17 @@ export default function Dashboard() {
                 <div key={a.agentAddress} className="bg-gray-900/30 rounded-lg p-3 border border-gray-700/50 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-mono text-gray-400">{a.agentAddress.slice(0, 8)}...{a.agentAddress.slice(-6)}</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${a.revenueVelocity >= 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${a.revenueVelocity >= 0 ? 'bg-violet-900/30 text-violet-400' : 'bg-red-900/30 text-red-400'}`}>
                       {a.revenueVelocity >= 0 ? '↑' : '↓'} {(a.revenueVelocity * 100).toFixed(0)}% velocity
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div><p className="text-[10px] text-gray-500">24h</p><p className="text-xs text-white font-semibold">{formatAmount(a.revenue24h)}</p></div>
                     <div><p className="text-[10px] text-gray-500">7d</p><p className="text-xs text-white font-semibold">{formatAmount(a.revenue7d)}</p></div>
-                    <div><p className="text-[10px] text-gray-500">Borrow Cap</p><p className="text-xs text-green-400 font-semibold">{formatAmount(a.borrowCapacity)}</p></div>
+                    <div><p className="text-[10px] text-gray-500">Borrow Cap</p><p className="text-xs text-violet-400 font-semibold">{formatAmount(a.borrowCapacity)}</p></div>
                   </div>
                   <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${Math.min(a.consistency * 100, 100)}%` }} />
+                    <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${Math.min(a.consistency * 100, 100)}%` }} />
                   </div>
                   <p className="text-[10px] text-gray-500 text-right">Consistency: {(a.consistency * 100).toFixed(0)}%</p>
                 </div>
@@ -760,9 +760,9 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-500">Proposed</p>
                   <p className="text-lg font-bold text-amber-400">{(restructuringSummary as any).pending}</p>
                 </div>
-                <div className="bg-green-900/20 rounded-lg p-3 border border-green-700/30 text-center">
+                <div className="bg-violet-900/20 rounded-lg p-3 border border-violet-700/30 text-center">
                   <p className="text-xs text-gray-500">Accepted</p>
-                  <p className="text-lg font-bold text-green-400">{(restructuringSummary as any).accepted}</p>
+                  <p className="text-lg font-bold text-violet-400">{(restructuringSummary as any).accepted}</p>
                 </div>
                 <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700 text-center">
                   <p className="text-xs text-gray-500">Forgiven</p>
@@ -780,7 +780,7 @@ export default function Dashboard() {
       {isLoading && !data && (
         <div className="fixed inset-0 bg-gray-950/80 flex items-center justify-center z-50">
           <div className="flex flex-col items-center gap-3">
-            <RefreshCw className="w-8 h-8 text-green-400 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
             <p className="text-sm text-gray-400">
               Connecting to agents...
             </p>
