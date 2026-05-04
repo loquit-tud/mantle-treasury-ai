@@ -1,8 +1,48 @@
 # Quorum
 
-**Autonomous DAO CFO system built on Mantle Network.**
+**AI-native RWA lending & treasury application on Mantle Network.**
 
-Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — without human intervention. They communicate through a pub/sub EventBus and hold structured debates every 45 seconds (Board Meetings) to reach consensus on capital allocation.
+> **One-line pitch:** Quorum is an autonomous treasury system that tokenizes short-term credit instruments (revenue-backed loans, revolving credit lines) on Mantle — three AI agents manage the full lending lifecycle from origination to restructuring without human intervention.
+
+Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (Board Meetings every 45 seconds) and a pub/sub EventBus for consensus on capital allocation.
+
+## Hackathon Submission
+
+| Field | Value |
+|-------|-------|
+| **Track** | AI & RWA Track — Path B (AI Driven Application) |
+| **Asset Category** | Tokenized short-term credit instruments (revenue-backed loans, revolving credit facilities) |
+| **Target Users** | DAOs, on-chain operator teams, and protocol treasuries seeking autonomous credit & yield management |
+| **Mantle Deployment** | TreasuryVault [`0x51A80e33E227029bB201C4891B62Eb8530F223c3`](https://mantlescan.xyz/address/0x51A80e33E227029bB201C4891B62Eb8530F223c3) · CreditLine [`0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
+| **Live Demo** | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
+| **Backend (Live)** | [https://mantle-treasury-ai-production.up.railway.app/health](https://mantle-treasury-ai-production.up.railway.app/health) |
+
+### Track Submission Answers
+
+**What type of real-world asset are you bringing on-chain?**
+Tokenized credit facilities — short-term, revenue-backed lending instruments. These mirror real-world financial primitives: revolving credit lines (like corporate LOCs), invoice factoring (borrowing against projected future earnings), and money-market lending (tiered APR by creditworthiness). Each loan is a structured on-chain debt instrument with defined terms, interest accrual, and default provisions.
+
+**How does AI play a role?**
+Three autonomous LLM-powered agents (Groq LLaMA 3.3 70B) manage the full credit lifecycle: (1) Treasury Agent optimizes idle capital deployment into Aave V3 yield, (2) Credit Agent scores borrowers using on-chain data + ML default prediction, approves/rejects loans, and (3) Risk Agent enforces exposure limits and triggers autonomous debt restructuring. Every 45 seconds, agents hold a Board Meeting (structured LLM debate → consensus → on-chain execution).
+
+**How is it realized on Mantle?**
+Both smart contracts (TreasuryVault + CreditLine) are deployed and verified on Mantle Mainnet. All agent decisions result in on-chain transactions — yield deposits via Aurelius Finance (Aave V3 fork), loan disbursements, repayment tracking, and credit score updates. Mantle's low gas fees enable the high-frequency autonomous operation cycle (every 45s) that would be cost-prohibitive on L1.
+
+### RWA Context: Why This Qualifies
+
+Traditional finance equivalents of what Quorum does on-chain:
+
+| On-Chain Feature | Real-World Equivalent |
+|-----------------|----------------------|
+| CreditLine loans (30-day, tiered APR) | Commercial paper / revolving credit facilities |
+| Revenue-backed lending | Invoice factoring / accounts receivable financing |
+| ML credit scoring (7 features) | Credit bureau scoring (FICO-equivalent for DAOs) |
+| Tiered penalty interest | Late payment fees in commercial lending |
+| Autonomous debt restructuring | Workout / loan modification (normally done by bank credit officers) |
+| TreasuryVault yield allocation | Money market fund management |
+| ZK credit proofs | Privacy-preserving credit checks (equivalent to "soft pull" in TradFi) |
+
+The key insight: **DAOs need the same financial services as corporations** (credit, yield, risk management) but lack the personnel to run them. Quorum replaces a team of treasury analysts, credit officers, and risk managers with autonomous AI agents operating 24/7 on-chain.
 
 ## What It Does
 
@@ -294,6 +334,18 @@ Primary (Groq/LLaMA 3.3 70B) ──[429/5xx]──► Fallback (configurable)
 
 Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBACK_MODEL` (fallback).
 
+## Deployment Award Checklist
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Smart contract on Mantle Mainnet | Done | [TreasuryVault](https://mantlescan.xyz/address/0x51A80e33E227029bB201C4891B62Eb8530F223c3) · [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
+| Contract verified on Explorer | Done | Both verified on Mantlescan |
+| AI-powered function callable on-chain | Done | Board Meeting consensus → on-chain loan approvals, yield deposits, credit score updates (every 45s cycle) |
+| Frontend publicly accessible | Done | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
+| Deployment address in submission | Done | See table above |
+| Demo video (≥ 2 min) | Pending | — |
+| Open-source repo with README | Done | This repo |
+
 ## Design Decisions
 
 **Why three agents?** Separation of concerns: Treasury optimizes yield without credit risk pressure, Credit focuses on scoring without yield pressure, Risk monitors both. Board Meetings create productive tension and produce better allocation than single-agent designs.
@@ -301,6 +353,8 @@ Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBAC
 **Why on-chain credit scoring?** The formula uses only publicly verifiable on-chain data — no off-chain oracles or trusted third parties.
 
 **Why EventBus?** Agents communicate via pub/sub rather than direct calls. This decouples them, exposes all activity to WebSocket clients, and makes adding new subscribers trivial.
+
+**Why Mantle?** Mantle's low gas fees (~$0.001/tx) enable the high-frequency autonomous operation cycle (every 45s) that would be cost-prohibitive on L1. The 3-agent architecture generates 10-20+ transactions per hour — Mantle makes this economically viable.
 
 ## License
 

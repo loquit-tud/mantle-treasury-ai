@@ -142,7 +142,7 @@ export default function Landing() {
               AI & RWA Track · Path B (Application)
             </span>
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Asset Category: USD-denominated treasury lending
+              Asset Category: Tokenized credit instruments & revenue-backed lending
             </span>
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
               Target Users: DAOs and on-chain operator teams
@@ -150,7 +150,7 @@ export default function Landing() {
           </div>
 
           <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            <span className="text-gray-500">One-line pitch:</span> Quorum is an AI-native treasury application on Mantle that makes USD-denominated, revenue-backed lending and yield allocation safer and more accessible for on-chain teams.
+            <span className="text-gray-500">One-line pitch:</span> Quorum tokenizes short-term credit instruments (revolving credit lines, revenue-backed loans) on Mantle — three AI agents manage origination, yield, and restructuring autonomously.
           </p>
 
           {/* Live stats bar */}
@@ -302,8 +302,8 @@ export default function Landing() {
             </div>
             <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Real Asset Framing</p>
-              <p className="text-sm text-white font-semibold">USD-denominated cashflow lending</p>
-              <p className="text-sm text-gray-400 mt-2">Revenue-backed loans and treasury allocation emulate real-world credit and fixed-income workflows.</p>
+              <p className="text-sm text-white font-semibold">Tokenized credit instruments & revenue-backed receivables</p>
+              <p className="text-sm text-gray-400 mt-2">On-chain revolving credit lines, invoice factoring (revenue-backed loans), and tiered fixed-income products — real-world financial primitives brought on-chain via AI.</p>
             </div>
             <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Mantle Integration</p>
@@ -312,10 +312,52 @@ export default function Landing() {
             </div>
             <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Compliance Awareness</p>
-              <p className="text-sm text-white font-semibold">Risk-first credit policy + auditable decisions</p>
-              <p className="text-sm text-gray-400 mt-2">Risk Agent oversight, ML default screening, and immutable on-chain actions provide traceability for policy review.</p>
+              <p className="text-sm text-white font-semibold">KYC-ready scoring + auditable credit decisions</p>
+              <p className="text-sm text-gray-400 mt-2">On-chain credit scoring (transparent formula), ZK proofs for privacy-preserving credit checks, ML default screening, and immutable decision logs for regulatory audit trails.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* RWA Real-World Equivalents */}
+      <section className="bg-gray-950 py-14 border-t border-gray-800">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2 block">Why This Is RWA</span>
+            <h3 className="text-3xl font-bold text-white mb-3">Real-World Finance, On-Chain</h3>
+            <p className="text-gray-400 max-w-2xl mx-auto">Every Quorum feature maps to a recognized traditional finance instrument — now autonomous and permissionless.</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-gray-800">
+                  <th className="text-left py-3 px-4 text-gray-400 font-semibold">On-Chain Feature</th>
+                  <th className="text-left py-3 px-4 text-gray-400 font-semibold">TradFi Equivalent</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
+                {[
+                  ['CreditLine loans (30-day, tiered APR)', 'Commercial paper / revolving credit facilities'],
+                  ['Revenue-backed lending', 'Invoice factoring / accounts receivable financing'],
+                  ['ML credit scoring (7 on-chain features)', 'Credit bureau scoring (FICO-equivalent for DAOs)'],
+                  ['Tiered penalty interest', 'Late payment fees in commercial lending'],
+                  ['Autonomous debt restructuring', 'Loan workouts (normally done by bank credit officers)'],
+                  ['TreasuryVault yield allocation', 'Money market fund management'],
+                  ['ZK credit proofs', 'Privacy-preserving credit checks ("soft pull")'],
+                ].map(([onchain, tradfi], i) => (
+                  <tr key={i} className="border-b border-gray-800/50 hover:bg-gray-900/50">
+                    <td className="py-3 px-4 font-medium text-white">{onchain}</td>
+                    <td className="py-3 px-4 text-amber-400/80">{tradfi}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-center text-sm text-gray-500 mt-6 max-w-2xl mx-auto">
+            DAOs need the same financial services as corporations — credit, yield, risk management — but lack the personnel. Quorum replaces treasury analysts, credit officers, and risk managers with autonomous AI agents operating 24/7 on-chain.
+          </p>
         </div>
       </section>
 
