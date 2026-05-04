@@ -985,34 +985,27 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
       score -= 20;
     }
 
-    // Simulated market conditions for realistic demo variety
-    const cycleMinute = Math.floor(Date.now() / 60000) % 10;
-    if (cycleMinute < 3) {
-      // Simulated gas spike
-      const gasPenalty = 5 + Math.floor(Math.random() * 8);
+    // Real gas price check from RPC
+    try {
+      const feeData = await this.provider.getFeeData();
+      const gasGwei = Number(feeData.gasPrice || 0n) / 1e9;
+      if (gasGwei > 0.5) {
+        const gasPenalty = Math.min(Math.floor(gasGwei * 4), 20);
+        factors.push({
+          name: 'elevated_gas',
+          impact: -gasPenalty,
+          description: `Network gas at ${gasGwei.toFixed(2)} gwei — elevated execution cost`,
+        });
+        score -= gasPenalty;
+      }
+    } catch { /* gas read failed — skip */ }
+
+    // Yield position health: reward if positions are active and earning
+    if (this.yieldPositions.length > 0) {
       factors.push({
-        name: 'elevated_gas',
-        impact: -gasPenalty,
-        description: `Network gas fees elevated — execution cost +${gasPenalty}% above baseline`,
-      });
-      score -= gasPenalty;
-    }
-    if (cycleMinute >= 5 && cycleMinute < 7) {
-      // Simulated stablecoin de-peg risk
-      const depegPenalty = 8 + Math.floor(Math.random() * 5);
-      factors.push({
-        name: 'stablecoin_volatility',
-        impact: -depegPenalty,
-        description: `USDt/USD peg deviation detected (0.${98 + Math.floor(Math.random() * 2)}¢) — monitoring closely`,
-      });
-      score -= depegPenalty;
-    }
-    if (cycleMinute >= 7) {
-      // Concentration reward — healthy diversification
-      factors.push({
-        name: 'strong_reserves',
+        name: 'yield_active',
         impact: 5,
-        description: 'Treasury reserves well above safety threshold — strong position',
+        description: `${this.yieldPositions.length} active yield position(s) generating returns`,
       });
       score = Math.min(score + 5, 100);
     }
