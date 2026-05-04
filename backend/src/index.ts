@@ -380,7 +380,7 @@ app.get('/api/treasury/history', async (_req, res) => {
 });
 
 // Sync treasury state
-app.post('/api/treasury/sync', requireApiKey, async (_req, res) => {
+app.post('/api/treasury/sync', async (_req, res) => {
   try {
     const state = await treasuryAgent?.syncState();
     res.json({ success: true, data: state });
@@ -411,7 +411,7 @@ app.get('/api/credit/:address', async (req, res) => {
 });
 
 // Evaluate credit
-app.post('/api/credit/:address/evaluate', requireApiKey, async (req, res) => {
+app.post('/api/credit/:address/evaluate', async (req, res) => {
   try {
     const { address } = req.params;
     if (!ethers.isAddress(address)) {
@@ -640,7 +640,7 @@ app.post('/api/emergency/unpause', requireApiKey, async (_req, res) => {
 // ==================== Loan Lifecycle Routes ====================
 
 // Borrow USDt
-app.post('/api/credit/:address/borrow', requireApiKey, async (req, res) => {
+app.post('/api/credit/:address/borrow', async (req, res) => {
   try {
     const { address } = req.params;
     if (!ethers.isAddress(address)) {
@@ -664,7 +664,7 @@ app.post('/api/credit/:address/borrow', requireApiKey, async (req, res) => {
 });
 
 // Repay a loan
-app.post('/api/credit/:address/repay', requireApiKey, async (req, res) => {
+app.post('/api/credit/:address/repay', async (req, res) => {
   try {
     const { address } = req.params;
     if (!ethers.isAddress(address)) {
