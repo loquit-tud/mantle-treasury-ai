@@ -54,6 +54,12 @@
   animation: slide-in 0.3s ease-out;
 }
 
+/* Display font (Syne) for headings */
+.font-display {
+  font-family: 'Syne', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);

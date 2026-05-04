@@ -14,6 +14,11 @@ import {
   MessageSquare,
   Layers,
   ArrowRightLeft,
+  Banknote,
+  Bot,
+  Vote,
+  Link2,
+  Lightbulb,
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 
@@ -90,7 +95,7 @@ export default function Landing() {
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-green-400" />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
+              <h1 className="font-display text-xl font-bold tracking-tight">
                 Quorum <span className="text-green-400">AI</span>
               </h1>
             </div>
@@ -126,10 +131,10 @@ export default function Landing() {
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
             Live on Mantle Mainnet
           </div>
-          <h2 className="animate-fade-in-up animate-delay-100 text-5xl sm:text-7xl font-extrabold tracking-tight leading-tight">
-            Quorum <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-600">
-              Autonomous CFO for DAOs
+          <h2 className="font-display animate-fade-in-up animate-delay-100 text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.1]">
+            The Autonomous CFO{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">
+              for every DAO
             </span>
           </h2>
           
@@ -137,21 +142,7 @@ export default function Landing() {
             3 AI agents that <strong className="text-white">hold, lend, and manage USDt on-chain</strong> without human intervention — powered by OpenClaw
           </p>
 
-          <div className="animate-fade-in-up animate-delay-300 flex flex-wrap items-center justify-center gap-3">
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              AI & RWA Track · Path B (Application)
-            </span>
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Asset Category: Tokenized credit instruments & revenue-backed lending
-            </span>
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Target Users: DAOs and on-chain operator teams
-            </span>
-          </div>
 
-          <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            <span className="text-gray-500">One-line pitch:</span> Quorum tokenizes short-term credit instruments (revolving credit lines, revenue-backed loans) on Mantle — three AI agents manage origination, yield, and restructuring autonomously.
-          </p>
 
           {/* Live stats bar */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
@@ -189,7 +180,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center gap-6 justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <span className="text-lg">💡</span>
+                <Lightbulb className="w-5 h-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-sm font-bold text-white">New to Web3? Simple version:</p>
@@ -215,7 +206,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
             <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 block">Step by Step</span>
-            <h3 className="text-3xl font-bold text-white mb-3">How Quorum Works</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">How Quorum Works</h3>
             <p className="text-gray-400 max-w-xl mx-auto">Four simple steps from deposit to autonomous yield &amp; lending.</p>
           </div>
 
@@ -223,7 +214,7 @@ export default function Landing() {
             {[
               {
                 step: '01',
-                icon: '🏦',
+                icon: <Banknote className="w-6 h-6 text-cyan-400" />,
                 title: 'Deposit USDt',
                 desc: 'Send USDt to the TreasuryVault smart contract on Mantle. Funds are secured by auditable Solidity code.',
                 styles: {
@@ -235,7 +226,7 @@ export default function Landing() {
               },
               {
                 step: '02',
-                icon: '🤖',
+                icon: <Bot className="w-6 h-6 text-emerald-400" />,
                 title: 'Agents Analyse',
                 desc: 'Treasury, Credit, and Risk agents read on-chain state every cycle and prepare proposals.',
                 styles: {
@@ -247,7 +238,7 @@ export default function Landing() {
               },
               {
                 step: '03',
-                icon: '🗳️',
+                icon: <Vote className="w-6 h-6 text-purple-400" />,
                 title: 'Board Meeting Vote',
                 desc: '3 LLM-powered agents debate via structured turns. Consensus reached in ≤4 turns using Groq LLaMA.',
                 styles: {
@@ -259,7 +250,7 @@ export default function Landing() {
               },
               {
                 step: '04',
-                icon: '⛓️',
+                icon: <Link2 className="w-6 h-6 text-amber-400" />,
                 title: 'Execute On-Chain',
                 desc: 'Winning decision executed directly on Mantle. Every action is recorded as an immutable on-chain event.',
                 styles: {
@@ -271,7 +262,7 @@ export default function Landing() {
               },
             ].map((s, i) => (
               <div key={i} className={`relative flex flex-col items-center text-center p-6 rounded-2xl bg-gray-900/60 border border-gray-800 transition-all duration-300 hover:-translate-y-1 group ${s.styles.card}`}>
-                <div className={`w-12 h-12 rounded-full border flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform ${s.styles.iconWrap}`}>
+                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${s.styles.iconWrap}`}>
                   {s.icon}
                 </div>
                 <div className={`absolute -top-3 -right-3 w-7 h-7 rounded-full border flex items-center justify-center ${s.styles.badgeWrap}`}>
@@ -290,7 +281,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-8">
             <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-2 block">Hackathon Alignment</span>
-            <h3 className="text-3xl font-bold text-white mb-3">AI & RWA Track Checklist</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">AI & RWA Track Checklist</h3>
             <p className="text-gray-400 max-w-2xl mx-auto">How Quorum maps to the track rubric: real asset context, Mantle deployment, and complete product delivery.</p>
           </div>
 
@@ -324,7 +315,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-8">
             <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2 block">Why This Is RWA</span>
-            <h3 className="text-3xl font-bold text-white mb-3">Real-World Finance, On-Chain</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">Real-World Finance, On-Chain</h3>
             <p className="text-gray-400 max-w-2xl mx-auto">Every Quorum feature maps to a recognized traditional finance instrument — now autonomous and permissionless.</p>
           </div>
 
@@ -365,7 +356,7 @@ export default function Landing() {
       <section className="bg-gray-950 py-20 border-t border-gray-900 relative">
         <div className="max-w-7xl mx-auto px-4 z-10 relative">
           <div className="text-center mb-14">
-            <h3 className="text-3xl font-bold text-white mb-3">3-Agent Architecture</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">3-Agent Architecture</h3>
             <p className="text-gray-400 max-w-2xl mx-auto">Three autonomous AI agents that debate, decide, and execute — all on-chain with real USDt.</p>
           </div>
 
@@ -400,7 +391,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-14">
             <span className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-2 block">Beyond Requirements</span>
-            <h3 className="text-3xl font-bold text-white mb-3">Innovation Features</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">Innovation Features</h3>
             <p className="text-gray-400 max-w-2xl mx-auto">Advanced autonomous finance capabilities — implemented and working.</p>
           </div>
 
@@ -422,7 +413,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 block">Verified On-Chain</span>
-            <h3 className="text-3xl font-bold text-white mb-3">Production Evidence</h3>
+            <h3 className="font-display text-3xl font-bold text-white mb-3">Production Evidence</h3>
             <p className="text-gray-400 max-w-xl mx-auto">Track submission artifacts: verified contracts, live backend, and open-source repository.</p>
           </div>
 
@@ -558,7 +549,7 @@ function AgentCard({ icon, title, subtitle, items, color }: { icon: React.ReactN
           {icon}
         </div>
         <div>
-          <h4 className="text-lg font-bold text-white">{title}</h4>
+          <h4 className="font-display text-lg font-bold text-white">{title}</h4>
           <p className="text-xs text-gray-500">{subtitle}</p>
         </div>
       </div>
@@ -580,7 +571,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
       <div className="w-11 h-11 rounded-lg bg-gray-950 border border-gray-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <h4 className="text-base font-semibold text-white mb-2">{title}</h4>
+      <h4 className="font-display text-base font-semibold text-white mb-2">{title}</h4>
       <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
     </div>
   );
