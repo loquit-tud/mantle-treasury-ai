@@ -140,13 +140,18 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [lastFetch]);
 
-  // Next Board Meeting countdown (300s cycle, resets on dialogue event)
-  const [lastDialogueAt, setLastDialogueAt] = useState<number>(Date.now());
+  // Next Board Meeting countdown — synced to server dialogue interval (300s)
+  const [lastDialogueAt, setLastDialogueAt] = useState<number>(0);
   const [meetingSecsLeft, setMeetingSecsLeft] = useState(300);
   useEffect(() => {
     const t = setInterval(() => {
+      if (lastDialogueAt === 0) {
+        setMeetingSecsLeft(300);
+        return;
+      }
       const elapsed = Math.floor((Date.now() - lastDialogueAt) / 1000);
-      setMeetingSecsLeft(Math.max(0, 300 - (elapsed % 300)));
+      const remaining = 300 - (elapsed % 300);
+      setMeetingSecsLeft(remaining);
     }, 1000);
     return () => clearInterval(t);
   }, [lastDialogueAt]);
@@ -182,9 +187,11 @@ export default function Dashboard() {
         credit: data.agentStatus?.credit || 'idle',
         risk: data.agentStatus?.risk || 'idle',
       });
-      // Seed dialogue rounds from REST
+      // Seed dialogue rounds from REST + sync board meeting countdown
       if (data.dialogueRounds?.length && !dialogueRounds?.length) {
         setDialogueRounds(data.dialogueRounds);
+        const lastRound = data.dialogueRounds[data.dialogueRounds.length - 1];
+        if (lastRound?.timestamp) setLastDialogueAt(lastRound.timestamp);
       }
       // Initialize balance history with current if empty
       if (balanceHistory.length === 0 && data.treasury) {
@@ -212,9 +219,11 @@ export default function Dashboard() {
         risk: msg.data.agentStatus?.risk || 'idle',
       });
 
-      // Seed dialogue rounds from WS initial payload
+      // Seed dialogue rounds from WS initial payload + sync countdown
       if (msg.data.dialogueRounds?.length) {
         setDialogueRounds(msg.data.dialogueRounds);
+        const lastRound = msg.data.dialogueRounds[msg.data.dialogueRounds.length - 1];
+        if (lastRound?.timestamp) setLastDialogueAt(lastRound.timestamp);
       }
       
       if (msg.data.treasury) {
