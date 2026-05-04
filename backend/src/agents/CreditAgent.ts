@@ -24,6 +24,7 @@ import { generateProof, verifyProof, getBestProvableTier } from '../services/ZKC
 import type { RevenueTracker } from '../services/RevenueTracker';
 import type { DebtRestructuring } from '../services/DebtRestructuring';
 import type { RiskAgent } from './RiskAgent';
+import { checkSanctions } from '../services/ComplianceCheck';
 
 // LLM Configuration
 const CREDIT_SYSTEM_PROMPT = `You are the Credit Agent for Quorum, an autonomous DAO CFO system.
@@ -306,6 +307,19 @@ export class CreditAgent {
     try {
       logger.info(`Evaluating credit for ${address}`);
 
+      // Compliance gate: reject sanctioned addresses before any evaluation
+      const compliance = checkSanctions(address);
+      if (compliance.sanctioned) {
+        logger.warn(`Credit evaluation blocked: sanctioned address ${address}`);
+        EventBus.emitEvent('credit:evaluation_blocked_sanctions', 'credit', {
+          action: 'evaluate_blocked',
+          reasoning: `Address ${address} is on OFAC SDN list — credit evaluation denied.`,
+          data: { address, source: compliance.source },
+          status: 'executed',
+        });
+        return { address, score: 0, limit: '0', rate: 0, borrowed: '0', available: '0', lastUpdated: Date.now(), exists: false };
+      }
+
       // Fetch on-chain history
       const history = await this.fetchCreditHistory(address);
 
@@ -584,6 +598,19 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
           action: 'borrow_rejected',
           reasoning: `Borrow rejected — borrower ${address} has frozen credit due to prior loan default. Must resolve outstanding defaults first.`,
           data: { address, amount: amount.toString(), reason: 'credit_frozen' },
+          status: 'executed',
+        });
+        return null;
+      }
+
+      // OFAC/Sanctions compliance check
+      const compliance = checkSanctions(addrLower);
+      if (compliance.sanctioned) {
+        logger.warn(`Borrow rejected: OFAC sanctioned address ${address}`);
+        EventBus.emitEvent('credit:borrow_rejected_sanctions', 'credit', {
+          action: 'borrow_rejected',
+          reasoning: `Borrow rejected — address ${address} is on the OFAC SDN sanctioned list. Compliance policy prohibits lending.`,
+          data: { address, amount: amount.toString(), reason: 'sanctions', source: compliance.source },
           status: 'executed',
         });
         return null;

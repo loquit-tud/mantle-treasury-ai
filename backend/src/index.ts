@@ -22,6 +22,7 @@ import { LLMClient } from './services/LLMClient';
 import { InterAgentLending } from './services/InterAgentLending';
 import { predictDefault } from './services/DefaultPredictor';
 import { generateProof, verifyProof, getBestProvableTier, type ZKCreditProof } from './services/ZKCreditProof';
+import { checkSanctions } from './services/ComplianceCheck';
 import { RevenueTracker } from './services/RevenueTracker';
 import { DebtRestructuring } from './services/DebtRestructuring';
 import { initWdk, getAccount, getWdkAddress, disposeWdk } from './services/wdk';
@@ -594,6 +595,17 @@ app.get('/api/yield/opportunities', async (_req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to fetch yield opportunities' });
   }
+});
+
+// Compliance/sanctions check
+app.get('/api/compliance/check/:address', (req, res) => {
+  const { address } = req.params;
+  if (!ethers.isAddress(address)) {
+    res.status(400).json({ success: false, error: 'Invalid address' });
+    return;
+  }
+  const result = checkSanctions(address);
+  res.json({ success: true, data: result });
 });
 
 // Risk metrics
