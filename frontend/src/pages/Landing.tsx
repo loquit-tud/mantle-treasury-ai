@@ -55,18 +55,28 @@ function useLiveStats() {
   return stats;
 }
 
-// On-chain proofs (real Arbiscan txs)
-const ON_CHAIN_PROOFS = [
-  { label: 'AGENT_ROLE grant (Vault)', tx: '0x26bb7311729c8e50a7ffad327932c76781d4d8dd631d25c631a51d4432a6eb02' },
-  { label: 'EXECUTOR_ROLE grant (Vault)', tx: '0x8ecf85df9f9a15f73a67b193052e044016d7da93305e27cb3d0fc4f2ed603ee3' },
-  { label: 'USDt approve → Aave V3', tx: '0x46f7966bd2055e22273e6d3870232a2e630612d57b8e629ea8225585fd9d4bdc' },
-  { label: 'USDt supply → Aave V3', tx: '0x2cccf89dfe2c17599dd1644e8e92c265d8218c9e3f5d730fe61a871b4c6d7152' },
-  { label: 'Cross-chain bridge (LayerZero)', tx: '0x55efb23ec8bfc027d75abcb44e12a25624e5306f0140c169c09930760fd69efb' },
+const EVIDENCE_LINKS = [
+  {
+    label: 'TreasuryVault contract (verified on Mantle)',
+    href: 'https://mantlescan.xyz/address/0x51A80e33E227029bB201C4891B62Eb8530F223c3',
+  },
+  {
+    label: 'CreditLine contract (verified on Mantle)',
+    href: 'https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c',
+  },
+  {
+    label: 'Live backend health endpoint (Railway)',
+    href: 'https://mantle-treasury-ai-production.up.railway.app/health',
+  },
+  {
+    label: 'Open-source repository',
+    href: 'https://github.com/loquit-tud/mantle-treasury-ai',
+  },
 ];
 
 const CONTRACTS = [
-  { label: 'TreasuryVault', address: '0x5503e9d53592B7D896E135804637C1710bDD5A64' },
-  { label: 'CreditLine', address: '0x236AB6D30F70D7aB6c272aCB3b186D925Bcae1a0' },
+  { label: 'TreasuryVault', address: '0x51A80e33E227029bB201C4891B62Eb8530F223c3' },
+  { label: 'CreditLine', address: '0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c' },
 ];
 
 export default function Landing() {
@@ -121,13 +131,29 @@ export default function Landing() {
             3 AI agents that <strong className="text-white">hold, lend, and manage USDt on-chain</strong> without human intervention — powered by OpenClaw
           </p>
 
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              AI & RWA Track · Path B (Application)
+            </span>
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Asset Category: USD-denominated treasury lending
+            </span>
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Target Users: DAOs and on-chain operator teams
+            </span>
+          </div>
+
+          <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <span className="text-gray-500">One-line pitch:</span> Quorum is an AI-native treasury application on Mantle that makes USD-denominated, revenue-backed lending and yield allocation safer and more accessible for on-chain teams.
+          </p>
+
           {/* Live stats bar */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <StatPill label="TVL" value={balanceUSDt !== null ? `$${balanceUSDt.toLocaleString()} USDt` : '...'} color="cyan" />
             <StatPill label="AI Agents" value="3" color="emerald" />
             <StatPill label="Contract Tests" value="31" color="blue" />
             <StatPill label="MCP Tools" value="15" color="purple" />
-            <StatPill label="On-Chain Proofs" value={String(ON_CHAIN_PROOFS.length)} color="green" />
+            <StatPill label="Proof Links" value={String(EVIDENCE_LINKS.length)} color="green" />
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -138,9 +164,52 @@ export default function Landing() {
               Enter Dashboard
               <ArrowRight className="w-5 h-5" />
             </Link>
+            <a
+              href="https://github.com/loquit-tud/mantle-treasury-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 border border-gray-700 px-6 py-4 text-sm font-semibold text-gray-200 hover:bg-gray-800 hover:border-gray-600 transition-colors"
+            >
+              Open-Source Repo
+              <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </main>
+
+      {/* Track Alignment Section */}
+      <section className="bg-gray-900/30 py-14 border-t border-gray-800">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-2 block">Hackathon Alignment</span>
+            <h3 className="text-3xl font-bold text-white mb-3">AI & RWA Track Checklist</h3>
+            <p className="text-gray-400 max-w-2xl mx-auto">How Quorum maps to the track rubric: real asset context, Mantle deployment, and complete product delivery.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Path Selection</p>
+              <p className="text-sm text-white font-semibold">Path B · AI Driven RWA Application</p>
+              <p className="text-sm text-gray-400 mt-2">End-user-facing treasury app where AI agents manage lending, yield, and risk decisions on-chain.</p>
+            </div>
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Real Asset Framing</p>
+              <p className="text-sm text-white font-semibold">USD-denominated cashflow lending</p>
+              <p className="text-sm text-gray-400 mt-2">Revenue-backed loans and treasury allocation emulate real-world credit and fixed-income workflows.</p>
+            </div>
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Mantle Integration</p>
+              <p className="text-sm text-white font-semibold">Production contracts deployed on Mantle Mainnet</p>
+              <p className="text-sm text-gray-400 mt-2">TreasuryVault and CreditLine are live, verifiable, and linked below.</p>
+            </div>
+            <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Compliance Awareness</p>
+              <p className="text-sm text-white font-semibold">Risk-first credit policy + auditable decisions</p>
+              <p className="text-sm text-gray-400 mt-2">Risk Agent oversight, ML default screening, and immutable on-chain actions provide traceability for policy review.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 3-Agent Architecture Section */}
       <section className="bg-gray-950 py-20 border-t border-gray-900 relative">
@@ -189,7 +258,7 @@ export default function Landing() {
             <FeatureCard icon={<Brain className="w-6 h-6 text-blue-400" />} title="ML Default Prediction" description="Logistic regression model predicts loan default probability (0–100%) using 7 on-chain features. Auto-blocks critical risk (>60%)." />
             <FeatureCard icon={<Lock className="w-6 h-6 text-purple-400" />} title="ZK Credit Proofs" description='Prove credit tier ("≥ 800 = Excellent") without revealing exact score. SHA-256 commitments + Fiat-Shamir + replay prevention.' />
             <FeatureCard icon={<ArrowRightLeft className="w-6 h-6 text-indigo-400" />} title="Inter-Agent Lending" description="Credit Agent borrows from Treasury via EventBus. Up to 20% of vault balance per request with full tracking." />
-            <FeatureCard icon={<MessageSquare className="w-6 h-6 text-pink-400" />} title="Board Meetings (LLM)" description="Every 45s, all 3 agents debate capital allocation, risk, and strategy. 4 LLM turns → synthesized consensus." />
+            <FeatureCard icon={<MessageSquare className="w-6 h-6 text-pink-400" />} title="Board Meetings (LLM)" description="Every 5 minutes, all 3 agents debate capital allocation, risk, and strategy. 4 LLM turns → synthesized consensus." />
             <FeatureCard icon={<TrendingUp className="w-6 h-6 text-green-400" />} title="Revenue-Backed Lending" description="AI agents borrow against future earnings — invoice factoring for the agent economy. 50% of projected 30d revenue." />
             <FeatureCard icon={<Layers className="w-6 h-6 text-amber-400" />} title="Debt Restructuring" description="ML detects at-risk loans → LLM negotiates new terms (extend, reduce rate, forgiveness, tranches). Fully autonomous." />
             <FeatureCard icon={<Globe className="w-6 h-6 text-teal-400" />} title="Cross-Chain Bridge" description="Compares Aave APY across Arbitrum/Ethereum/Polygon. Bridges USDt0 via LayerZero when remote yield is ≥1.5% better." />
@@ -204,8 +273,8 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-2 block">Verified On-Chain</span>
-            <h3 className="text-3xl font-bold text-white mb-3">Real Transactions</h3>
-            <p className="text-gray-400 max-w-xl mx-auto">Every key operation verified on-chain — not simulated, not mocked.</p>
+            <h3 className="text-3xl font-bold text-white mb-3">Production Evidence</h3>
+            <p className="text-gray-400 max-w-xl mx-auto">Track submission artifacts: verified contracts, live backend, and open-source repository.</p>
           </div>
 
           {/* Contracts */}
@@ -225,12 +294,12 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Transaction proofs */}
+          {/* Track evidence links */}
           <div className="space-y-2">
-            {ON_CHAIN_PROOFS.map((proof) => (
+            {EVIDENCE_LINKS.map((proof) => (
               <a
-                key={proof.tx}
-                href={`https://explorer.mantle.xyz/tx/${proof.tx}`}
+                key={proof.href}
+                href={proof.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between gap-4 px-5 py-3.5 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-green-500/30 hover:bg-gray-900/80 transition-all group"
@@ -240,9 +309,6 @@ export default function Landing() {
                   <span className="text-sm font-medium text-gray-200">{proof.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="text-xs font-mono text-gray-500 group-hover:text-green-400 transition-colors hidden sm:inline">
-                    {proof.tx.slice(0, 10)}...{proof.tx.slice(-8)}
-                  </code>
                   <ExternalLink className="w-3 h-3 text-gray-600 group-hover:text-green-400 flex-shrink-0" />
                 </div>
               </a>
