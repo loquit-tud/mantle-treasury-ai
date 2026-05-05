@@ -1,9 +1,5 @@
-# Deploys the Vite build to branch `gh-pages` (avoids the protected `github-pages`
-# environment that was rejecting deployments from `master`).
-#
-# One-time repo setup: Settings → Pages → Build and deployment → Source:
-#   "Deploy from a branch" → Branch `gh-pages`, folder `/ (root)`.
-# If Source was "GitHub Actions", switch it as above so this workflow takes effect.
+# GitHub Pages via Actions artifact (no job-level `environment:`).
+# Using `environment: github-pages` triggered branch protection that rejected `master`.
 
 name: Deploy Frontend to GitHub Pages
 
@@ -16,10 +12,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: gh-pages-deploy
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -42,9 +40,14 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/dist
-          force_orphan: true
+          path: frontend/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
