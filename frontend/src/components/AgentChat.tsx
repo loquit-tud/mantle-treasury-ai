@@ -11,10 +11,10 @@ interface ChatMessage {
 }
 
 const SPEAKER_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; avatar: string }> = {
-  treasury: { label: 'Treasury', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', avatar: '💰' },
-  credit:   { label: 'Credit',   color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/30', avatar: '🏦' },
-  risk:     { label: 'Risk',     color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', avatar: '🛡️' },
-  consensus:{ label: 'Consensus',color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30', avatar: '⚖️' },
+  treasury: { label: 'Treasury', color: 'text-indigo-200', bg: 'bg-indigo-500/10', border: 'border-indigo-500/25', avatar: 'T' },
+  credit: { label: 'Credit', color: 'text-sky-200', bg: 'bg-sky-500/10', border: 'border-sky-500/25', avatar: 'C' },
+  risk: { label: 'Risk', color: 'text-amber-200', bg: 'bg-amber-500/10', border: 'border-amber-500/25', avatar: 'R' },
+  consensus: { label: 'Consensus', color: 'text-slate-100', bg: 'bg-slate-800/80', border: 'border-slate-600/60', avatar: 'Σ' },
 };
 
 interface DialogueRound {
@@ -104,33 +104,33 @@ export function AgentChat({ lastMessage, initialDialogues }: { lastMessage: unkn
   const topicLabel = currentTopic ? currentTopic.replace(/_/g, ' ') : 'Waiting for Board Meeting...';
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-700 flex items-center justify-between bg-gray-800/80">
+    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/40 px-5 py-4">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-purple-400" />
-          <h3 className="text-sm font-semibold text-gray-200">Board Meeting — Live Debate</h3>
+          <MessageSquare className="h-4 w-4 text-indigo-300" />
+          <h3 className="text-sm font-semibold text-slate-200">Board meeting transcript</h3>
         </div>
-        <span className="text-[11px] uppercase tracking-wider text-purple-400 font-bold px-2 py-0.5 bg-purple-500/10 rounded border border-purple-500/20">
+        <span className="rounded border border-indigo-500/25 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-indigo-200">
           {topicLabel}
         </span>
       </div>
       <div
         ref={scrollRef}
-        className="p-4 space-y-3 h-[380px] overflow-y-auto overflow-x-hidden custom-scrollbar"
+        className="custom-scrollbar h-[380px] space-y-3 overflow-y-auto overflow-x-hidden p-4"
       >
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-purple-500/5 border border-purple-500/20 flex items-center justify-center mb-3 animate-pulse">
-              <MessageSquare className="w-7 h-7 text-purple-500/40" />
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <div className="mb-3 flex h-16 w-16 animate-pulse items-center justify-center rounded-full border border-indigo-500/20 bg-indigo-500/5">
+              <MessageSquare className="h-7 w-7 text-indigo-400/40" />
             </div>
-            <p className="text-sm font-semibold text-gray-400">Agents standing by...</p>
-            <p className="text-[11px] text-gray-500 mt-1 max-w-[220px] leading-relaxed">
-              Three AI advisors will debate capital allocation & risk once the countdown reaches 0:00
+            <p className="text-sm font-semibold text-slate-400">Awaiting next cycle</p>
+            <p className="mt-1 max-w-[240px] text-[11px] leading-relaxed text-slate-500">
+              Structured debate rounds appear here when agents synchronize on capital allocation and risk posture.
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <span className="flex items-center gap-1.5 text-[10px] text-violet-500/80"><span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />Treasury</span>
-              <span className="flex items-center gap-1.5 text-[10px] text-fuchsia-500/80"><span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 animate-pulse" />Credit</span>
-              <span className="flex items-center gap-1.5 text-[10px] text-amber-500/80"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Risk</span>
+            <div className="mt-4 flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-[10px] text-indigo-300/90"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />Treasury</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-sky-300/90"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400" />Credit</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-amber-300/90"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />Risk</span>
             </div>
           </div>
         ) : (
@@ -142,24 +142,24 @@ export function AgentChat({ lastMessage, initialDialogues }: { lastMessage: unkn
                 key={msg.id}
                 className={`flex gap-3 animate-in slide-in-from-bottom-2 duration-300 ${i === messages.length - 1 ? 'animate-pulse-once' : ''}`}
               >
-                <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${cfg.bg} border ${cfg.border}`}>
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${cfg.bg} ${cfg.border} ${cfg.color}`}>
                   {cfg.avatar}
                 </div>
-                <div className={`flex-1 min-w-0 ${isConsensus ? `rounded-lg p-3 ${cfg.bg} border ${cfg.border}` : ''}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${cfg.color}`}>
+                <div className={`min-w-0 flex-1 ${isConsensus ? `rounded-lg border p-3 ${cfg.bg} ${cfg.border}` : ''}`}>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.color}`}>
                       {cfg.label}
                     </span>
                     {isConsensus && (
-                      <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-bold">
-                        FINAL DECISION
+                      <span className="rounded bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-bold text-indigo-100">
+                        Consensus
                       </span>
                     )}
-                    <span className="text-[10px] text-gray-600 font-mono ml-auto shrink-0">
+                    <span className="ml-auto shrink-0 font-mono text-[10px] text-slate-500">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </span>
                   </div>
-                  <p className={`text-[13px] leading-relaxed break-words ${isConsensus ? 'text-purple-200 font-medium' : 'text-gray-300'}`}>
+                  <p className={`break-words text-[13px] leading-relaxed ${isConsensus ? 'font-medium text-slate-100' : 'text-slate-300'}`}>
                     {msg.message}
                   </p>
                 </div>

@@ -1,11 +1,11 @@
 import type { TreasuryState } from '../types';
 
 const NODES = [
-  { id: 'wallet', label: 'Wallet', x: 50, y: 120, icon: '👛', color: '#6366f1' },
-  { id: 'treasury', label: 'Treasury Vault', x: 220, y: 120, icon: '🏛️', color: '#22d3ee' },
-  { id: 'yield', label: 'Aave Yield', x: 390, y: 50, icon: '📈', color: '#a855f7' },
-  { id: 'credit', label: 'Credit Pool', x: 390, y: 190, icon: '🏦', color: '#22c55e' },
-  { id: 'borrower', label: 'Borrowers', x: 540, y: 190, icon: '👤', color: '#eab308' },
+  { id: 'wallet', label: 'Wallet', x: 50, y: 120, icon: 'W', color: '#818cf8' },
+  { id: 'treasury', label: 'Treasury', x: 220, y: 120, icon: 'V', color: '#38bdf8' },
+  { id: 'yield', label: 'Yield', x: 390, y: 50, icon: 'Y', color: '#2dd4bf' },
+  { id: 'credit', label: 'Credit', x: 390, y: 190, icon: 'C', color: '#a5b4fc' },
+  { id: 'borrower', label: 'Borrowers', x: 540, y: 190, icon: 'B', color: '#fbbf24' },
 ];
 
 const EDGES = [
@@ -32,15 +32,15 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
   const totalHarvested = treasury.yieldPositions.reduce((s, p) => s + Number(p.harvested || 0), 0);
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-700 flex items-center gap-2 bg-gray-800/80">
-        <svg className="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        <h3 className="text-sm font-semibold text-gray-200">Fund Flow — Live</h3>
+    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
+        <svg className="h-4 w-4 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <h3 className="text-sm font-semibold text-slate-200">Capital flow</h3>
       </div>
       <div className="p-4">
         <svg viewBox="0 0 620 240" className="w-full h-auto" style={{ minHeight: 180 }}>
           <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse" fill="#4b5563">
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse" fill="#64748b">
               <path d="M 0 0 L 10 5 L 0 10 z" />
             </marker>
             {/* Animated particle */}
@@ -89,7 +89,7 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
                   />
                 </circle>
                 {/* Edge label */}
-                <text x={mx + perpX} y={my + perpY - 6} textAnchor="middle" fill="#6b7280" fontSize="9" fontWeight="500">
+                <text x={mx + perpX} y={my + perpY - 6} textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="500">
                   {e.label}
                 </text>
               </g>
@@ -103,15 +103,15 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
                 x={node.x - 40} y={node.y - 28}
                 width="80" height="56"
                 rx="12"
-                fill="#1f2937"
+                fill="#0f172a"
                 stroke={node.color}
                 strokeWidth="1.5"
                 opacity="0.9"
               />
-              <text x={node.x} y={node.y - 8} textAnchor="middle" fontSize="14">
+              <text x={node.x} y={node.y - 8} textAnchor="middle" fill="#cbd5e1" fontSize="11" fontWeight="700">
                 {node.icon}
               </text>
-              <text x={node.x} y={node.y + 10} textAnchor="middle" fill="#e5e7eb" fontSize="9" fontWeight="600">
+              <text x={node.x} y={node.y + 10} textAnchor="middle" fill="#e2e8f0" fontSize="9" fontWeight="600">
                 {node.label}
               </text>
               {/* Live amounts */}
@@ -131,7 +131,7 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
                 </text>
               )}
               {node.id === 'yield' && totalHarvested > 0 && (
-                <text x={node.x} y={node.y + 32} textAnchor="middle" fill="#a855f7" fontSize="7" opacity="0.7">
+                <text x={node.x} y={node.y + 32} textAnchor="middle" fill="#2dd4bf" fontSize="7" opacity="0.75">
                   +{formatUSDt(totalHarvested)} harvested
                 </text>
               )}
@@ -139,7 +139,7 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
           ))}
 
           {/* Pulsing glow on treasury node */}
-          <circle cx={220} cy={120} r="38" fill="none" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+          <circle cx={220} cy={120} r="38" fill="none" stroke="#818cf8" strokeWidth="1" opacity="0.25">
             <animate attributeName="r" values="38;46;38" dur="3s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite" />
           </circle>

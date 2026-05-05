@@ -14,43 +14,43 @@ export function AgentStatus({ status, wsConnected }: AgentStatusProps) {
   const getStatusColor = (agentStatus: string) => {
     switch (agentStatus) {
       case 'active':
-        return 'text-green-400';
+        return 'text-emerald-300';
       case 'idle':
-        return 'text-gray-400';
+        return 'text-slate-400';
       case 'error':
-        return 'text-red-400';
+        return 'text-red-300';
       case 'paused':
-        return 'text-yellow-400';
+        return 'text-amber-300';
       default:
-        return 'text-gray-400';
+        return 'text-slate-400';
     }
   };
 
   const getStatusBg = (agentStatus: string) => {
     switch (agentStatus) {
       case 'active':
-        return 'bg-green-500/20';
+        return 'bg-emerald-500/15';
       case 'idle':
-        return 'bg-gray-500/20';
+        return 'bg-slate-500/15';
       case 'error':
-        return 'bg-red-500/20';
+        return 'bg-red-500/15';
       case 'paused':
-        return 'bg-yellow-500/20';
+        return 'bg-amber-500/15';
       default:
-        return 'bg-gray-500/20';
+        return 'bg-slate-500/15';
     }
   };
 
   return (
     <div className="flex items-center gap-3">
       {/* Connection Status */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 rounded-lg">
+      <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5">
         {wsConnected ? (
-          <Wifi className="w-4 h-4 text-green-400" />
+          <Wifi className="h-4 w-4 text-emerald-400" />
         ) : (
-          <WifiOff className="w-4 h-4 text-red-400" />
+          <WifiOff className="h-4 w-4 text-red-400" />
         )}
-        <span className={`text-xs font-medium ${wsConnected ? 'text-green-400' : 'text-red-400'}`}>
+        <span className={`text-xs font-medium ${wsConnected ? 'text-emerald-300' : 'text-red-300'}`}>
           {wsConnected ? 'Live' : 'Connecting...'}
         </span>
       </div>
@@ -58,20 +58,20 @@ export function AgentStatus({ status, wsConnected }: AgentStatusProps) {
       {/* Agent Status */}
       {status && (
         <div className="flex items-center gap-2">
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${getStatusBg(status.treasury)}`}>
-            <Activity className={`w-3 h-3 ${getStatusColor(status.treasury)}`} />
+          <div className={`flex items-center gap-1.5 rounded px-2 py-1 ${getStatusBg(status.treasury)}`}>
+            <Activity className={`h-3 w-3 ${getStatusColor(status.treasury)}`} />
             <span className={`text-xs font-medium capitalize ${getStatusColor(status.treasury)}`}>
               Treasury
             </span>
           </div>
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${getStatusBg(status.credit)}`}>
-            <Activity className={`w-3 h-3 ${getStatusColor(status.credit)}`} />
+          <div className={`flex items-center gap-1.5 rounded px-2 py-1 ${getStatusBg(status.credit)}`}>
+            <Activity className={`h-3 w-3 ${getStatusColor(status.credit)}`} />
             <span className={`text-xs font-medium capitalize ${getStatusColor(status.credit)}`}>
               Credit
             </span>
           </div>
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${getStatusBg(status.risk)}`}>
-            <Activity className={`w-3 h-3 ${getStatusColor(status.risk)}`} />
+          <div className={`flex items-center gap-1.5 rounded px-2 py-1 ${getStatusBg(status.risk)}`}>
+            <Activity className={`h-3 w-3 ${getStatusColor(status.risk)}`} />
             <span className={`text-xs font-medium capitalize ${getStatusColor(status.risk)}`}>
               Risk
             </span>

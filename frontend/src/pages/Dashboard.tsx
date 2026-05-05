@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   Shield,
   ArrowLeft,
+  CalendarClock,
+  Lock,
 } from 'lucide-react';
 import { AgentChat } from '../components/AgentChat';
 import { FundFlowDiagram } from '../components/FundFlowDiagram';
@@ -264,10 +266,10 @@ export default function Dashboard() {
   
   // Prepare Credit Score Distribution data
   const scoreDistribution = [
-    { name: 'Poor (<600)', count: 0, color: '#ef4444' },     // red-500
-    { name: 'Fair (600-699)', count: 0, color: '#eab308' },  // yellow-500
-    { name: 'Good (700-799)', count: 0, color: '#3b82f6' },  // blue-500
-    { name: 'Excellent (800+)', count: 0, color: '#8b5cf6' } // violet-500
+    { name: 'Poor (<600)', count: 0, color: '#f87171' },
+    { name: 'Fair (600-699)', count: 0, color: '#fbbf24' },
+    { name: 'Good (700-799)', count: 0, color: '#38bdf8' },
+    { name: 'Excellent (800+)', count: 0, color: '#818cf8' },
   ];
   
   if (data?.creditProfiles) {
@@ -287,105 +289,112 @@ export default function Dashboard() {
 
       {/* ── First-Visit Onboarding Banner ── */}
       {showOnboarding && (
-        <div className="relative bg-gradient-to-r from-violet-900/20 to-fuchsia-900/20 border border-violet-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center shrink-0 text-xl">👋</div>
+        <div className="relative flex flex-col gap-4 rounded-2xl border border-indigo-500/25 bg-slate-900/60 p-5 sm:flex-row sm:items-center">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-indigo-500/30 bg-indigo-500/10">
+            <Shield className="h-5 w-5 text-indigo-300" />
+          </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-white mb-0.5">Welcome to Mission Control</p>
-            <p className="text-xs text-gray-400">
-              You're watching <strong className="text-violet-400">3 live AI agents</strong> manage a DAO treasury on Mantle.
-              The <strong className="text-fuchsia-400">Board Meeting</strong> countdown shows when they'll debate next.
-              <strong className="text-purple-400"> KPI cards</strong> show real on-chain data. Hover any <span className="inline-flex items-center gap-0.5 text-gray-300 font-mono text-[10px] bg-gray-800 border border-gray-700 rounded px-1">?</span> for explanations.
+            <p className="mb-0.5 text-sm font-semibold text-slate-100">Mission Control overview</p>
+            <p className="text-xs leading-relaxed text-slate-400">
+              Three agents coordinate treasury allocation, credit decisions, and risk monitoring on Mantle.
+              The <strong className="text-indigo-300">Board Meeting</strong> timer marks the next structured consensus cycle.
+              KPI tiles summarize vault balances and portfolio exposure — tap <span className="rounded border border-slate-600 bg-slate-800 px-1 font-mono text-[10px] text-slate-300">?</span> on any metric for context.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboarding-dismissed', '1'); }}
-            className="shrink-0 text-xs text-gray-500 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-600"
+            className="shrink-0 rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
           >
-            Got it ✓
+            Dismiss
           </button>
         </div>
       )}
 
       {/* ── Next Board Meeting Countdown ── */}
-      <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 px-5 py-4 rounded-2xl border transition-all duration-500 ${
+      <div className={`flex flex-col gap-4 rounded-2xl border px-5 py-4 transition-all duration-300 sm:flex-row sm:items-center ${
         meetingSecsLeft <= 30
-          ? 'bg-purple-900/30 border-purple-500/50 shadow-[0_0_20px_-5px_rgba(168,85,247,0.4)]'
-          : 'bg-gray-900/60 border-gray-700'
+          ? 'border-indigo-400/40 bg-indigo-950/40 shadow-[0_0_24px_-8px_rgba(99,102,241,0.35)]'
+          : 'border-slate-800 bg-slate-900/60'
       }`}>
-        <div className="flex items-center gap-3 flex-1">
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${meetingSecsLeft <= 30 ? 'bg-purple-500/20 border border-purple-500/50 countdown-glow' : 'bg-gray-800 border border-gray-700'}`}>
-            <span className="text-base">🗳️</span>
+        <div className="flex flex-1 items-center gap-3">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${meetingSecsLeft <= 30 ? 'border-indigo-400/50 bg-indigo-500/20 countdown-glow' : 'border-slate-700 bg-slate-800'}`}>
+            <CalendarClock className={`h-4 w-4 ${meetingSecsLeft <= 30 ? 'text-indigo-200' : 'text-slate-400'}`} />
           </div>
           <div>
-            <p className={`text-xs font-bold uppercase tracking-widest ${meetingSecsLeft <= 30 ? 'text-purple-300' : 'text-gray-400'}`}>
-              {meetingSecsLeft <= 30 ? '⚡ Board Meeting Imminent!' : 'Next Board Meeting'}
+            <p className={`text-xs font-semibold uppercase tracking-widest ${meetingSecsLeft <= 30 ? 'text-indigo-200' : 'text-slate-500'}`}>
+              {meetingSecsLeft <= 30 ? 'Board meeting starting' : 'Next board meeting'}
             </p>
-            <p className="text-[11px] text-gray-500">All 3 agents will debate capital allocation &amp; risk</p>
+            <p className="text-[11px] text-slate-500">Treasury, Credit, and Risk align before on-chain execution.</p>
           </div>
         </div>
-        <div className={`font-mono text-4xl font-black tabular-nums tracking-tight ${meetingSecsLeft <= 30 ? 'text-purple-300' : 'text-white'}`}>
+        <div className={`font-mono text-4xl font-semibold tabular-nums tracking-tight ${meetingSecsLeft <= 30 ? 'text-indigo-100' : 'text-white'}`}>
           {String(Math.floor(meetingSecsLeft / 60)).padStart(2, '0')}
-          <span className="opacity-60 text-2xl">:</span>
+          <span className="text-2xl opacity-60">:</span>
           {String(meetingSecsLeft % 60).padStart(2, '0')}
         </div>
-        <div className="hidden sm:flex flex-col items-end gap-1 text-[10px] text-gray-600">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500/60" />Treasury Agent</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fuchsia-500/60" />Credit Agent</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500/60" />Risk Agent</span>
+        <div className="hidden flex-col items-end gap-1 text-[10px] text-slate-500 sm:flex">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-indigo-400/70" />Treasury</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400/70" />Credit</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400/70" />Risk</span>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-violet-400 transition-colors">
+              <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-indigo-300">
                 <ArrowLeft className="w-3.5 h-3.5" /> Home
               </Link>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Mission Control</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">Mission Control</h2>
             </div>
             <div className="flex items-center gap-3">
-              <p className="text-sm text-gray-400">Quorum real-time overview and health</p>
-               <div className="h-4 w-px bg-gray-800" />
+              <p className="text-sm text-slate-400">Live treasury health and agent activity</p>
+               <div className="h-4 w-px bg-slate-800" />
                <AgentStatus status={agentStatus} wsConnected={isConnected || !!data} />
-               <div className="h-4 w-px bg-gray-800" />
-               <span className="text-[11px] text-gray-500 font-mono tabular-nums">
-                 updated {secondsAgo}s ago
+               <div className="h-4 w-px bg-slate-800" />
+               <span className="font-mono text-[11px] tabular-nums text-slate-500">
+                 Updated {secondsAgo}s ago
                </span>
             </div>
          </div>
          {/* Quick Actions Panel */}
          <div className="flex gap-3">
              <button
+               type="button"
                onClick={syncTreasury}
                disabled={syncing}
-               className="inline-flex items-center gap-2 rounded-lg bg-gray-900 border border-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 hover:border-gray-700 transition-colors disabled:opacity-50"
+               className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-slate-600 hover:bg-slate-800 disabled:opacity-50"
              >
-               <RefreshCw className={`w-4 h-4 text-violet-400 ${syncing ? 'animate-spin' : ''}`} />
-               {syncing ? 'Syncing...' : 'Sync Treasury'}
+               <RefreshCw className={`h-4 w-4 text-indigo-300 ${syncing ? 'animate-spin' : ''}`} />
+               {syncing ? 'Syncing...' : 'Sync treasury'}
              </button>
              {confirmingPause ? (
-               <div className="flex items-center gap-2 bg-red-900/20 border border-red-500/40 rounded-lg px-3 py-2 animate-in fade-in duration-150">
-                 <span className="text-xs text-red-300 font-medium">Pause all agents?</span>
+               <div className="flex animate-in items-center gap-2 rounded-lg border border-red-500/35 bg-red-950/40 px-3 py-2 fade-in duration-150">
+                 <span className="text-xs font-medium text-red-200">Pause all agents?</span>
                  <button
+                   type="button"
                    onClick={() => { pauseAgents(); setConfirmingPause(false); }}
-                   className="text-xs bg-red-500 hover:bg-red-400 px-3 py-1 rounded font-bold text-white transition-colors"
+                   className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-500"
                  >
-                   Yes, Pause
+                   Confirm
                  </button>
                  <button
+                   type="button"
                    onClick={() => setConfirmingPause(false)}
-                   className="text-xs text-gray-400 hover:text-white px-2 py-1 transition-colors"
+                   className="px-2 py-1 text-xs text-slate-400 transition-colors hover:text-white"
                  >
                    Cancel
                  </button>
                </div>
              ) : (
                <button
+                 type="button"
                  onClick={() => setConfirmingPause(true)}
-                 className="inline-flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-all hover:scale-105"
+                 className="inline-flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-950/30 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-950/50"
                >
-                 <PauseCircle className="w-4 h-4" />
-                 Emergency Pause
+                 <PauseCircle className="h-4 w-4" />
+                 Emergency pause
                </button>
              )}
          </div>
@@ -393,14 +402,15 @@ export default function Dashboard() {
 
       {/* Error banner */}
       {error && (
-        <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-400" />
-          <span className="text-red-300 text-sm">{error}</span>
+        <div className="flex items-center gap-3 rounded-xl border border-red-800/60 bg-red-950/40 p-4">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-red-400" />
+          <span className="text-sm text-red-200">{error}</span>
           <button
+            type="button"
             onClick={refresh}
-            className="ml-auto text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+            className="ml-auto inline-flex items-center gap-1 text-xs text-red-300 hover:text-red-200"
           >
-            <RefreshCw className="w-3 h-3" /> Retry
+            <RefreshCw className="h-3 w-3" /> Retry
           </button>
         </div>
       )}
@@ -408,21 +418,21 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          icon={<DollarSign className="w-5 h-5 text-violet-400" />}
+          icon={<DollarSign className="h-5 w-5 text-indigo-300" />}
           label="Treasury Balance"
           tooltip="Total USDt held in the TreasuryVault smart contract on Mantle. Real on-chain capital managed by AI agents."
           value={`$${(Number(treasury.balance) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDt`}
           sub="Vault holdings"
         />
         <KPICard
-          icon={<BarChart3 className="w-5 h-5 text-blue-400" />}
+          icon={<BarChart3 className="h-5 w-5 text-sky-300" />}
           label="Daily Volume"
           tooltip="Total USDt moved in/out of the vault today — deposits, loan disbursements, and yield harvests combined."
           value={`$${(Number(treasury.dailyVolume) / 1e6).toLocaleString('en-US')} USDt`}
           sub="In / Out today"
         />
         <KPICard
-          icon={<TrendingUp className="w-5 h-5 text-purple-400" />}
+          icon={<TrendingUp className="h-5 w-5 text-teal-300" />}
           label="Yield Positions"
           tooltip="Active yield strategies (Aave V3). Treasury Agent auto-compounds returns. APY = annual percentage yield."
           value={String(treasury.yieldPositions.length)}
@@ -438,7 +448,7 @@ export default function Dashboard() {
           }
         />
         <KPICard
-          icon={<Users className="w-5 h-5 text-yellow-400" />}
+          icon={<Users className="h-5 w-5 text-amber-300" />}
           label="Credit Profiles"
           tooltip="Unique borrower wallets scored by the Credit Agent. Scores 500–1000 determine loan eligibility and interest rate."
           value={String(data?.creditProfiles?.length ?? 0)}
@@ -449,40 +459,40 @@ export default function Dashboard() {
       {/* Treasury Health */}
       <div className="grid grid-cols-1 gap-4">
         {/* Health Score */}
-        <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-5 h-5" style={{ color: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }} />
-            <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Treasury Health Score</span>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <Shield className="h-5 w-5" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }} />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Treasury health score</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280' }}>
+              <span className="text-5xl font-semibold tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }}>
                 {healthData?.score ?? '—'}
               </span>
-              <span className="text-lg text-gray-500 font-medium">/100</span>
+              <span className="text-lg font-medium text-slate-500">/100</span>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              !healthData ? 'bg-gray-700 text-gray-400'
-              : healthData.score >= 80 ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
-              : healthData.score >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-              : healthData.score >= 40 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
+              !healthData ? 'border-slate-700 bg-slate-800 text-slate-400'
+              : healthData.score >= 80 ? 'border-indigo-500/35 bg-indigo-500/15 text-indigo-200'
+              : healthData.score >= 60 ? 'border-amber-500/35 bg-amber-500/15 text-amber-200'
+              : healthData.score >= 40 ? 'border-orange-500/35 bg-orange-500/15 text-orange-200'
+              : 'border-red-500/35 bg-red-500/15 text-red-200'
             }`}>
               {healthData?.rating ?? 'Loading...'}
             </span>
             {/* Health bar */}
-            <div className="flex-1 hidden sm:block">
-              <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div className="hidden flex-1 sm:block">
+              <div className="h-3 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{
                     width: `${healthData?.score ?? 0}%`,
-                    backgroundColor: healthData ? (healthData.score >= 80 ? '#8b5cf6' : healthData.score >= 60 ? '#eab308' : healthData.score >= 40 ? '#f97316' : '#ef4444') : '#6b7280'
+                    backgroundColor: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b'
                   }}
                 />
               </div>
               {healthData?.breakdown && (
-                <div className="flex gap-3 mt-2 text-[10px] text-gray-500">
+                <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
                   {Object.entries(healthData.breakdown).slice(0, 4).map(([key, val]) => (
                     <span key={key} className="capitalize">{key.replace(/_/g, ' ')}: {Math.round(val.score)}%</span>
                   ))}
@@ -495,25 +505,25 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Panel title="Treasury Balance History (Last 24 updates)" icon={<Activity className="w-4 h-4 text-violet-400" />}>
+        <Panel title="Treasury balance (last 24 updates)" icon={<Activity className="h-4 w-4 text-indigo-300" />}>
           <div className="h-[250px] w-full pt-4">
             {balanceHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={balanceHistory} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                  <XAxis dataKey="time" stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                  <XAxis dataKey="time" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
-                    itemStyle={{ color: '#22d3ee' }}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
+                    itemStyle={{ color: '#a5b4fc' }}
                   />
-                  <Area type="monotone" dataKey="balance" stroke="#22d3ee" strokeWidth={2} fillOpacity={1} fill="url(#colorBalance)" />
+                  <Area type="monotone" dataKey="balance" stroke="#818cf8" strokeWidth={2} fillOpacity={1} fill="url(#colorBalance)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -524,16 +534,16 @@ export default function Dashboard() {
           </div>
         </Panel>
         
-        <Panel title="Credit Score Distribution" icon={<BarChart3 className="w-4 h-4 text-blue-400" />}>
+        <Panel title="Credit score distribution" icon={<BarChart3 className="h-4 w-4 text-sky-300" />}>
             <div className="h-[250px] w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={scoreDistribution} margin={{ top: 5, right: 0, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                <XAxis dataKey="name" stroke="#4b5563" fontSize={11} tickLine={false} axisLine={false} angle={-15} textAnchor="end" />
-                <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} angle={-15} textAnchor="end" />
+                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                 <Tooltip 
-                  cursor={{ fill: '#374151', opacity: 0.4 }}
-                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                  cursor={{ fill: '#334155', opacity: 0.35 }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {scoreDistribution.map((entry, index) => (
@@ -558,14 +568,14 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Active Loans */}
-          <Panel title="Active Loans" icon={<Users className="w-4 h-4 text-fuchsia-400" />}>
+          <Panel title="Active loans" icon={<Users className="h-4 w-4 text-indigo-300" />}>
             {activeLoans.length === 0 ? (
               <EmptyState text="No active loans" />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-gray-500 text-xs uppercase border-b border-gray-800">
+                    <tr className="border-b border-slate-800 text-xs uppercase text-slate-500">
                       <th className="py-2 text-left">Borrower</th>
                       <th className="py-2 text-right">Principal</th>
                       <th className="py-2 text-right">Rate</th>
@@ -573,25 +583,25 @@ export default function Dashboard() {
                       <th className="py-2 text-right">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-slate-800">
                     {activeLoans.map((loan) => {
                       const now = Date.now() / 1000;
                       const isOverdue = loan.dueDate < now;
                       const overdueDays = isOverdue ? Math.ceil((now - loan.dueDate) / 86400) : 0;
                       return (
-                      <tr key={loan.id} className={`hover:bg-gray-800/20 transition-colors ${loan.creditFrozen ? 'opacity-60' : ''}`}>
-                        <td className="py-3 font-mono text-gray-300">
+                      <tr key={loan.id} className={`transition-colors hover:bg-slate-900/50 ${loan.creditFrozen ? 'opacity-60' : ''}`}>
+                        <td className="py-3 font-mono text-slate-300">
                           <div className="flex items-center gap-2">
                             {loan.borrower.slice(0, 6)}...{loan.borrower.slice(-4)}
                             {loan.loanType === 'revenue_backed' && (
-                              <span className="text-[9px] bg-violet-900/30 text-violet-400 px-1.5 py-0.5 rounded-full">REV</span>
+                              <span className="rounded-full bg-indigo-500/15 px-1.5 py-0.5 text-[9px] font-medium text-indigo-200">REV</span>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 text-right text-white font-medium">
+                        <td className="py-3 text-right font-medium text-white">
                           {formatAmount(loan.principal)} USDt
                         </td>
-                        <td className="py-3 text-right text-gray-400">
+                        <td className="py-3 text-right text-slate-400">
                           <div>
                             {formatPercentage(loan.interestRate / 100)}
                             {loan.penaltyRateBps ? (
@@ -599,21 +609,23 @@ export default function Dashboard() {
                             ) : null}
                           </div>
                         </td>
-                        <td className="py-3 text-right text-gray-400">
+                        <td className="py-3 text-right text-slate-400">
                           {new Date(loan.dueDate * 1000).toLocaleDateString()}
                         </td>
                         <td className="py-3 text-right">
                           {loan.creditFrozen ? (
-                            <span className="text-[10px] bg-red-900/40 text-red-400 px-2 py-1 rounded-full font-semibold">🔒 FROZEN</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-950/50 px-2 py-1 text-[10px] font-semibold text-red-300 ring-1 ring-red-500/30">
+                              <Lock className="h-3 w-3" /> Frozen
+                            </span>
                           ) : isOverdue ? (
                             <div>
-                              <span className="text-[10px] bg-amber-900/30 text-amber-400 px-2 py-1 rounded-full font-semibold">{overdueDays}d overdue</span>
+                              <span className="rounded-full bg-amber-950/40 px-2 py-1 text-[10px] font-semibold text-amber-200 ring-1 ring-amber-500/25">{overdueDays}d overdue</span>
                               {loan.penaltyAccrued && BigInt(loan.penaltyAccrued) > 0n && (
                                 <p className="text-[9px] text-red-400 mt-1">+{formatAmount(loan.penaltyAccrued)} penalty</p>
                               )}
                             </div>
                           ) : (
-                            <span className="text-[10px] bg-violet-900/30 text-violet-400 px-2 py-1 rounded-full font-semibold">Current</span>
+                            <span className="rounded-full bg-indigo-950/40 px-2 py-1 text-[10px] font-semibold text-indigo-200 ring-1 ring-indigo-500/25">Current</span>
                           )}
                         </td>
                       </tr>
@@ -626,33 +638,33 @@ export default function Dashboard() {
           </Panel>
 
           {/* Pending Transactions */}
-          <Panel title="Pending Transactions (Multi-sig)" icon={<Wallet className="w-4 h-4 text-violet-400" />}>
+          <Panel title="Pending transactions (multi-sig)" icon={<Wallet className="h-4 w-4 text-indigo-300" />}>
             {treasury.pendingTransactions.length === 0 ? (
               <EmptyState text="No pending transactions" />
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-slate-800">
                 {treasury.pendingTransactions.map((tx: PendingTransaction) => (
                   <div
                     key={tx.txHash}
-                    className="py-4 flex items-center justify-between hover:bg-gray-800/10 transition-colors px-2 rounded-lg"
+                    className="flex items-center justify-between rounded-lg px-2 py-4 transition-colors hover:bg-slate-900/40"
                   >
                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
-                          <CheckCircle2 className="w-4 h-4 text-gray-400" />
+                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800">
+                          <CheckCircle2 className="h-4 w-4 text-slate-500" />
                        </div>
                        <div>
-                        <p className="text-sm font-mono text-gray-300">
+                        <p className="font-mono text-sm text-slate-300">
                           {tx.to.slice(0, 6)}...{tx.to.slice(-4)}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-slate-500">
                           {tx.signatures} sig(s) &middot;{' '}
-                          <span className={tx.executed ? "text-violet-400" : "text-yellow-500"}>
+                          <span className={tx.executed ? 'text-indigo-300' : 'text-amber-300'}>
                             {tx.executed ? 'Executed' : 'Pending'}
                           </span>
                         </p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-white bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
+                    <span className="rounded-full border border-slate-800 bg-slate-950 px-3 py-1 text-sm font-semibold text-white">
                       {formatAmount(tx.amount)} USDt
                     </span>
                   </div>
@@ -662,25 +674,25 @@ export default function Dashboard() {
           </Panel>
 
           {/* Yield Positions */}
-          <Panel title="Yield Positions" icon={<TrendingUp className="w-4 h-4 text-purple-400" />}>
+          <Panel title="Yield positions" icon={<TrendingUp className="h-4 w-4 text-teal-300" />}>
             {treasury.yieldPositions.length === 0 ? (
               <EmptyState text="No active yield positions" />
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-slate-800">
                 {treasury.yieldPositions.map((pos: YieldPosition, i: number) => (
                   <div
                     key={i}
-                    className="py-4 flex items-center justify-between hover:bg-gray-800/10 transition-colors px-2 rounded-lg"
+                    className="flex items-center justify-between rounded-lg px-2 py-4 transition-colors hover:bg-slate-900/40"
                   >
                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-purple-900/30 flex items-center justify-center border border-purple-500/20">
-                          <TrendingUp className="w-4 h-4 text-purple-400" />
+                       <div className="flex h-8 w-8 items-center justify-center rounded-full border border-teal-500/25 bg-teal-950/40">
+                          <TrendingUp className="h-4 w-4 text-teal-300" />
                        </div>
                        <div>
                         <p className="text-sm font-medium text-white capitalize">
                           {pos.protocol}
                         </p>
-                        <p className="text-xs text-purple-400 font-medium">
+                        <p className="text-xs font-medium text-teal-300">
                           {formatPercentage(pos.apy)} APY
                         </p>
                       </div>
@@ -704,41 +716,41 @@ export default function Dashboard() {
 
       {/* ── Innovation: Revenue-Backed Lending + Debt Restructuring ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Panel title="Revenue-Backed Lending" icon={<TrendingUp className="w-4 h-4 text-violet-400" />}>
+        <Panel title="Revenue-backed lending" icon={<TrendingUp className="h-4 w-4 text-indigo-300" />}>
           {!revenueSummary || (revenueSummary as any).totalRevenue === '0' ? (
             <div className="text-center space-y-3">
               <EmptyState text="No revenue events tracked yet" />
-              <p className="text-xs text-gray-500 mt-1">Revenue events are tracked automatically when agents earn from tasks, yield, or services</p>
+              <p className="mt-1 text-xs text-slate-500">Revenue events are inferred from agent activity, yield, and fee flows.</p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-xs text-gray-500 uppercase">Total Revenue</p>
-                  <p className="text-lg font-bold text-violet-400">{formatAmount((revenueSummary as any).totalRevenue)} USDt</p>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                  <p className="text-xs uppercase text-slate-500">Total revenue</p>
+                  <p className="text-lg font-semibold text-indigo-200">{formatAmount((revenueSummary as any).totalRevenue)} USDt</p>
                 </div>
-                <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-xs text-gray-500 uppercase">Tracked Agents</p>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                  <p className="text-xs uppercase text-slate-500">Tracked agents</p>
                   <p className="text-lg font-bold text-white">{(revenueSummary as any).agents?.length ?? 0}</p>
                 </div>
               </div>
               {((revenueSummary as any).agents ?? []).map((a: any) => (
-                <div key={a.agentAddress} className="bg-gray-900/30 rounded-lg p-3 border border-gray-700/50 space-y-2">
+                <div key={a.agentAddress} className="space-y-2 rounded-lg border border-slate-800/80 bg-slate-950/40 p-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-mono text-gray-400">{a.agentAddress.slice(0, 8)}...{a.agentAddress.slice(-6)}</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${a.revenueVelocity >= 0 ? 'bg-violet-900/30 text-violet-400' : 'bg-red-900/30 text-red-400'}`}>
+                    <span className="font-mono text-xs text-slate-400">{a.agentAddress.slice(0, 8)}...{a.agentAddress.slice(-6)}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${a.revenueVelocity >= 0 ? 'bg-indigo-500/15 text-indigo-200' : 'bg-red-950/50 text-red-300'}`}>
                       {a.revenueVelocity >= 0 ? '↑' : '↓'} {(a.revenueVelocity * 100).toFixed(0)}% velocity
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div><p className="text-[10px] text-gray-500">24h</p><p className="text-xs text-white font-semibold">{formatAmount(a.revenue24h)}</p></div>
-                    <div><p className="text-[10px] text-gray-500">7d</p><p className="text-xs text-white font-semibold">{formatAmount(a.revenue7d)}</p></div>
-                    <div><p className="text-[10px] text-gray-500">Borrow Cap</p><p className="text-xs text-violet-400 font-semibold">{formatAmount(a.borrowCapacity)}</p></div>
+                    <div><p className="text-[10px] text-slate-500">24h</p><p className="text-xs font-semibold text-white">{formatAmount(a.revenue24h)}</p></div>
+                    <div><p className="text-[10px] text-slate-500">7d</p><p className="text-xs font-semibold text-white">{formatAmount(a.revenue7d)}</p></div>
+                    <div><p className="text-[10px] text-slate-500">Borrow cap</p><p className="text-xs font-semibold text-indigo-200">{formatAmount(a.borrowCapacity)}</p></div>
                   </div>
-                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${Math.min(a.consistency * 100, 100)}%` }} />
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+                    <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${Math.min(a.consistency * 100, 100)}%` }} />
                   </div>
-                  <p className="text-[10px] text-gray-500 text-right">Consistency: {(a.consistency * 100).toFixed(0)}%</p>
+                  <p className="text-right text-[10px] text-slate-500">Consistency: {(a.consistency * 100).toFixed(0)}%</p>
                 </div>
               ))}
 
@@ -746,34 +758,34 @@ export default function Dashboard() {
           )}
         </Panel>
 
-        <Panel title="Autonomous Debt Restructuring" icon={<Shield className="w-4 h-4 text-amber-400" />}>
+        <Panel title="Debt restructuring" icon={<Shield className="h-4 w-4 text-amber-300" />}>
           {!restructuringSummary || (restructuringSummary as any).totalProposals === 0 ? (
             <div className="text-center space-y-2">
               <EmptyState text="No restructuring proposals yet" />
-              <p className="text-xs text-gray-500">ML detects at-risk loans → LLM negotiates new terms autonomously</p>
-              <div className="flex justify-center gap-2 mt-2">
-                <span className="text-[10px] bg-gray-700 text-gray-400 px-2 py-1 rounded-full">ML Default Prediction</span>
-                <span className="text-[10px] bg-gray-700 text-gray-400 px-2 py-1 rounded-full">LLM Negotiation</span>
-                <span className="text-[10px] bg-gray-700 text-gray-400 px-2 py-1 rounded-full">Auto-Accept</span>
+              <p className="text-xs text-slate-500">At-risk loans trigger structured term negotiation before write-down.</p>
+              <div className="mt-2 flex flex-wrap justify-center gap-2">
+                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-400">ML screening</span>
+                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-400">LLM negotiation</span>
+                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] text-slate-400">Auto-accept</span>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-amber-900/20 rounded-lg p-3 border border-amber-700/30 text-center">
-                  <p className="text-xs text-gray-500">Proposed</p>
-                  <p className="text-lg font-bold text-amber-400">{(restructuringSummary as any).pending}</p>
+                <div className="rounded-lg border border-amber-500/25 bg-amber-950/30 p-3 text-center">
+                  <p className="text-xs text-slate-500">Proposed</p>
+                  <p className="text-lg font-semibold text-amber-200">{(restructuringSummary as any).pending}</p>
                 </div>
-                <div className="bg-violet-900/20 rounded-lg p-3 border border-violet-700/30 text-center">
-                  <p className="text-xs text-gray-500">Accepted</p>
-                  <p className="text-lg font-bold text-violet-400">{(restructuringSummary as any).accepted}</p>
+                <div className="rounded-lg border border-indigo-500/25 bg-indigo-950/30 p-3 text-center">
+                  <p className="text-xs text-slate-500">Accepted</p>
+                  <p className="text-lg font-semibold text-indigo-200">{(restructuringSummary as any).accepted}</p>
                 </div>
-                <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700 text-center">
-                  <p className="text-xs text-gray-500">Forgiven</p>
-                  <p className="text-lg font-bold text-purple-400">{formatAmount((restructuringSummary as any).totalForgivenAmount ?? '0')} USDt</p>
+                <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-center">
+                  <p className="text-xs text-slate-500">Forgiven</p>
+                  <p className="text-lg font-semibold text-sky-200">{formatAmount((restructuringSummary as any).totalForgivenAmount ?? '0')} USDt</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 text-center">Total proposals: {(restructuringSummary as any).totalProposals} • Declined: {(restructuringSummary as any).declined} • Expired: {(restructuringSummary as any).expired}</p>
+              <p className="text-center text-xs text-slate-400">Total proposals: {(restructuringSummary as any).totalProposals} • Declined: {(restructuringSummary as any).declined} • Expired: {(restructuringSummary as any).expired}</p>
             </div>
           )}
         </Panel>
@@ -782,10 +794,10 @@ export default function Dashboard() {
 
       {/* Loading overlay */}
       {isLoading && !data && (
-        <div className="fixed inset-0 bg-gray-950/80 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
-            <p className="text-sm text-gray-400">
+            <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
+            <p className="text-sm text-slate-400">
               Connecting to agents...
             </p>
           </div>
@@ -814,17 +826,17 @@ function KPICard({
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 hover:border-gray-600 transition-all shadow-sm group">
-      <div className="flex items-center gap-3 mb-3">
+    <div className="group rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm transition-colors hover:border-slate-700">
+      <div className="mb-3 flex items-center gap-3">
         {icon}
-        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold flex-1">
+        <span className="flex-1 text-xs font-semibold uppercase tracking-widest text-slate-500">
           {label}
         </span>
         {tooltip && (
           <div className={`tooltip-wrap ${isTooltipOpen ? 'tooltip-open' : ''}`}>
             <button
               type="button"
-              className="w-4 h-4 rounded-full bg-gray-700 border border-gray-600 text-[9px] font-bold text-gray-400 flex items-center justify-center cursor-help hover:border-gray-500 hover:text-gray-300 transition-colors"
+              className="flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-600 bg-slate-800 text-[9px] font-bold text-slate-400 transition-colors hover:border-slate-500 hover:text-slate-200"
               aria-label={`Explain ${label}`}
               aria-expanded={isTooltipOpen}
               onClick={() => setIsTooltipOpen((v) => !v)}
@@ -841,8 +853,8 @@ function KPICard({
           </div>
         )}
       </div>
-      <p className="text-2xl font-black text-white tracking-tight">{value}</p>
-      <p className="text-xs text-gray-500 mt-2 font-medium">{sub}</p>
+      <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="mt-2 text-xs font-medium text-slate-500">{sub}</p>
     </div>
   );
 }
@@ -857,12 +869,12 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm flex flex-col">
-      <div className="px-5 py-4 border-b border-gray-700 flex items-center gap-2 bg-gray-800/80">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
         {icon}
-        <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
       </div>
-      <div className="p-5 flex-1">{children}</div>
+      <div className="flex-1 p-5">{children}</div>
     </div>
   );
 }
@@ -870,10 +882,10 @@ function Panel({
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="py-8 flex flex-col items-center justify-center text-center">
-       <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center mb-3">
-          <Activity className="w-5 h-5 text-gray-600" />
+       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-slate-800 bg-slate-950/50">
+          <Activity className="h-5 w-5 text-slate-600" />
        </div>
-       <p className="text-sm font-medium text-gray-500">{text}</p>
+       <p className="text-sm font-medium text-slate-500">{text}</p>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   Zap,
   History,
   Server,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -175,9 +176,9 @@ export default function Analytics() {
   });
 
   const creditStatsData = [
-    { name: 'Active Lent', value: totalLent - totalRepaid, color: '#3b82f6' }, // blue-500
-    { name: 'Repaid', value: totalRepaid, color: '#22c55e' }, // green-500
-    { name: 'Defaulted', value: totalDefaulted, color: '#ef4444' }, // red-500
+    { name: 'Active Lent', value: totalLent - totalRepaid, color: '#38bdf8' },
+    { name: 'Repaid', value: totalRepaid, color: '#34d399' },
+    { name: 'Defaulted', value: totalDefaulted, color: '#f87171' },
   ].filter(d => d.value > 0);
 
   // Agent Performance Metrics
@@ -192,37 +193,50 @@ export default function Analytics() {
     ? creditProfiles.reduce((acc, p) => acc + p.score, 0) / creditProfiles.length 
     : 0;
 
+  const agentBadge = (agentType: string) => {
+    switch (agentType) {
+      case 'treasury':
+        return 'border-indigo-500/25 bg-indigo-500/10 text-indigo-200';
+      case 'credit':
+        return 'border-sky-500/25 bg-sky-500/10 text-sky-200';
+      case 'risk':
+        return 'border-amber-500/25 bg-amber-500/10 text-amber-200';
+      default:
+        return 'border-slate-600 bg-slate-800 text-slate-300';
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+    <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500">
+      <div className="mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">System Analytics</h2>
-            <p className="text-sm text-gray-400">Deep dive into Quorum performance and metrics.</p>
+            <h2 className="text-2xl font-semibold tracking-tight text-white">Analytics</h2>
+            <p className="text-sm text-slate-400">Treasury, credit, and agent performance metrics.</p>
          </div>
       </div>
 
       {/* Top Level KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
          <KPICard 
-           icon={<Activity className="w-5 h-5 text-purple-400" />}
+           icon={<Activity className="h-5 w-5 text-indigo-300" />}
            label="Agent Actions (24h)"
            value={last24h.length.toString()}
            sub={`${decisionsPerHour.toFixed(1)} actions / hour`}
          />
          <KPICard 
-           icon={<CheckCircle2 className="w-5 h-5 text-green-400" />}
+           icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
            label="Agent Success Rate"
            value={`${successRate.toFixed(1)}%`}
            sub={`${successCount} successful executions`}
          />
          <KPICard 
-           icon={<Zap className="w-5 h-5 text-yellow-400" />}
+           icon={<Zap className="h-5 w-5 text-amber-300" />}
            label="Avg Credit Score"
            value={avgScore.toFixed(0)}
            sub={`Across ${creditProfiles.length} profiles`}
          />
          <KPICard 
-           icon={<PieChartIcon className="w-5 h-5 text-blue-400" />}
+           icon={<PieChartIcon className="h-5 w-5 text-sky-300" />}
            label="Total Lent"
            value={`${formatAmount(totalLent)} USDt`}
            sub={`Repaid: ${formatAmount(totalRepaid)} USDt`}
@@ -231,50 +245,50 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Treasury Balance Over Time */}
-        <Panel title="Treasury Balance (7 Days)" icon={<LineChartIcon className="w-4 h-4 text-green-400" />}>
+        <Panel title="Treasury balance (sampled)" icon={<LineChartIcon className="h-4 w-4 text-indigo-300" />}>
            <div className="h-[300px] w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={treasuryHistoryData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorTreasury" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                  <XAxis dataKey="day" stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '0.5rem', color: '#fff' }}
-                    itemStyle={{ color: '#4ade80' }}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
+                    itemStyle={{ color: '#a5b4fc' }}
                     formatter={(val: number) => [`$${val.toFixed(2)}`, 'Balance']}
                   />
-                  <Area type="monotone" dataKey="balance" stroke="#4ade80" strokeWidth={2} fillOpacity={1} fill="url(#colorTreasury)" />
+                  <Area type="monotone" dataKey="balance" stroke="#818cf8" strokeWidth={2} fillOpacity={1} fill="url(#colorTreasury)" />
                 </AreaChart>
               </ResponsiveContainer>
            </div>
         </Panel>
 
         {/* Daily Volume */}
-        <Panel title="Daily Transaction Volume" icon={<BarChart3 className="w-4 h-4 text-blue-400" />}>
+        <Panel title="Daily transaction volume" icon={<BarChart3 className="h-4 w-4 text-sky-300" />}>
            <div className="h-[300px] w-full pt-4">
               {volumeData.every(d => d.volume === 0) ? (
-                 <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                 <div className="flex h-full items-center justify-center text-sm text-slate-500">
                     No transaction volume recorded yet. Deposits and withdrawals will appear here.
                  </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={volumeData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                  <XAxis dataKey="day" stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val >= 1000 ? (val/1000).toFixed(0)+'k' : val}`} />
                   <Tooltip 
-                    cursor={{ fill: '#1f2937', opacity: 0.4 }}
-                    contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '0.5rem', color: '#fff' }}
-                    itemStyle={{ color: '#60a5fa' }}
+                    cursor={{ fill: '#334155', opacity: 0.35 }}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
+                    itemStyle={{ color: '#38bdf8' }}
                     formatter={(val: number) => [`$${val.toFixed(2)}`, 'Volume']}
                   />
-                  <Bar dataKey="volume" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="volume" fill="#38bdf8" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               )}
@@ -282,30 +296,30 @@ export default function Analytics() {
         </Panel>
 
         {/* Yield Performance */}
-        <Panel title="Yield Protocol APY Comparison" icon={<TrendingUp className="w-4 h-4 text-purple-400" />}>
+        <Panel title="Yield APY comparison" icon={<TrendingUp className="h-4 w-4 text-teal-300" />}>
            <div className="h-[300px] w-full pt-4">
               {yieldData.length > 0 ? (
                  <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={yieldData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
-                      <XAxis dataKey="protocol" stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                      <XAxis dataKey="protocol" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '0.5rem', color: '#fff' }}
-                        formatter={(val: number, _name: string, entry: any) => [
-                          `${val.toFixed(2)}%`,
-                          entry.payload.active ? 'Active APY' : 'Available APY'
+                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
+                        formatter={(val, _name, item) => [
+                          `${Number(val).toFixed(2)}%`,
+                          item?.payload?.active ? 'Active APY' : 'Available APY',
                         ]}
                       />
                       <Bar dataKey="apy" radius={[4, 4, 0, 0]}>
                         {yieldData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.active ? '#c084fc' : '#6b7280'} fillOpacity={entry.active ? 1 : 0.5} />
+                          <Cell key={`cell-${index}`} fill={entry.active ? '#818cf8' : '#475569'} fillOpacity={entry.active ? 1 : 0.55} />
                         ))}
                       </Bar>
                     </BarChart>
                  </ResponsiveContainer>
               ) : (
-                 <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                 <div className="flex h-full items-center justify-center text-sm text-slate-500">
                     No active yield positions to compare.
                  </div>
               )}
@@ -313,11 +327,11 @@ export default function Analytics() {
         </Panel>
 
         {/* Credit System Stats */}
-        <Panel title="Credit Ledger Distribution" icon={<PieChartIcon className="w-4 h-4 text-gray-400" />}>
-           <div className="h-[300px] w-full pt-4 flex items-center justify-center">
+        <Panel title="Credit ledger" icon={<PieChartIcon className="h-4 w-4 text-slate-400" />}>
+           <div className="flex h-[300px] w-full items-center justify-center pt-4">
               {creditStatsData.length > 0 ? (
-                 <div className="w-full h-full flex flex-col sm:flex-row items-center">
-                    <div className="flex-1 h-full min-h-[200px]">
+                 <div className="flex h-full w-full flex-col items-center sm:flex-row">
+                    <div className="h-full min-h-[200px] flex-1">
                        <ResponsiveContainer width="100%" height="100%">
                          <PieChart>
                            <Pie
@@ -335,26 +349,26 @@ export default function Analytics() {
                              ))}
                            </Pie>
                            <Tooltip 
-                             contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '0.5rem', color: '#fff' }}
+                             contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f1f5f9' }}
                              formatter={(val: number) => [`$${val.toFixed(2)}`, 'Amount']}
                            />
                          </PieChart>
                        </ResponsiveContainer>
                     </div>
-                    <div className="sm:w-1/3 flex flex-col justify-center gap-4 shrink-0">
+                    <div className="flex shrink-0 flex-col justify-center gap-4 sm:w-1/3">
                        {creditStatsData.map(stat => (
                           <div key={stat.name} className="flex items-center gap-2">
-                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stat.color }} />
+                             <div className="h-3 w-3 rounded-full" style={{ backgroundColor: stat.color }} />
                              <div>
-                                <p className="text-xs text-gray-400">{stat.name}</p>
-                                <p className="text-sm font-bold text-white">${formatAmount(stat.value)}</p>
+                                <p className="text-xs text-slate-500">{stat.name}</p>
+                                <p className="text-sm font-semibold text-white">${formatAmount(stat.value)}</p>
                              </div>
                           </div>
                        ))}
                     </div>
                  </div>
               ) : (
-                 <div className="text-sm text-gray-500">
+                 <div className="text-sm text-slate-500">
                     No debt issued yet.
                  </div>
               )}
@@ -365,10 +379,10 @@ export default function Analytics() {
       {/* Data Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
          {/* Agent Decision History */}
-         <Panel title="Agent Decision History" icon={<History className="w-4 h-4 text-cyan-400" />}>
-            <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
-               <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 uppercase bg-gray-950/50 sticky top-0">
+         <Panel title="Agent decision history" icon={<History className="h-4 w-4 text-indigo-300" />}>
+            <div className="custom-scrollbar max-h-[400px] overflow-x-auto">
+               <table className="w-full text-left text-sm">
+                  <thead className="sticky top-0 bg-slate-950/90 text-xs uppercase text-slate-500 backdrop-blur-sm">
                      <tr>
                         <th className="px-4 py-3 font-semibold">Time</th>
                         <th className="px-4 py-3 font-semibold">Agent</th>
@@ -376,31 +390,27 @@ export default function Analytics() {
                         <th className="px-4 py-3 font-semibold">Status</th>
                      </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-slate-800">
                      {allDecisions.length === 0 ? (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No decisions recorded</td></tr>
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No decisions recorded</td></tr>
                      ) : (
                         allDecisions.slice(0, 50).reverse().map((decision, i) => (
-                           <tr key={decision.id || i} className="hover:bg-gray-800/30 transition-colors">
-                              <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
+                           <tr key={decision.id || i} className="transition-colors hover:bg-slate-900/40">
+                              <td className="whitespace-nowrap px-4 py-3 text-slate-400">
                                  {new Date(decision.timestamp).toLocaleTimeString()}
                               </td>
                               <td className="px-4 py-3">
-                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                    decision.agentType === 'treasury' 
-                                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
-                                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                 }`}>
+                                 <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${agentBadge(decision.agentType)}`}>
                                     {decision.agentType}
                                  </span>
                               </td>
-                              <td className="px-4 py-3 text-gray-300">
+                              <td className="px-4 py-3 text-slate-300">
                                  {(decision.action || 'Unknown Action').replace(/_/g, ' ')}
                               </td>
                               <td className="px-4 py-3">
                                  <span className={
-                                    decision.status === 'executed' ? 'text-green-400' :
-                                    decision.status === 'failed' ? 'text-red-400' : 'text-yellow-400'
+                                    decision.status === 'executed' ? 'text-emerald-400' :
+                                    decision.status === 'failed' ? 'text-red-400' : 'text-amber-300'
                                  }>
                                     {(decision.status || 'pending').charAt(0).toUpperCase() + (decision.status || 'pending').slice(1)}
                                  </span>
@@ -414,39 +424,39 @@ export default function Analytics() {
          </Panel>
 
          {/* Yield Opportunities */}
-         <Panel title="Yield Opportunities" icon={<Server className="w-4 h-4 text-purple-400" />}>
-            <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
-               <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 uppercase bg-gray-950/50 sticky top-0">
+         <Panel title="Yield opportunities" icon={<Server className="h-4 w-4 text-teal-300" />}>
+            <div className="custom-scrollbar max-h-[400px] overflow-x-auto">
+               <table className="w-full text-left text-sm">
+                  <thead className="sticky top-0 bg-slate-950/90 text-xs uppercase text-slate-500 backdrop-blur-sm">
                      <tr>
                         <th className="px-4 py-3 font-semibold">Protocol</th>
                         <th className="px-4 py-3 font-semibold">Strategy</th>
-                        <th className="px-4 py-3 font-semibold text-right">APY</th>
-                        <th className="px-4 py-3 font-semibold text-right">Risk Score</th>
+                        <th className="px-4 py-3 text-right font-semibold">APY</th>
+                        <th className="px-4 py-3 text-right font-semibold">Risk score</th>
                      </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-slate-800">
                      {opportunities.length === 0 ? (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-500">No opportunities detected</td></tr>
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No opportunities detected</td></tr>
                      ) : (
                         opportunities.map((opp, i) => {
                            const riskScore = typeof opp.riskScore === 'number' ? opp.riskScore : (opp.risk === 'low' ? 20 : opp.risk === 'medium' ? 50 : opp.risk === 'high' ? 80 : 0);
                            const apyVal = typeof opp.apy === 'number' && opp.apy < 1 ? opp.apy * 100 : opp.apy;
                            return (
-                           <tr key={i} className="hover:bg-gray-800/30 transition-colors">
-                              <td className="px-4 py-3 font-medium text-white capitalize">
+                           <tr key={i} className="transition-colors hover:bg-slate-900/40">
+                              <td className="px-4 py-3 font-medium capitalize text-white">
                                  {opp.protocol}
                               </td>
-                              <td className="px-4 py-3 text-gray-400">
+                              <td className="px-4 py-3 text-slate-400">
                                  {(opp.strategy || 'lending').replace(/_/g, ' ')}
                               </td>
-                              <td className="px-4 py-3 text-right text-purple-400 font-medium">
+                              <td className="px-4 py-3 text-right font-medium text-indigo-200">
                                  {apyVal.toFixed(2)}%
                               </td>
                               <td className="px-4 py-3 text-right">
-                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    riskScore < 30 ? 'text-green-400' :
-                                    riskScore < 60 ? 'text-yellow-400' : 'text-red-400'
+                                 <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                                    riskScore < 30 ? 'text-emerald-400' :
+                                    riskScore < 60 ? 'text-amber-300' : 'text-red-400'
                                  }`}>
                                     {riskScore}/100
                                  </span>
@@ -465,33 +475,25 @@ export default function Analytics() {
 
 function KPICard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 hover:bg-gray-800/50 transition-colors">
-      <div className="flex items-center gap-3 mb-3">
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-colors hover:border-slate-700">
+      <div className="mb-3 flex items-center gap-3">
         {icon}
-        <span className="text-xs text-gray-400 uppercase tracking-widest font-semibold">{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</span>
       </div>
-      <p className="text-2xl font-black text-white tracking-tight">{value}</p>
-      <p className="text-xs text-gray-500 mt-2 font-medium">{sub}</p>
+      <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="mt-2 text-xs font-medium text-slate-500">{sub}</p>
     </div>
   );
 }
 
 function Panel({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
-      <div className="px-5 py-4 border-b border-gray-800/80 flex items-center gap-2 bg-gray-950/20">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
         {icon}
-        <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
       </div>
-      <div className="p-5 flex-1">{children}</div>
+      <div className="flex-1 p-5">{children}</div>
     </div>
-  );
-}
-
-function CheckCircle2(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
-    </svg>
   );
 }

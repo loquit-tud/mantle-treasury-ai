@@ -13,6 +13,7 @@ import {
   ArrowUpCircle,
   AlertCircle,
   LogOut,
+  Shield,
 } from 'lucide-react';
 import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
@@ -407,9 +408,9 @@ export default function WalletPage() {
 
   // Determine Credit Tier & Color
   const getCreditTier = (score: number) => {
-    if (score >= 800) return { label: 'Excellent', color: 'text-violet-400', stroke: '#8b5cf6' };
-    if (score >= 700) return { label: 'Good', color: 'text-blue-400', stroke: '#60a5fa' };
-    if (score >= 600) return { label: 'Fair', color: 'text-yellow-400', stroke: '#facc15' };
+    if (score >= 800) return { label: 'Excellent', color: 'text-indigo-300', stroke: '#818cf8' };
+    if (score >= 700) return { label: 'Good', color: 'text-sky-300', stroke: '#38bdf8' };
+    if (score >= 600) return { label: 'Fair', color: 'text-amber-300', stroke: '#fbbf24' };
     return { label: 'Poor', color: 'text-red-400', stroke: '#f87171' };
   };
 
@@ -423,35 +424,37 @@ export default function WalletPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               {/* ── No Wallet Onboarding Card ── */}
               {showNoWalletCard && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowNoWalletCard(false)}>
-                  <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl">🦊</div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm" onClick={() => setShowNoWalletCard(false)} role="presentation">
+                  <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl" onClick={e => e.stopPropagation()} role="dialog" aria-labelledby="wallet-modal-title">
+                    <div className="mb-5 flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-indigo-500/30 bg-indigo-500/10">
+                        <Shield className="h-6 w-6 text-indigo-300" />
+                      </div>
                       <div>
-                        <h3 className="text-lg font-bold text-white">MetaMask Required</h3>
-                        <p className="text-xs text-gray-400">To interact with the vault, you need a Web3 wallet</p>
+                        <h3 id="wallet-modal-title" className="text-lg font-semibold text-white">Wallet required</h3>
+                        <p className="text-xs text-slate-400">Deposits and credit actions need a browser wallet (e.g. MetaMask).</p>
                       </div>
                     </div>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
-                        <span className="text-lg shrink-0">1️⃣</span>
+                    <div className="mb-6 space-y-3">
+                      <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-bold text-slate-400">1</span>
                         <div>
-                          <p className="text-sm font-semibold text-white">Install MetaMask</p>
-                          <p className="text-xs text-gray-400">Free browser extension — works in Chrome, Firefox, Brave</p>
+                          <p className="text-sm font-semibold text-white">Install a wallet</p>
+                          <p className="text-xs text-slate-400">Browser extension — Chrome, Firefox, or Brave.</p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
-                        <span className="text-lg shrink-0">2️⃣</span>
+                      <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-bold text-slate-400">2</span>
                         <div>
-                          <p className="text-sm font-semibold text-white">Add Mantle Network</p>
-                          <p className="text-xs text-gray-400">RPC: rpc.mantle.xyz · Chain ID: 5000 · Symbol: MNT</p>
+                          <p className="text-sm font-semibold text-white">Use Mantle</p>
+                          <p className="text-xs text-slate-400">RPC: rpc.mantle.xyz · Chain ID: 5000 · Symbol: MNT</p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/60 border border-gray-700">
-                        <span className="text-lg shrink-0">3️⃣</span>
+                      <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xs font-bold text-slate-400">3</span>
                         <div>
-                          <p className="text-sm font-semibold text-white">Connect &amp; Explore</p>
-                          <p className="text-xs text-gray-400">You can view the live dashboard without connecting — only deposits &amp; loans require a wallet</p>
+                          <p className="text-sm font-semibold text-white">Connect when ready</p>
+                          <p className="text-xs text-slate-400">You can explore the dashboard without connecting.</p>
                         </div>
                       </div>
                     </div>
@@ -460,13 +463,14 @@ export default function WalletPage() {
                         href="https://metamask.io/download/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-sm transition-colors"
+                        className="flex-1 rounded-xl bg-indigo-500 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-400"
                       >
-                        Install MetaMask →
+                        Get MetaMask
                       </a>
                       <button
+                        type="button"
                         onClick={() => setShowNoWalletCard(false)}
-                        className="px-4 py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:text-white text-sm transition-colors"
+                        className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
                       >
                         Dismiss
                       </button>
@@ -477,7 +481,7 @@ export default function WalletPage() {
 
          <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Your Portfolio</h2>
-            <p className="text-sm text-gray-400">Manage your connected wallet, credit, and vault deposits.</p>
+            <p className="text-sm text-slate-400">Manage your connected wallet, credit, and vault deposits.</p>
          </div>
       </div>
 
@@ -485,14 +489,14 @@ export default function WalletPage() {
         
         {/* Wallet Overview Panel */}
         <div className="md:col-span-1 space-y-6">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-800/80">
-                   <div className="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center">
-                      <Wallet className="w-5 h-5 text-gray-300" />
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-800/80">
+                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+                      <Wallet className="w-5 h-5 text-slate-300" />
                    </div>
                    <div>
                        <h3 className="text-sm font-semibold text-white">Connected Wallet</h3>
-                       <p className="text-xs text-gray-400 mt-0.5">
+                       <p className="text-xs text-slate-400 mt-0.5">
                          {isConnected ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : 'Not Connected'}
                        </p>
                    </div>
@@ -502,27 +506,27 @@ export default function WalletPage() {
                   <div className="space-y-4">
                      <button
                         onClick={disconnectWallet}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gray-800 px-3 py-2 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-all border border-gray-700"
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 hover:text-white transition-all border border-slate-700"
                      >
                         <LogOut className="w-3.5 h-3.5" /> Disconnect Wallet
                      </button>
-                     <div className="bg-gray-950/50 rounded-xl p-4 border border-gray-800/50">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">ETH Balance</p>
+                     <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/50">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ETH Balance</p>
                         <p className="text-xl font-bold text-white">
-                           {ethBal ? Number(ethBal).toFixed(4) : '0.0000'} <span className="text-sm text-gray-400 font-medium">ETH</span>
+                           {ethBal ? Number(ethBal).toFixed(4) : '0.0000'} <span className="text-sm text-slate-400 font-medium">ETH</span>
                         </p>
                      </div>
-                     <div className="bg-gray-950/50 rounded-xl p-4 border border-gray-800/50">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">USDt Balance</p>
+                     <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/50">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">USDt Balance</p>
                         <p className="text-xl font-bold text-white">
-                           {usdtBal ? Number(usdtBal).toFixed(2) : '0.00'} <span className="text-sm text-gray-400 font-medium">USDt</span>
+                           {usdtBal ? Number(usdtBal).toFixed(2) : '0.00'} <span className="text-sm text-slate-400 font-medium">USDt</span>
                         </p>
                      </div>
                   </div>
                 ) : (
                   <div className="py-8 flex flex-col items-center justify-center text-center">
-                     <p className="text-sm text-gray-500 mb-4">Connect wallet to view balances</p>
-                     <button onClick={connectWallet} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-400 transition-all">
+                     <p className="text-sm text-slate-500 mb-4">Connect wallet to view balances</p>
+                     <button onClick={connectWallet} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-400 transition-all">
                         <Wallet className="w-4 h-4" /> Connect MetaMask
                      </button>
                   </div>
@@ -531,12 +535,12 @@ export default function WalletPage() {
 
             {/* Deposit Form */}
             {isConnected && (
-              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                   <div className="flex items-center gap-2 mb-4">
-                     <Upload className="w-4 h-4 text-violet-400" />
+                     <Upload className="w-4 h-4 text-indigo-400" />
                      <h3 className="text-sm font-semibold text-white">Deposit to Treasury</h3>
                   </div>
-                  <p className="text-xs text-gray-400 mb-4">Provide liquidity to the multi-sig vault. Approvals may be required.</p>
+                  <p className="text-xs text-slate-400 mb-4">Provide liquidity to the multi-sig vault. Approvals may be required.</p>
                   
                   <div className="space-y-3">
                      <div className="relative">
@@ -545,14 +549,14 @@ export default function WalletPage() {
                          value={depositAmount}
                          onChange={(e) => setDepositAmount(e.target.value)}
                          placeholder="Amount in USDt"
-                         className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all font-mono"
+                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono"
                        />
-                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 uppercase tracking-wider">USDt</span>
+                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 uppercase tracking-wider">USDt</span>
                      </div>
                      <button
                         onClick={handleDeposit}
                         disabled={isDepositing || !depositAmount}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white hover:bg-violet-500 transition-all shadow-[0_0_20px_-5px_rgba(124,58,237,0.5)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-500 transition-all shadow-[0_0_20px_-5px_rgba(99,102,241,0.45)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
                      >
                        {isDepositing ? (
                          <><RefreshCw className="w-4 h-4 animate-spin" /> Depositing...</>
@@ -562,11 +566,11 @@ export default function WalletPage() {
                      </button>
                   </div>
                   {txHash && (
-                    <div className="mt-4 p-3 rounded-lg bg-violet-950/30 border border-violet-900/50 flex items-start gap-2">
-                       <CheckCircle2 className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+                    <div className="mt-4 p-3 rounded-lg bg-indigo-950/30 border border-indigo-900/50 flex items-start gap-2">
+                       <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                        <div className="overflow-hidden">
-                          <p className="text-xs text-violet-400 font-medium mb-0.5">Deposit Successful</p>
-                          <p className="text-[10px] text-violet-500/70 truncate font-mono">{txHash}</p>
+                          <p className="text-xs text-indigo-400 font-medium mb-0.5">Deposit Successful</p>
+                          <p className="text-[10px] text-indigo-500/70 truncate font-mono">{txHash}</p>
                        </div>
                     </div>
                   )}
@@ -577,25 +581,25 @@ export default function WalletPage() {
         {/* Credit & Loans Panel */}
         <div className="md:col-span-2 space-y-6">
             {/* Credit Score Module */}
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none" />
                 
                 {!isConnected ? (
                    <div className="h-full min-h-[250px] flex flex-col items-center justify-center text-center">
-                      <Activity className="w-12 h-12 text-gray-700 mb-4" />
+                      <Activity className="w-12 h-12 text-slate-700 mb-4" />
                       <h3 className="text-lg font-semibold text-white mb-2">Credit System Locked</h3>
-                      <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">Connect your wallet to evaluate your on-chain history and access uncollateralized credit lines.</p>
-                      <button onClick={connectWallet} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-400 transition-all">
+                      <p className="text-sm text-slate-400 max-w-sm mx-auto mb-6">Connect your wallet to evaluate your on-chain history and access uncollateralized credit lines.</p>
+                      <button onClick={connectWallet} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-400 transition-all">
                         <Wallet className="w-4 h-4" /> Connect MetaMask
                       </button>
                    </div>
                 ) : !creditProfile ? (
                    <div className="h-full min-h-[250px] flex flex-col items-center justify-center text-center">
-                      <div className="w-16 h-16 rounded-full bg-blue-950/30 border border-blue-900/50 flex items-center justify-center mb-6">
-                         <Activity className="w-6 h-6 text-blue-400" />
+                      <div className="w-16 h-16 rounded-full bg-indigo-950/30 border border-indigo-900/50 flex items-center justify-center mb-6">
+                         <Activity className="w-6 h-6 text-indigo-400" />
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">Check On-chain Credit Profile</h3>
-                      <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">Our Credit Agent will analyze on-chain history and generate a score instantly.</p>
+                      <p className="text-sm text-slate-400 max-w-sm mx-auto mb-6">Our Credit Agent will analyze on-chain history and generate a score instantly.</p>
                       
                       <div className="flex w-full max-w-md mx-auto items-center gap-2 mb-4">
                         <input
@@ -606,14 +610,14 @@ export default function WalletPage() {
                              if (creditCheckError) setCreditCheckError(null);
                            }}
                            placeholder="Enter 0x..."
-                           className="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 font-mono"
+                           className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-mono"
                         />
                       </div>
 
                       <button
                         onClick={checkCreditScore}
                         disabled={isCheckingCredit || !lookupAddress}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-6 py-3 text-sm font-bold text-white hover:bg-blue-400 transition-all shadow-[0_0_20px_-5px_var(--color-blue-500)] disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-400 transition-all shadow-[0_0_20px_-5px_var(--color-indigo-500)] disabled:opacity-50"
                       >
                          {isCheckingCredit ? (
                             <><RefreshCw className="w-4 h-4 animate-spin" /> Analyzing History...</>
@@ -632,7 +636,7 @@ export default function WalletPage() {
                          <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                             {/* Background Circle */}
                             <path
-                              className="text-gray-800"
+                              className="text-slate-800"
                               strokeWidth="3"
                               stroke="currentColor"
                               fill="none"
@@ -651,7 +655,7 @@ export default function WalletPage() {
                          </svg>
                          <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-4xl font-extrabold text-white tracking-tight">{creditProfile.score}</span>
-                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mt-1">Score</span>
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-1">Score</span>
                          </div>
                       </div>
 
@@ -664,59 +668,59 @@ export default function WalletPage() {
                                   {tierInfo?.label} Tier
                                </span>
                             </div>
-                            <p className="text-sm text-gray-400">Last updated: {new Date(creditProfile.lastUpdated).toLocaleString()}</p>
+                            <p className="text-sm text-slate-400">Last updated: {new Date(creditProfile.lastUpdated).toLocaleString()}</p>
                          </div>
 
                          {/* ML Risk Assessment Badge */}
                          {mlPrediction && (
                            <div className={`rounded-xl p-4 border ${
-                             mlPrediction.riskBucket === 'low' ? 'bg-violet-950/20 border-violet-900/40' :
-                             mlPrediction.riskBucket === 'medium' ? 'bg-yellow-950/20 border-yellow-900/40' :
+                             mlPrediction.riskBucket === 'low' ? 'bg-indigo-950/20 border-indigo-900/40' :
+                             mlPrediction.riskBucket === 'medium' ? 'bg-amber-950/20 border-amber-900/40' :
                              mlPrediction.riskBucket === 'high' ? 'bg-orange-950/20 border-orange-900/40' :
                              'bg-red-950/20 border-red-900/40'
                            }`}>
                              <div className="flex items-center justify-between">
                                <div className="flex items-center gap-2">
-                                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">ML Risk</span>
+                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ML Risk</span>
                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                   mlPrediction.riskBucket === 'low' ? 'text-violet-400 bg-violet-500/10' :
-                                   mlPrediction.riskBucket === 'medium' ? 'text-yellow-400 bg-yellow-500/10' :
+                                   mlPrediction.riskBucket === 'low' ? 'text-indigo-400 bg-indigo-500/10' :
+                                   mlPrediction.riskBucket === 'medium' ? 'text-amber-400 bg-amber-500/10' :
                                    mlPrediction.riskBucket === 'high' ? 'text-orange-400 bg-orange-500/10' :
                                    'text-red-400 bg-red-500/10'
                                  }`}>
                                    {mlPrediction.riskBucket}
                                  </span>
                                </div>
-                               <span className="text-xs text-gray-400">Default probability: <span className="font-bold text-white">{(mlPrediction.probability * 100).toFixed(2)}%</span></span>
+                               <span className="text-xs text-slate-400">Default probability: <span className="font-bold text-white">{(mlPrediction.probability * 100).toFixed(2)}%</span></span>
                              </div>
                            </div>
                          )}
 
                          <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-gray-950/60 rounded-xl p-4 border border-gray-800/60">
-                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Credit Limit</p>
-                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.limit)} <span className="text-xs text-gray-400 font-medium">USDt</span></p>
+                            <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
+                               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Credit Limit</p>
+                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.limit)} <span className="text-xs text-slate-400 font-medium">USDt</span></p>
                             </div>
-                            <div className="bg-gray-950/60 rounded-xl p-4 border border-gray-800/60">
-                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Interest Rate</p>
-                               <p className="text-lg font-bold text-white">{formatPercentage(creditProfile.rate / 100)} <span className="text-xs text-gray-400 font-medium">APR</span></p>
+                            <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
+                               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Interest Rate</p>
+                               <p className="text-lg font-bold text-white">{formatPercentage(creditProfile.rate / 100)} <span className="text-xs text-slate-400 font-medium">APR</span></p>
                             </div>
-                            <div className="bg-gray-950/60 rounded-xl p-4 border border-gray-800/60">
-                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Available to Borrow</p>
-                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.available)} <span className="text-xs text-gray-400 font-medium">USDt</span></p>
+                            <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
+                               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Available to Borrow</p>
+                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.available)} <span className="text-xs text-slate-400 font-medium">USDt</span></p>
                             </div>
-                            <div className="bg-gray-950/60 rounded-xl p-4 border border-gray-800/60">
-                               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Borrowed</p>
-                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.borrowed)} <span className="text-xs text-gray-400 font-medium">USDt</span></p>
+                            <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
+                               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Borrowed</p>
+                               <p className="text-lg font-bold text-white">{formatAmount(creditProfile.borrowed)} <span className="text-xs text-slate-400 font-medium">USDt</span></p>
                             </div>
                          </div>
 
                          {/* Borrow Form */}
                          {BigInt(creditProfile.available) > 0n && (
-                           <div className="bg-gray-950/60 rounded-xl p-4 border border-blue-900/30">
+                           <div className="bg-slate-950/60 rounded-xl p-4 border border-indigo-900/30">
                               <div className="flex items-center gap-2 mb-3">
-                                 <ArrowDownCircle className="w-4 h-4 text-blue-400" />
-                                 <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Borrow USDt</p>
+                                 <ArrowDownCircle className="w-4 h-4 text-indigo-400" />
+                                 <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Borrow USDt</p>
                               </div>
                               <div className="flex items-center gap-2">
                                  <div className="relative flex-1">
@@ -727,22 +731,22 @@ export default function WalletPage() {
                                       value={borrowAmount}
                                       onChange={(e) => setBorrowAmount(e.target.value)}
                                       placeholder={`Max ${formatAmount(creditProfile.available)}`}
-                                      className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 font-mono"
+                                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 font-mono"
                                     />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-500 uppercase">USDt</span>
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-500 uppercase">USDt</span>
                                  </div>
                                  <button
                                     onClick={handleBorrow}
                                     disabled={isBorrowing || !borrowAmount || Number(borrowAmount) <= 0}
-                                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                  >
                                     {isBorrowing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowDownCircle className="w-3.5 h-3.5" />}
                                     {isBorrowing ? 'Locking collateral...' : 'Lock & Borrow'}
                                  </button>
                               </div>
-                              <p className="mt-2 text-[10px] text-gray-500">100% USDt collateral is locked on-chain before the loan is issued. Returned on full repayment.</p>
+                              <p className="mt-2 text-[10px] text-slate-500">100% USDt collateral is locked on-chain before the loan is issued. Returned on full repayment.</p>
                               {borrowResult && (
-                                <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-violet-950/30 border border-violet-900/50 text-violet-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
+                                <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-indigo-950/30 border border-indigo-900/50 text-indigo-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                    {borrowResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                                    <span>{borrowResult.message}</span>
                                 </div>
@@ -757,12 +761,12 @@ export default function WalletPage() {
                                   value={lookupAddress}
                                   onChange={(e) => setLookupAddress(e.target.value)}
                                   placeholder="0x..."
-                                  className="w-48 bg-gray-950 border border-gray-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+                                  className="w-48 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 font-mono"
                                />
                                <button
                                  onClick={checkCreditScore}
                                  disabled={isCheckingCredit || !lookupAddress}
-                                 className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center justify-center sm:justify-start gap-1 p-2"
+                                 className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center justify-center sm:justify-start gap-1 p-2"
                                >
                                   <RefreshCw className={`w-3 h-3 ${isCheckingCredit ? 'animate-spin' : ''}`} /> Evaluate
                                </button>
@@ -775,19 +779,19 @@ export default function WalletPage() {
 
             {/* Active Loans List */}
             {isConnected && creditProfile && (
-                <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-                   <div className="flex items-center gap-2 mb-6 pb-4 border-b border-gray-800/80">
-                      <History className="w-5 h-5 text-gray-300" />
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                   <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-800/80">
+                      <History className="w-5 h-5 text-slate-300" />
                       <h3 className="text-sm font-semibold text-white">Your Active Loans</h3>
                    </div>
 
                    {activeLoans.length === 0 ? (
                       <div className="py-8 flex flex-col items-center justify-center text-center">
-                         <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center mb-3">
-                            <TrendingDown className="w-5 h-5 text-gray-600" />
+                         <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center mb-3">
+                            <TrendingDown className="w-5 h-5 text-slate-600" />
                          </div>
-                         <p className="text-sm font-medium text-gray-500 mb-1">No active loans found</p>
-                         <p className="text-xs text-gray-600">You currently do not have any debt in the protocol.</p>
+                         <p className="text-sm font-medium text-slate-500 mb-1">No active loans found</p>
+                         <p className="text-xs text-slate-600">You currently do not have any debt in the protocol.</p>
                       </div>
                    ) : (
                       <div className="space-y-4">
@@ -800,25 +804,25 @@ export default function WalletPage() {
                             const isUrgent = daysLeft <= 3;
 
                             return (
-                            <div key={loan.id} className="bg-gray-950/50 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                            <div key={loan.id} className="bg-slate-950/50 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors">
                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <div>
                                      <div className="flex items-center gap-2 mb-1">
                                         <span className="text-lg font-bold text-white">{formatAmount(loan.principal)} USDt</span>
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">Active</span>
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">Active</span>
                                      </div>
-                                     <p className="text-xs text-gray-500">Borrowed on {new Date(loan.borrowedAt * 1000).toLocaleDateString()}</p>
+                                     <p className="text-xs text-slate-500">Borrowed on {new Date(loan.borrowedAt * 1000).toLocaleDateString()}</p>
                                   </div>
                                   
                                   <div className="flex items-center gap-6">
                                      <div className="text-right">
-                                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-0.5">Interest</p>
-                                        <p className="text-sm font-medium text-gray-300">{formatPercentage(loan.interestRate / 100)}</p>
+                                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-0.5">Interest</p>
+                                        <p className="text-sm font-medium text-slate-300">{formatPercentage(loan.interestRate / 100)}</p>
                                      </div>
                                      <div className="text-right">
-                                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-0.5">Due Date</p>
-                                        <p className="text-sm font-medium text-gray-300">{new Date(loan.dueDate * 1000).toLocaleDateString()}</p>
-                                        <span className={`text-[10px] font-bold ${isUrgent ? 'text-red-400' : 'text-gray-500'}`}>
+                                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-0.5">Due Date</p>
+                                        <p className="text-sm font-medium text-slate-300">{new Date(loan.dueDate * 1000).toLocaleDateString()}</p>
+                                        <span className={`text-[10px] font-bold ${isUrgent ? 'text-red-400' : 'text-slate-500'}`}>
                                           {daysLeft}d left
                                         </span>
                                      </div>
@@ -829,7 +833,7 @@ export default function WalletPage() {
                                   </div>
                                </div>
                                
-                               <div className="mt-4 pt-4 border-t border-gray-800/80 sm:hidden">
+                               <div className="mt-4 pt-4 border-t border-slate-800/80 sm:hidden">
                                   <div className="flex justify-between items-center">
                                       <p className="text-xs font-semibold text-red-500/70 uppercase tracking-widest">Total Due</p>
                                       <p className="text-sm font-bold text-red-400">{formatAmount(loan.totalDue)} USDt</p>
@@ -840,17 +844,17 @@ export default function WalletPage() {
                                {repaidBig > 0n && (
                                  <div className="mt-3">
                                    <div className="flex items-center justify-between mb-1">
-                                     <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Repaid</span>
-                                     <span className="text-[10px] text-gray-400 font-mono">{formatAmount(loan.repaid || '0')} / {formatAmount(loan.principal)} USDt ({repayPercent}%)</span>
+                                     <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Repaid</span>
+                                     <span className="text-[10px] text-slate-400 font-mono">{formatAmount(loan.repaid || '0')} / {formatAmount(loan.principal)} USDt ({repayPercent}%)</span>
                                    </div>
-                                   <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                     <div className="h-full bg-violet-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(repayPercent, 100)}%` }} />
+                                   <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                     <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${Math.min(repayPercent, 100)}%` }} />
                                    </div>
                                  </div>
                                )}
 
                                {/* Repay inline */}
-                               <div className="mt-4 pt-4 border-t border-gray-800/80">
+                               <div className="mt-4 pt-4 border-t border-slate-800/80">
                                   {repayLoanId === loan.id ? (
                                      <div className="flex items-center gap-2">
                                         <div className="relative flex-1">
@@ -861,21 +865,21 @@ export default function WalletPage() {
                                               value={repayAmount}
                                               onChange={(e) => setRepayAmount(e.target.value)}
                                               placeholder={`Max ${formatAmount(loan.totalDue)}`}
-                                              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-violet-500/50 font-mono"
+                                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 font-mono"
                                            />
-                                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-gray-500 uppercase">USDt</span>
+                                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-500 uppercase">USDt</span>
                                         </div>
                                         <button
                                            onClick={() => handleRepay(loan.id)}
                                            disabled={isRepaying || !repayAmount || Number(repayAmount) <= 0}
-                                           className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                           className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white hover:bg-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                            {isRepaying ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowUpCircle className="w-3.5 h-3.5" />}
                                            {isRepaying ? 'Paying...' : 'Pay'}
                                         </button>
                                         <button
                                            onClick={() => { setRepayLoanId(null); setRepayAmount(''); setRepayResult(null); }}
-                                           className="shrink-0 text-xs text-gray-500 hover:text-gray-300 px-2 py-2"
+                                           className="shrink-0 text-xs text-slate-500 hover:text-slate-300 px-2 py-2"
                                         >
                                            Cancel
                                         </button>
@@ -895,13 +899,13 @@ export default function WalletPage() {
                                             } catch { setRepayAmount(formatUnits(BigInt(loan.totalDue || loan.principal), 6)); }
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
                                      >
                                         <ArrowUpCircle className="w-4 h-4" /> Repay This Loan
                                      </button>
                                   )}
                                   {repayResult && repayLoanId === loan.id && (
-                                     <div className={`mt-2 p-2.5 rounded-lg flex items-start gap-2 text-xs ${repayResult.success ? 'bg-violet-950/30 border border-violet-900/50 text-violet-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
+                                     <div className={`mt-2 p-2.5 rounded-lg flex items-start gap-2 text-xs ${repayResult.success ? 'bg-indigo-950/30 border border-indigo-900/50 text-indigo-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                         {repayResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                                         <span>{repayResult.message}</span>
                                      </div>
@@ -917,36 +921,36 @@ export default function WalletPage() {
 
             {/* Loan History Toggle */}
             {isConnected && creditProfile && (
-                <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
                    <button
                      onClick={() => { setShowHistory(!showHistory); if (!showHistory) fetchLoanHistory(); }}
                      className="flex items-center gap-2 w-full text-left"
                    >
-                      <History className="w-5 h-5 text-gray-400" />
+                      <History className="w-5 h-5 text-slate-400" />
                       <h3 className="text-sm font-semibold text-white">Loan History</h3>
-                      <span className="ml-auto text-xs text-gray-500">{showHistory ? '▲ Hide' : '▼ Show'}</span>
+                      <span className="ml-auto text-xs text-slate-500">{showHistory ? '▲ Hide' : '▼ Show'}</span>
                    </button>
 
                    {showHistory && (
-                     <div className="mt-4 pt-4 border-t border-gray-800/80">
+                     <div className="mt-4 pt-4 border-t border-slate-800/80">
                        {loanHistory.filter(l => !l.active).length === 0 ? (
-                         <p className="text-sm text-gray-500 text-center py-4">No past loans found.</p>
+                         <p className="text-sm text-slate-500 text-center py-4">No past loans found.</p>
                        ) : (
                          <div className="space-y-3">
                            {loanHistory.filter(l => !l.active).map(loan => {
                              const wasDefaulted = BigInt(loan.repaid || '0') < BigInt(loan.principal);
                              return (
-                               <div key={loan.id} className={`bg-gray-950/50 border rounded-xl p-4 ${wasDefaulted ? 'border-red-900/40' : 'border-violet-900/40'}`}>
+                               <div key={loan.id} className={`bg-slate-950/50 border rounded-xl p-4 ${wasDefaulted ? 'border-red-900/40' : 'border-indigo-900/40'}`}>
                                  <div className="flex items-center justify-between">
                                    <div className="flex items-center gap-2">
                                      <span className="text-sm font-bold text-white">{formatAmount(loan.principal)} USDt</span>
                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                       wasDefaulted ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+                                       wasDefaulted ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
                                      }`}>
                                        {wasDefaulted ? 'Defaulted' : 'Repaid'}
                                      </span>
                                    </div>
-                                   <span className="text-xs text-gray-500">{new Date(loan.borrowedAt * 1000).toLocaleDateString()}</span>
+                                   <span className="text-xs text-slate-500">{new Date(loan.borrowedAt * 1000).toLocaleDateString()}</span>
                                  </div>
                                </div>
                              );
