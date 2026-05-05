@@ -294,7 +294,7 @@ export default function Dashboard() {
             <Shield className="h-5 w-5 text-indigo-300" />
           </div>
           <div className="flex-1">
-            <p className="mb-0.5 text-sm font-semibold text-slate-100">Mission Control overview</p>
+            <p className="mb-0.5 text-sm font-semibold text-slate-100">Dashboard overview</p>
             <p className="text-xs leading-relaxed text-slate-400">
               Three agents coordinate treasury allocation, credit decisions, and risk monitoring on Mantle.
               The <strong className="text-indigo-300">Board Meeting</strong> timer marks the next structured consensus cycle.
@@ -346,7 +346,7 @@ export default function Dashboard() {
               <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-indigo-300">
                 <ArrowLeft className="w-3.5 h-3.5" /> Home
               </Link>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">Mission Control</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">Dashboard</h2>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-sm text-slate-400">Live treasury health and agent activity</p>

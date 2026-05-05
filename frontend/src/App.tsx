@@ -32,7 +32,7 @@ export default function App() {
                     Quorum
                   </h1>
                   <p className="text-xs text-slate-500 hidden sm:block">
-                    Autonomous DAO CFO &mdash; Mantle Network
+                    Treasury & credit demo — Mantle Network
                   </p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-800 mt-auto bg-slate-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <span>Quorum &mdash; Autonomous DAO CFO on Mantle</span>
+          <span>Quorum — treasury & credit demo on Mantle</span>
           <span>Powered by Mantle Network</span>
         </div>
       </footer>

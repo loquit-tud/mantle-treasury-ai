@@ -87,13 +87,13 @@ export default function Landing() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Quorum</p>
-              <p className="text-sm font-semibold text-slate-100">Autonomous Treasury Engine</p>
+              <p className="text-sm font-semibold text-slate-100">Treasury & credit prototype</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-300 sm:inline-flex">
               <span className={`h-1.5 w-1.5 rounded-full ${stats?.healthy ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              {stats?.healthy ? 'Systems online' : 'Syncing'}
+              {stats?.healthy ? 'Demo backend up' : 'Connecting…'}
             </span>
             <Link
               to="/dashboard"
@@ -113,18 +113,18 @@ export default function Landing() {
                 Built on Mantle mainnet
               </p>
               <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
-                Institutional treasury operations, fully autonomous.
+                Automated treasury and lending you can try on Mantle.
               </h1>
               <p className="max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-                Quorum orchestrates three AI agents that manage treasury allocation, credit underwriting, and risk controls.
-                Decisions are auditable and executed directly on-chain.
+                Quorum wires three AI agents into treasury allocation, credit decisions, and risk checks — experimental software,
+                executed on-chain so you can follow what happened and when.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
                   to="/dashboard"
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400"
                 >
-                  Launch Mission Control
+                  Open live dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
@@ -141,7 +141,7 @@ export default function Landing() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-slate-950/50">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-200">Live protocol snapshot</p>
+                <p className="text-sm font-semibold text-slate-200">Live demo snapshot</p>
                 <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-400">Real-time API</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -153,8 +153,7 @@ export default function Landing() {
               <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-4">
                 <p className="text-xs uppercase tracking-[0.14em] text-slate-500">One-line pitch</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                  Quorum is an AI-native treasury and credit layer for DAOs, bringing tokenized short-term credit
-                  workflows on-chain with autonomous risk governance.
+                  A small-stack demo: agents propose treasury moves and loans, then consensus gates what actually executes — useful for hackathons and learning, not a substitute for audits or legal advice.
                 </p>
               </div>
             </div>
@@ -163,9 +162,9 @@ export default function Landing() {
 
         <section className="border-b border-slate-800/70">
           <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
-            <h2 className="text-2xl font-semibold text-white">Why this feels enterprise-ready</h2>
+            <h2 className="text-2xl font-semibold text-white">How the three agents split the work</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-              Product credibility comes from strict risk controls, verifiable execution, and role-separated AI agents.
+              Each agent has a narrow job; proposals meet in a board-style step before anything is sent on-chain — easier to reason about than one model doing everything.
             </p>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <FeatureCard
@@ -181,7 +180,7 @@ export default function Landing() {
               <FeatureCard
                 icon={<BrainCircuit className="h-5 w-5 text-indigo-300" />}
                 title="Risk Agent"
-                description="Monitors systemic exposure, flags anomalies, and triggers restructuring workflows before defaults cascade."
+                description="Watches exposure, surfaces odd patterns, and can suggest restructuring paths before small issues snowball."
               />
             </div>
           </div>
@@ -209,7 +208,7 @@ export default function Landing() {
           <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
             <h2 className="text-2xl font-semibold text-white">On-chain evidence</h2>
             <p className="mt-3 max-w-2xl text-sm text-slate-400">
-              Every critical claim in the pitch is backed by a public artifact.
+              Contracts, backend health, and source — open for inspection.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
