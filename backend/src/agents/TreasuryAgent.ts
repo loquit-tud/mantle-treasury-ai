@@ -708,8 +708,15 @@ export class TreasuryAgent {
           )`,
         ];
         const pool = new ethers.Contract(this.config.aavePoolAddress, poolAbi, this.provider);
-        const data = await pool.getReserveData(this.config.usdtAddress);
-        const rawRate = Number(data.currentLiquidityRate);
+        const reserveData = await pool.getReserveData(this.config.usdtAddress);
+        // Different pool implementations return either:
+        // - flattened struct fields on root object, or
+        // - nested tuple under `.data`.
+        const liquidityRateRaw =
+          reserveData?.currentLiquidityRate ??
+          reserveData?.data?.currentLiquidityRate ??
+          0;
+        const rawRate = Number(liquidityRateRaw);
         const apy = rawRate / 1e25; // ray (27 dec) → percentage
         if (apy > 0 && apy < 50) {
           opportunities.push({
