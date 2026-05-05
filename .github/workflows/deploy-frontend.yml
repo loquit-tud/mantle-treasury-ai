@@ -1,6 +1,3 @@
-# GitHub Pages via Actions artifact (no job-level `environment:`).
-# Using `environment: github-pages` triggered branch protection that rejected `master`.
-
 name: Deploy Frontend to GitHub Pages
 
 on:
@@ -23,6 +20,9 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
