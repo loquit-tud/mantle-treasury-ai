@@ -1,3 +1,6 @@
+# Live site uses Pages source "Deploy from branch: gh-pages" (see repo Pages settings).
+# Push the Vite build to `gh-pages` on each change on master.
+
 name: Deploy Frontend to GitHub Pages
 
 on:
@@ -9,12 +12,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: gh-pages-deploy
   cancel-in-progress: true
 
 jobs:
@@ -37,15 +38,9 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Push build to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: frontend/dist
-
-      # Omit job-level `environment: github-pages`; custom deployment-branch policy allowed only `gh-pages`, blocking master.
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          force_orphan: true
