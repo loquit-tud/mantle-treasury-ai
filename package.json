@@ -4,7 +4,7 @@
   "private": true,
   "description": "Quorum — Autonomous DAO CFO for Mantle Network",
   "scripts": {
-    "build": "npm --prefix backend install && npm --prefix backend run build",
+    "build": "npm --prefix backend install --include=dev && npm --prefix backend run build",
     "start": "npm --prefix backend run start",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",

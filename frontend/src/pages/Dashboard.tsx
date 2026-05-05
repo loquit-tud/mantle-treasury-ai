@@ -45,6 +45,7 @@ import {
 import { apiUrl, wsUrl } from '../utils/api';
 
 const WS_URL = wsUrl();
+const DUMMY_BORROWER_ADDRESS = '0x0000000000000000000000000000000000000001';
 
 // API helpers for Quick Actions
 
@@ -257,6 +258,9 @@ export default function Dashboard() {
     yieldPositions: [],
     lastUpdated: 0,
   };
+  const activeLoans = (data?.activeLoans ?? []).filter(
+    (loan) => loan.borrower.toLowerCase() !== DUMMY_BORROWER_ADDRESS
+  );
   
   // Prepare Credit Score Distribution data
   const scoreDistribution = [
@@ -438,7 +442,7 @@ export default function Dashboard() {
           label="Credit Profiles"
           tooltip="Unique borrower wallets scored by the Credit Agent. Scores 500–1000 determine loan eligibility and interest rate."
           value={String(data?.creditProfiles?.length ?? 0)}
-          sub={`${data?.activeLoans?.length ?? 0} active loans`}
+          sub={`${activeLoans.length} active loans`}
         />
       </div>
 
@@ -545,7 +549,7 @@ export default function Dashboard() {
       {/* Agent Chat + Fund Flow Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AgentChat lastMessage={lastMessage} initialDialogues={dialogueRounds} />
-        <FundFlowDiagram treasury={treasury} loanCount={data?.activeLoans?.length ?? 0} />
+        <FundFlowDiagram treasury={treasury} loanCount={activeLoans.length} />
       </div>
 
       {/* Main Content Layout */}
@@ -555,7 +559,7 @@ export default function Dashboard() {
           
           {/* Active Loans */}
           <Panel title="Active Loans" icon={<Users className="w-4 h-4 text-fuchsia-400" />}>
-            {(!data?.activeLoans || data.activeLoans.length === 0) ? (
+            {activeLoans.length === 0 ? (
               <EmptyState text="No active loans" />
             ) : (
               <div className="overflow-x-auto">
@@ -570,7 +574,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {data.activeLoans.map((loan) => {
+                    {activeLoans.map((loan) => {
                       const now = Date.now() / 1000;
                       const isOverdue = loan.dueDate < now;
                       const overdueDays = isOverdue ? Math.ceil((now - loan.dueDate) / 86400) : 0;

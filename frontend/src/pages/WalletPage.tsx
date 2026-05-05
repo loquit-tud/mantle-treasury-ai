@@ -130,6 +130,7 @@ export default function WalletPage() {
   }, [connectWallet]);
 
   const [isCheckingCredit, setIsCheckingCredit] = useState(false);
+  const [creditCheckError, setCreditCheckError] = useState<string | null>(null);
   const [creditProfile, setCreditProfile] = useState<CreditProfile | null>(null);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [depositAmount, setDepositAmount] = useState('');
@@ -166,7 +167,7 @@ export default function WalletPage() {
   // Fetch initial user data (only if profile exists already)
   useEffect(() => {
     if (address && isConnected) {
-      fetch(apiUrl(`/api/credit/${address}`))
+      fetch(apiUrl(`/api/credit/${address.toLowerCase()}`))
         .then(res => res.json())
         .then(data => {
             if (data.success && data.data && data.data.exists) {
@@ -186,7 +187,7 @@ export default function WalletPage() {
     const target = lookupAddress || address;
     if (!target) return;
     try {
-        const res = await fetch(apiUrl(`/api/credit/${target}/loans`));
+        const res = await fetch(apiUrl(`/api/credit/${target.toLowerCase()}/loans`));
         const data = await res.json();
         if (data.success) {
             setLoans(data.data as Loan[]);
@@ -200,7 +201,7 @@ export default function WalletPage() {
     const target = lookupAddress || address;
     if (!target) return;
     try {
-        const res = await fetch(apiUrl(`/api/credit/${target}/history`));
+        const res = await fetch(apiUrl(`/api/credit/${target.toLowerCase()}/history`));
         const data = await res.json();
         if (data.success) {
             setLoanHistory(data.data as Loan[]);
@@ -245,7 +246,7 @@ export default function WalletPage() {
 
       // Step 2: Request loan from backend
       const wei = parsedAmount.toString();
-      const res = await fetch(apiUrl(`/api/credit/${target}/borrow`), {
+      const res = await fetch(apiUrl(`/api/credit/${target.toLowerCase()}/borrow`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: wei }),
@@ -293,7 +294,7 @@ export default function WalletPage() {
       await repayTx.wait();
 
       // 3. Notify backend to sync local state
-      fetch(apiUrl(`/api/credit/${target}/repay`), {
+      fetch(apiUrl(`/api/credit/${target.toLowerCase()}/repay`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ loanId, amount: parsedAmount.toString(), onChainDone: true }),
@@ -323,18 +324,28 @@ export default function WalletPage() {
   };
 
   const checkCreditScore = async () => {
-    if (!lookupAddress) return;
+    const target = lookupAddress.trim();
+    if (!target) return;
+    if (!/^0x[a-fA-F0-9]{40}$/.test(target)) {
+      setCreditCheckError('Enter a full wallet address (42 chars), not a shortened one like 0x1234...abcd.');
+      return;
+    }
+
     setIsCheckingCredit(true);
+    setCreditCheckError(null);
     try {
-      const res = await fetch(apiUrl(`/api/credit/${lookupAddress}/evaluate`), { method: 'POST' });
+      const res = await fetch(apiUrl(`/api/credit/${target.toLowerCase()}/evaluate`), { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         setCreditProfile(data.data as CreditProfile);
         if (data.data.mlPrediction) setMlPrediction(data.data.mlPrediction as DefaultPrediction);
         fetchLoans();
+      } else {
+        setCreditCheckError(data.error || 'Credit evaluation failed. Try again in a moment.');
       }
     } catch (err) {
       console.error(err);
+      setCreditCheckError('Network error while evaluating wallet. Please retry.');
     } finally {
       setIsCheckingCredit(false);
     }
@@ -590,7 +601,10 @@ export default function WalletPage() {
                         <input
                            type="text"
                            value={lookupAddress}
-                           onChange={(e) => setLookupAddress(e.target.value)}
+                           onChange={(e) => {
+                             setLookupAddress(e.target.value);
+                             if (creditCheckError) setCreditCheckError(null);
+                           }}
                            placeholder="Enter 0x..."
                            className="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 font-mono"
                         />
@@ -607,6 +621,9 @@ export default function WalletPage() {
                             <><Activity className="w-4 h-4" /> Evaluate Profile</>
                          )}
                       </button>
+                      {creditCheckError && (
+                        <p className="mt-3 text-xs text-red-400 max-w-md mx-auto">{creditCheckError}</p>
+                      )}
                    </div>
                 ) : (
                    <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
