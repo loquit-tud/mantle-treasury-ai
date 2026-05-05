@@ -43,6 +43,7 @@ Always respond in valid JSON matching the requested schema.`;
 // Contract ABIs (simplified)
 const TREASURY_VAULT_ABI = [
   'function getBalance() view returns (uint256)',
+  'function allowedProtocols(address protocol) view returns (bool)',
   'function getCurrentDayVolume() view returns (uint256)',
   'function getPendingTransactions() view returns (bytes32[])',
   'function getTransaction(bytes32 txHash) view returns (address to, uint256 amount, uint256 proposedAt, uint256 executedAt, bool executed, uint256 signatures)',
@@ -96,6 +97,8 @@ export class TreasuryAgent {
   private offChainVolumeDay = '';
   private previousBalance: number | null = null;
   private crossChainBridge: CrossChainBridge;
+  /** Avoid repeating failed setProtocolAllowed txs when agent lacks GUARDIAN_ROLE */
+  private poolAllowlistAttempted = false;
 
   constructor(
     config: AgentConfig,
@@ -811,6 +814,47 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
   }
 
   /**
+   * TreasuryVault.investInYield requires allowedProtocols[pool] == true (only guardian can set).
+   * If the deploy wallet also has GUARDIAN_ROLE, auto-whitelist once per process.
+   */
+  private async ensureYieldProtocolAllowed(poolAddress: string): Promise<boolean> {
+    if (!poolAddress || poolAddress === ethers.ZeroAddress) return false;
+    try {
+      let allowed: boolean = await this.vaultContract.allowedProtocols(poolAddress);
+      if (allowed) return true;
+
+      if (!this.poolAllowlistAttempted) {
+        this.poolAllowlistAttempted = true;
+        logger.warn(
+          'TreasuryVault: lending pool not allowlisted — sending setProtocolAllowed(pool,true) once (needs GUARDIAN_ROLE on agent wallet)',
+          { poolAddress },
+        );
+        try {
+          const data = VAULT_IFACE.encodeFunctionData('setProtocolAllowed', [poolAddress, true]);
+          await this.sendTx(this.config.treasuryVaultAddress, data, 'setProtocolAllowed(pool)');
+        } catch (err) {
+          logger.error(
+            'setProtocolAllowed failed — idle vault USDt cannot move to Aave until a guardian allowlists the pool on-chain',
+            {
+              poolAddress,
+              hint: 'Call TreasuryVault.setProtocolAllowed(<AAVE_POOL_ADDRESS>, true) from a guardian wallet',
+              error: err instanceof Error ? err.message : String(err),
+            },
+          );
+        }
+        allowed = await this.vaultContract.allowedProtocols(poolAddress);
+      }
+      return allowed;
+    } catch (err) {
+      logger.error('ensureYieldProtocolAllowed failed', {
+        poolAddress,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
+    }
+  }
+
+  /**
    * Propose a yield investment via yield pool or vault contract
    */
   async proposeYieldInvestment(
@@ -825,51 +869,78 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
         amount = CONSTRAINTS.MAX_SINGLE_TX;
       }
 
-      // ON-CHAIN FIRST: attempt real DeFi supply, only track position if it succeeds.
       const displayName = protocol.charAt(0).toUpperCase() + protocol.slice(1) + ' V3';
       let hash: string | undefined;
 
-      // Primary: yield pool supply (Aurelius / Lendle on Mantle)
-      try {
-        const aave = getAaveLending(this.wdkAccount);
-        if (aave) {
-          // Step 1: Approve USDt spending by yield pool
-          if (this.config.aavePoolAddress) {
-            const approveResult = await this.wdkAccount.approve({
-              token: this.config.usdtAddress,
-              spender: this.config.aavePoolAddress,
-              amount,
-            });
-            logger.info('Approve for yield pool supply succeeded', { hash: approveResult.hash });
-          }
+      const protocolAddress = this.getProtocolAddress(protocol);
+      if (protocolAddress === ethers.ZeroAddress) {
+        logger.warn('AAVE_POOL_ADDRESS missing — cannot route vault funds to yield');
+        return null;
+      }
 
-          // Step 2: Supply to yield pool (Aurelius / Lendle on Mantle)
-          const supplyResult = await aave.supply({
-            token: this.config.usdtAddress,
-            amount,
-          });
-          hash = supplyResult.hash;
-          logger.info('Yield supply succeeded', { protocol, amount: amount.toString(), hash });
+      let vaultBal = 0n;
+      try {
+        vaultBal = await this.vaultContract.getBalance();
+      } catch {
+        vaultBal = BigInt(this.lastState?.balance || '0');
+      }
+
+      const vaultCanFund = vaultBal >= amount;
+
+      // 1) Primary for user deposits: pull idle USDt FROM THE VAULT via investInYield (same wallet must hold AGENT_ROLE).
+      if (vaultCanFund) {
+        const allowlisted = await this.ensureYieldProtocolAllowed(protocolAddress);
+        if (allowlisted) {
+          try {
+            const data = VAULT_IFACE.encodeFunctionData('investInYield', [
+              protocolAddress,
+              amount,
+              Math.floor(apy * 100),
+            ]);
+            hash = await this.sendTx(this.config.treasuryVaultAddress, data, `investInYield(${protocol})`);
+            logger.info('Vault investInYield succeeded (vault balance moved to lending pool)', {
+              protocol,
+              amount: amount.toString(),
+              hash,
+            });
+          } catch (txErr) {
+            logger.warn('Vault investInYield reverted — position NOT tracked', {
+              protocol,
+              error: txErr instanceof Error ? txErr.message : String(txErr),
+            });
+          }
         }
-      } catch (aaveErr) {
-        logger.warn('Yield pool supply failed, falling back to vault investInYield', {
-          error: aaveErr instanceof Error ? aaveErr.message : String(aaveErr),
+      } else {
+        logger.debug('Vault balance below planned investment — will try agent-wallet supply only', {
+          vaultBal: vaultBal.toString(),
+          amount: amount.toString(),
         });
       }
 
-      // Fallback: vault investInYield contract call
+      // 2) Secondary: supply from the agent wallet’s own USDt (does not use vault funds).
       if (!hash) {
         try {
-          const protocolAddress = this.getProtocolAddress(protocol);
-          const data = VAULT_IFACE.encodeFunctionData('investInYield', [
-            protocolAddress,
-            amount,
-            Math.floor(apy * 100),
-          ]);
-          hash = await this.sendTx(this.config.treasuryVaultAddress, data, `investInYield(${protocol})`);
-        } catch (txErr) {
-          logger.warn('On-chain yield investment failed — position NOT tracked (no phantom positions)', {
-            protocol, error: txErr instanceof Error ? txErr.message : String(txErr),
+          const aave = getAaveLending(this.wdkAccount);
+          if (aave) {
+            if (this.config.aavePoolAddress) {
+              const approveResult = await this.wdkAccount.approve({
+                token: this.config.usdtAddress,
+                spender: this.config.aavePoolAddress,
+                amount,
+              });
+              logger.info('Approve for yield pool supply succeeded', { hash: approveResult.hash });
+            }
+
+            const supplyResult = await aave.supply({
+              token: this.config.usdtAddress,
+              amount,
+            });
+            hash = supplyResult.hash;
+            logger.info('Yield supply succeeded (agent wallet)', { protocol, amount: amount.toString(), hash });
+          }
+        } catch (aaveErr) {
+          logger.warn('Yield pool supply from agent wallet failed', {
+            error: aaveErr instanceof Error ? aaveErr.message : String(aaveErr),
           });
         }
       }
