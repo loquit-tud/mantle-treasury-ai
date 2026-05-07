@@ -1,10 +1,11 @@
 /**
  * Module-level store for the user-selected EIP-1193 provider.
  *
- * Some wallet extensions (Rabby, SafePal, Brave) lock `window.ethereum` as a
- * read-only getter, so we cannot reassign it. Instead, the wallet picker stores
- * the chosen provider here and `getEth()` returns it (or falls back to
- * window.ethereum) for all subsequent calls.
+ * We deliberately do NOT touch `window.ethereum`. Some extensions (MetaMask)
+ * lock it as non-configurable, which makes any `Object.defineProperty` call
+ * throw "Cannot redefine property: ethereum" and breaks the page when other
+ * wallets (EVM Ask, Trust, Rabby) try to inject. All ethers calls in the app
+ * route through `getEth()` and use the user-picked provider directly.
  */
 import type { EIP1193Provider } from './useWalletProviders';
 
@@ -13,28 +14,14 @@ const listeners = new Set<() => void>();
 
 export function setSelectedProvider(p: EIP1193Provider | null): void {
   selected = p;
-  // Best-effort: try to also overwrite window.ethereum for libraries we don't
-  // control. Silently ignore if the property is locked by another extension.
-  if (p) {
-    try {
-      Object.defineProperty(window, 'ethereum', {
-        value: p,
-        writable: true,
-        configurable: true,
-      });
-    } catch {
-      try {
-        (window as { ethereum?: EIP1193Provider }).ethereum = p;
-      } catch {
-        /* read-only — getEth() handles it */
-      }
-    }
-  }
   listeners.forEach((l) => l());
 }
 
 export function getEth(): EIP1193Provider | null {
   if (selected) return selected;
+  // Fallback only if the user hasn't explicitly picked a provider yet.
+  // window.ethereum can be hijacked by whichever extension wins the inject race
+  // — that's why the wallet picker is the source of truth.
   const eth = (window as { ethereum?: EIP1193Provider }).ethereum;
   return eth ?? null;
 }

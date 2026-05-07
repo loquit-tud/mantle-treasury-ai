@@ -84,6 +84,7 @@ export default function WalletPage() {
   const [showNoWalletCard, setShowNoWalletCard] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [reconnectFailedFor, setReconnectFailedFor] = useState<string | null>(null);
 
   const finishConnect = useCallback(async () => {
     const eth = getEth();
@@ -143,6 +144,7 @@ export default function WalletPage() {
   const handleProviderSelected = useCallback(async (chosen: EIP1193Provider, name: string) => {
     setPickerOpen(false);
     setConnectError(null);
+    setReconnectFailedFor(null);
     try {
       // Store globally so all subsequent calls use the chosen provider.
       setSelectedProvider(chosen);
@@ -192,6 +194,7 @@ export default function WalletPage() {
     if (!lastName) return; // never auto-connect a wallet the user hasn't picked
 
     let cancelled = false;
+    let matched = false;
 
     const tryConnect = async (eth: EIP1193Provider) => {
       if (cancelled) return;
@@ -199,11 +202,15 @@ export default function WalletPage() {
         const provider = new BrowserProvider(eth);
         const accs: string[] = await provider.send('eth_accounts', []);
         if (!cancelled && accs.length > 0) {
+          matched = true;
           setSelectedProvider(eth);
           await finishConnect();
+        } else if (!cancelled) {
+          // Wallet still installed but session revoked — surface a clear CTA
+          setReconnectFailedFor(lastName);
         }
       } catch {
-        // ignore
+        if (!cancelled) setReconnectFailedFor(lastName);
       }
     };
 
@@ -214,14 +221,24 @@ export default function WalletPage() {
       const detail = (e as CustomEvent).detail as { info?: { name?: string }; provider?: EIP1193Provider };
       if (!detail?.info?.name || !detail.provider) return;
       if (detail.info.name === lastName) {
+        matched = true;
         tryConnect(detail.provider);
       }
     };
     window.addEventListener('eip6963:announceProvider', onAnnounce as EventListener);
     window.dispatchEvent(new Event('eip6963:requestProvider'));
 
+    // If the chosen wallet doesn't announce itself within 2.5s (extension was
+    // uninstalled, browser blocks injection, or another wallet hijacked the
+    // namespace) — surface a "Reconnect <walletName>" CTA so the page never
+    // looks dead after refresh.
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled && !matched) setReconnectFailedFor(lastName);
+    }, 2500);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
       window.removeEventListener('eip6963:announceProvider', onAnnounce as EventListener);
     };
   }, [finishConnect]);
@@ -546,6 +563,32 @@ export default function WalletPage() {
             type="button"
             onClick={() => setConnectError(null)}
             className="text-xs text-rose-200/70 transition-colors hover:text-white"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+      {reconnectFailedFor && !isConnected && !connectError && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100" role="alert">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+          <div className="flex-1">
+            <p className="font-medium text-amber-50">Reconnect needed</p>
+            <p className="mt-1 break-words text-xs text-amber-200/80">
+              Your last session with <strong>{reconnectFailedFor}</strong> couldn't be restored automatically.
+              This usually means another wallet extension hijacked the page or the session expired.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setReconnectFailedFor(null); setPickerOpen(true); }}
+            className="rounded-md border border-amber-400/50 bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-50 transition-colors hover:bg-amber-500/30"
+          >
+            Reconnect
+          </button>
+          <button
+            type="button"
+            onClick={() => { localStorage.removeItem('wallet-last'); setReconnectFailedFor(null); }}
+            className="text-xs text-amber-200/70 transition-colors hover:text-white"
           >
             Dismiss
           </button>
