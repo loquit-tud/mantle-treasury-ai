@@ -147,6 +147,13 @@ export default function Dashboard() {
   // Next Board Meeting countdown — synced to server dialogue interval (300s)
   const [lastDialogueAt, setLastDialogueAt] = useState<number>(0);
   const [meetingSecsLeft, setMeetingSecsLeft] = useState(300);
+  // Live "agent thinking" indicator (set on dialogue:turn, auto-clears after 6s)
+  const [activeSpeaker, setActiveSpeaker] = useState<{ agent: string; at: number } | null>(null);
+  useEffect(() => {
+    if (!activeSpeaker) return;
+    const t = setTimeout(() => setActiveSpeaker(null), 6000);
+    return () => clearTimeout(t);
+  }, [activeSpeaker]);
   useEffect(() => {
     const t = setInterval(() => {
       if (lastDialogueAt === 0) {
@@ -248,8 +255,10 @@ export default function Dashboard() {
       }
       // Reset board meeting countdown on dialogue events
       const evtType = (msg.data as { type?: string }).type;
+      const evtSource = (msg.data as { source?: string }).source;
       if (evtType === 'dialogue:turn' || evtType === 'dialogue:consensus') {
         setLastDialogueAt(Date.now());
+        if (evtSource) setActiveSpeaker({ agent: evtSource, at: Date.now() });
       }
     }
   }, [lastMessage]);
@@ -334,11 +343,27 @@ export default function Dashboard() {
           <span className="text-2xl opacity-60">:</span>
           {String(meetingSecsLeft % 60).padStart(2, '0')}
         </div>
-        <div className="hidden flex-col items-end gap-1 text-[10px] text-slate-500 sm:flex">
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-indigo-400/70" />Treasury</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400/70" />Credit</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400/70" />Risk</span>
-        </div>
+        {activeSpeaker ? (
+          <div
+            className="flex items-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            </span>
+            <span className="text-xs font-medium text-emerald-200">
+              <span className="capitalize">{activeSpeaker.agent}</span> agent thinking…
+            </span>
+          </div>
+        ) : (
+          <div className="hidden flex-col items-end gap-1 text-[10px] text-slate-500 sm:flex">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-indigo-400/70" />Treasury</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400/70" />Credit</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400/70" />Risk</span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">

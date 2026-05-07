@@ -147,6 +147,7 @@ export function WalletConnect() {
             <button
               type="button"
               onClick={copyAddress}
+              aria-label={copied ? 'Address copied' : 'Copy wallet address'}
               className="rounded p-1 transition-colors hover:bg-slate-800"
             >
               {copied ? (
@@ -159,6 +160,7 @@ export function WalletConnect() {
               href={`https://mantlescan.xyz/address/${address}`}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="View on Mantlescan"
               className="rounded p-1 transition-colors hover:bg-slate-800"
             >
               <ExternalLink className="h-3 w-3 text-slate-400" />

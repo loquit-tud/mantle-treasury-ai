@@ -13,9 +13,11 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 | **Track** | AI & RWA Track — Path B (AI Driven Application) |
 | **Asset Category** | Tokenized short-term credit instruments (revenue-backed loans, revolving credit facilities) |
 | **Target Users** | DAOs, on-chain operator teams, and protocol treasuries seeking autonomous credit & yield management |
-| **Mantle Deployment** | TreasuryVault [`0x51A80e33E227029bB201C4891B62Eb8530F223c3`](https://mantlescan.xyz/address/0x51A80e33E227029bB201C4891B62Eb8530F223c3) · CreditLine [`0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
+| **Mantle Deployment** | TreasuryVault [`0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0`](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) (USDT0 + Aave V3) · CreditLine [`0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
 | **Live Demo** | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
 | **Backend (Live)** | [https://mantle-treasury-ai-production.up.railway.app/health](https://mantle-treasury-ai-production.up.railway.app/health) |
+| **Demo Video** | _(linked in DoraHacks submission — ≥2 min walkthrough of board meeting → on-chain tx)_ |
+| **Contract Verification** | Both contracts verified on Mantlescan — see address links above |
 
 ### Track Submission Answers
 
@@ -40,7 +42,6 @@ Traditional finance equivalents of what Quorum does on-chain:
 | Tiered penalty interest | Late payment fees in commercial lending |
 | Autonomous debt restructuring | Workout / loan modification (normally done by bank credit officers) |
 | TreasuryVault yield allocation | Money market fund management |
-| ZK credit proofs | Privacy-preserving credit checks (equivalent to "soft pull" in TradFi) |
 
 The key insight: **DAOs need the same financial services as corporations** (credit, yield, risk management) but lack the personnel to run them. Quorum replaces a team of treasury analysts, credit officers, and risk managers with autonomous AI agents operating 24/7 on-chain.
 
@@ -55,7 +56,6 @@ The key insight: **DAOs need the same financial services as corporations** (cred
 ### Feature Highlights
 - ✅ **Inter-agent lending** — Credit Agent borrows capital from Treasury's pool via EventBus (`credit:capital_request` → `treasury:capital_allocated`). Treasury evaluates and caps at 20% of balance per request.
 - ✅ **ML default prediction** — Logistic regression predicts default probability (0–100%) from 7 features. Critical risk (>60%) auto-blocks loans before LLM evaluation.
-- ✅ **ZK credit proofs** — Prove credit score meets a tier threshold without revealing the exact score. SHA-256 commitments + Fiat-Shamir range proofs + replay prevention.
 - ✅ **Revenue-backed lending** — Borrow against projected future earnings (invoice factoring for the agent economy). Tracks 24h/7d/30d rolling revenue and borrow capacity.
 - ✅ **Autonomous debt restructuring** — ML-triggered, LLM-negotiated term modification. Extend duration, reduce rate, partial forgiveness, split into tranches.
 - ✅ **Idle capital detection** — Agent reads vault balance on-chain, detects idle capital, and proactively extends loans in aggressive mode (>2000 USDt idle).
@@ -72,7 +72,7 @@ The key insight: **DAOs need the same financial services as corporations** (cred
 | **Groq** (LLaMA 3.3 70B) | Primary LLM for agent reasoning |
 | **OpenClaw** | Agent identity (SOUL.md), skills, MCP tool definitions |
 | **MCP Server** | 15 tools for external agent access (stdio transport) |
-| **SQLite (WAL)** | Persistent state: loans, profiles, decisions, ZK proof log |
+| **SQLite (WAL)** | Persistent state: loans, profiles, decisions, revenue events |
 
 ## Architecture
 
@@ -103,7 +103,6 @@ quorum/
 │       │   ├── LLMClient.ts           # Failover LLM wrapper (primary + fallback)
 │       │   ├── DefaultPredictor.ts    # ML logistic regression for default prediction
 │       │   ├── InterAgentLending.ts   # Inter-agent capital allocation via EventBus
-│       │   ├── ZKCreditProof.ts       # ZK range proofs for credit tier privacy
 │       │   ├── RevenueTracker.ts      # Revenue-backed lending
 │       │   ├── DebtRestructuring.ts   # Autonomous debt restructuring (ML+LLM)
 │       │   ├── StateDB.ts             # SQLite (WAL) persistence layer
@@ -151,7 +150,6 @@ quorum/
                           │
              ┌────────────▼─────────────────┐
              │       Services Layer          │
-             │  CrossChainBridge │ ZKProof   │
              │  InterAgentLend  │ Revenue    │
              │  DebtRestructure │ StateDB    │
              └────────────┬─────────────────┘
@@ -223,12 +221,12 @@ AGENT_SEED_PHRASE=your twelve word seed phrase here
 # Mantle Network
 RPC_URL=https://rpc.mantle.xyz
 CHAIN_ID=5000
-USDT_ADDRESS=0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE
-AAVE_POOL_ADDRESS=<aurelius-pool-address>
+USDT_ADDRESS=0x779Ded0c9e1022225f8E0630b35a9b54bE713736  # USDT0 (Aave V3 compatible on Mantle)
+AAVE_POOL_ADDRESS=0x458F293454fE0d67EC0655f3672301301DD51422
 
 # Deployed contracts
-TREASURY_VAULT_ADDRESS=<deployed>
-CREDIT_LINE_ADDRESS=<deployed>
+TREASURY_VAULT_ADDRESS=0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0
+CREDIT_LINE_ADDRESS=0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c
 ```
 
 #### 3. Deploy Contracts
@@ -306,8 +304,6 @@ OpenClaw config (`openclaw.config.json`):
 | `/api/yield/opportunities` | GET | Current yield opportunities |
 | `/api/yield/invest` | POST | Invest in yield protocol |
 | `/api/credit/:address/default-prediction` | GET | ML default probability |
-| `/api/credit/:address/zk-proof` | POST | Generate ZK credit proof |
-| `/api/credit/verify-proof` | POST | Verify a ZK credit proof |
 | `/api/inter-agent/lending` | GET | Inter-agent lending status |
 | `/api/inter-agent/request-capital` | POST | Credit Agent requests capital |
 | `/api/inter-agent/harvest` | POST | Yield harvest → auto debt service |
@@ -338,7 +334,7 @@ Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBAC
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
-| Smart contract on Mantle Mainnet | Done | [TreasuryVault](https://mantlescan.xyz/address/0x51A80e33E227029bB201C4891B62Eb8530F223c3) · [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
+| Smart contract on Mantle Mainnet | Done | [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) (USDT0 + Aave V3) · [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
 | Contract verified on Explorer | Done | Both verified on Mantlescan |
 | AI-powered function callable on-chain | Done | Board Meeting consensus → on-chain loan approvals, yield deposits, credit score updates (every 45s cycle) |
 | Frontend publicly accessible | Done | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
