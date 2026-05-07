@@ -62,6 +62,7 @@ async function ensureCorrectChain(): Promise<void> {
 const VAULT_ABI = [
   "function deposit(uint256 amount) external",
   "function getBalance() external view returns (uint256)",
+  "function emergencyWithdraw(address to, uint256 amount) external",
 ];
 const ERC20_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
@@ -125,6 +126,13 @@ export default function WalletPage() {
       const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
       const bal = await usdt.balanceOf(addr);
       setUsdtBal(formatUnits(bal, 6));
+      try {
+        const vault = new Contract(TREASURY_VAULT_ADDRESS, VAULT_ABI, provider);
+        const vBal = await vault.getBalance();
+        setVaultBal(formatUnits(vBal, 6));
+      } catch {
+        // vault read optional
+      }
     } catch (balErr) {
       console.warn('Balance fetch failed:', balErr);
     }
@@ -177,13 +185,51 @@ export default function WalletPage() {
 
   // Auto-connect if already authorized (skip if user explicitly disconnected)
   useEffect(() => {
-    const eth = getEth();
-    if (eth && !localStorage.getItem('wallet-disconnected')) {
-      const provider = new BrowserProvider(eth);
-      provider.send('eth_accounts', []).then((accs: string[]) => {
-        if (accs.length > 0) finishConnect();
-      }).catch(() => {});
-    }
+    if (localStorage.getItem('wallet-disconnected')) return;
+
+    const lastName = localStorage.getItem('wallet-last');
+    let cancelled = false;
+
+    const tryConnect = async (eth: EIP1193Provider) => {
+      if (cancelled) return;
+      try {
+        const provider = new BrowserProvider(eth);
+        const accs: string[] = await provider.send('eth_accounts', []);
+        if (!cancelled && accs.length > 0) {
+          setSelectedProvider(eth);
+          await finishConnect();
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    // 1) Try to re-discover the previously chosen wallet via EIP-6963
+    const detected = new Map<string, EIP1193Provider>();
+    const onAnnounce = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { info?: { name?: string }; provider?: EIP1193Provider };
+      if (!detail?.info?.name || !detail.provider) return;
+      detected.set(detail.info.name, detail.provider);
+      if (lastName && detail.info.name === lastName) {
+        tryConnect(detail.provider);
+      }
+    };
+    window.addEventListener('eip6963:announceProvider', onAnnounce as EventListener);
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+    // 2) Fallback after 600ms — if saved wallet not announced, try window.ethereum
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      if (lastName && detected.has(lastName)) return; // already handled
+      const eth = (window as { ethereum?: EIP1193Provider }).ethereum;
+      if (eth) tryConnect(eth);
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('eip6963:announceProvider', onAnnounce as EventListener);
+      window.clearTimeout(timer);
+    };
   }, [finishConnect]);
 
   const [isCheckingCredit, setIsCheckingCredit] = useState(false);
@@ -193,6 +239,10 @@ export default function WalletPage() {
   const [depositAmount, setDepositAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
+  const [vaultBal, setVaultBal] = useState<string | null>(null);
   
   const [lookupAddress, setLookupAddress] = useState('');
 
@@ -444,6 +494,8 @@ export default function WalletPage() {
       // Refresh balances after deposit
       const newBal = await usdtContract.balanceOf(address);
       setUsdtBal(formatUnits(newBal, 6));
+      const vBal = await vaultContract.getBalance();
+      setVaultBal(formatUnits(vBal, 6));
     } catch (err: unknown) {
       console.error('Deposit error:', err);
       const msg = err instanceof Error ? err.message : String(err);
@@ -456,6 +508,44 @@ export default function WalletPage() {
       }
     } finally {
       setIsDepositing(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!address || !withdrawAmount || isNaN(Number(withdrawAmount))) return;
+    if (!getEth()) { setShowNoWalletCard(true); return; }
+    setIsWithdrawing(true);
+    setWithdrawTxHash(null);
+    try {
+      await ensureCorrectChain();
+      const provider = new BrowserProvider(getEth()!);
+      const signer = await provider.getSigner();
+      const vaultContract = new Contract(TREASURY_VAULT_ADDRESS, VAULT_ABI, signer);
+      const usdtContract = new Contract(USDT_ADDRESS, ERC20_ABI, signer);
+      const parsedAmount = parseUnits(withdrawAmount, 6);
+
+      const tx = await vaultContract.emergencyWithdraw(address, parsedAmount);
+      await tx.wait();
+
+      setWithdrawTxHash(tx.hash);
+      setWithdrawAmount('');
+
+      const newBal = await usdtContract.balanceOf(address);
+      setUsdtBal(formatUnits(newBal, 6));
+      const vBal = await vaultContract.getBalance();
+      setVaultBal(formatUnits(vBal, 6));
+    } catch (err: unknown) {
+      console.error('Withdraw error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('user rejected') || msg.includes('ACTION_REJECTED')) {
+        alert('Transaction cancelled by user.');
+      } else if (msg.includes('insufficient')) {
+        alert('Vault has insufficient balance for that amount.');
+      } else {
+        alert(`Withdraw failed: ${msg.slice(0, 120)}`);
+      }
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -655,10 +745,87 @@ export default function WalletPage() {
                   {txHash && (
                     <div className="mt-4 p-3 rounded-lg bg-indigo-950/30 border border-indigo-900/50 flex items-start gap-2">
                        <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                       <div className="overflow-hidden">
+                       <div className="overflow-hidden flex-1">
                           <p className="text-xs text-indigo-400 font-medium mb-0.5">Deposit Successful</p>
-                          <p className="text-[10px] text-indigo-500/70 truncate font-mono">{txHash}</p>
+                          <a
+                            href={`https://mantlescan.xyz/tx/${txHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-indigo-300 hover:text-indigo-200 underline truncate font-mono block"
+                          >
+                            {txHash}
+                          </a>
                        </div>
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {/* Withdraw Form */}
+            {isConnected && (
+              <div className="glass-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                     <LogOut className="w-4 h-4 text-amber-400" />
+                     <h3 className="text-sm font-semibold text-white">Withdraw USDT0 from Treasury</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-2">Pull liquidity back to your wallet from the on-chain vault.</p>
+                  <div className="mb-4 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Liquid in vault (instantly withdrawable)</span>
+                    <span className="font-mono text-slate-300">{vaultBal ? Number(vaultBal).toFixed(4) : '0.0000'} USDT0</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">
+                    Funds invested in yield (Aave aUSDT0) must first be unwound by the Treasury Agent before they become withdrawable here.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-28 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all font-mono"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => { if (vaultBal) setWithdrawAmount(vaultBal); }}
+                          disabled={!vaultBal || Number(vaultBal) <= 0}
+                          className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300 transition-colors hover:bg-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Max
+                        </button>
+                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider pr-2">USDT0</span>
+                      </div>
+                    </div>
+                    {withdrawAmount && vaultBal && Number(withdrawAmount) > Number(vaultBal) && (
+                      <p className="text-[11px] text-rose-400">Amount exceeds vault balance ({Number(vaultBal).toFixed(4)} USDT0).</p>
+                    )}
+                    <button
+                      onClick={handleWithdraw}
+                      disabled={isWithdrawing || !withdrawAmount || Number(withdrawAmount) <= 0 || (!!vaultBal && Number(withdrawAmount) > Number(vaultBal))}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white hover:bg-amber-500 transition-all shadow-[0_0_20px_-5px_rgba(245,158,11,0.45)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                    >
+                      {isWithdrawing ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Withdrawing...</>
+                      ) : (
+                        <>Withdraw {withdrawAmount || '0'} USDT0</>
+                      )}
+                    </button>
+                  </div>
+                  {withdrawTxHash && (
+                    <div className="mt-4 p-3 rounded-lg bg-amber-950/30 border border-amber-900/50 flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="overflow-hidden flex-1">
+                        <p className="text-xs text-amber-400 font-medium mb-0.5">Withdraw Successful</p>
+                        <a
+                          href={`https://mantlescan.xyz/tx/${withdrawTxHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-amber-300 hover:text-amber-200 underline truncate font-mono block"
+                        >
+                          {withdrawTxHash}
+                        </a>
+                      </div>
                     </div>
                   )}
               </div>
