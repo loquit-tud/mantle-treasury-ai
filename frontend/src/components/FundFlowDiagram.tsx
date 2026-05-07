@@ -32,10 +32,14 @@ export function FundFlowDiagram({ treasury, loanCount }: { treasury: TreasurySta
   const totalHarvested = treasury.yieldPositions.reduce((s, p) => s + Number(p.harvested || 0), 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
+    <div className="overflow-hidden glass-card">
+      <div className="flex items-center gap-2 border-b border-slate-800/60 bg-slate-950/30 px-5 py-4">
         <svg className="h-4 w-4 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         <h3 className="text-sm font-semibold text-slate-200">Capital flow</h3>
+        <span className="ml-auto flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Live
+        </span>
       </div>
       <div className="p-4">
         <svg viewBox="0 0 620 240" className="w-full h-auto" style={{ minHeight: 180 }}>

@@ -19,8 +19,8 @@ import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
 
 // Constants using Vite Env
-const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0x51A80e33E227029bB201C4891B62Eb8530F223c3';
-const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE';
+const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0';
+const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0x779Ded0c9e1022225f8E0630b35a9b54bE713736';
 const CREDIT_LINE_ADDRESS = import.meta.env.VITE_CREDIT_LINE_ADDRESS || '0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c';
 const COLLATERAL_LOCK_ADDRESS = import.meta.env.VITE_COLLATERAL_LOCK_ADDRESS || '0x73136630885C6b74bAe6AdC56e8D17D055f3F2f6';
 const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '5000');
@@ -480,7 +480,7 @@ export default function WalletPage() {
               )}
 
          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Your Portfolio</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-gradient-brand">Your Portfolio</h2>
             <p className="text-sm text-slate-400">Manage your connected wallet, credit, and vault deposits.</p>
          </div>
       </div>
@@ -489,7 +489,7 @@ export default function WalletPage() {
         
         {/* Wallet Overview Panel */}
         <div className="md:col-span-1 space-y-6">
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+            <div className="glass-card p-6">
                 <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-800/80">
                    <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
                       <Wallet className="w-5 h-5 text-slate-300" />
@@ -535,7 +535,7 @@ export default function WalletPage() {
 
             {/* Deposit Form */}
             {isConnected && (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+              <div className="glass-card p-6">
                   <div className="flex items-center gap-2 mb-4">
                      <Upload className="w-4 h-4 text-indigo-400" />
                      <h3 className="text-sm font-semibold text-white">Deposit to Treasury</h3>
@@ -581,7 +581,7 @@ export default function WalletPage() {
         {/* Credit & Loans Panel */}
         <div className="md:col-span-2 space-y-6">
             {/* Credit Score Module */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 relative overflow-hidden">
+            <div className="glass-card p-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none" />
                 
                 {!isConnected ? (
@@ -779,7 +779,7 @@ export default function WalletPage() {
 
             {/* Active Loans List */}
             {isConnected && creditProfile && (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <div className="glass-card p-6">
                    <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-800/80">
                       <History className="w-5 h-5 text-slate-300" />
                       <h3 className="text-sm font-semibold text-white">Your Active Loans</h3>
@@ -921,7 +921,7 @@ export default function WalletPage() {
 
             {/* Loan History Toggle */}
             {isConnected && creditProfile && (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <div className="glass-card p-6">
                    <button
                      onClick={() => { setShowHistory(!showHistory); if (!showHistory) fetchLoanHistory(); }}
                      className="flex items-center gap-2 w-full text-left"

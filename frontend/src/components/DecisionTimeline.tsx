@@ -19,29 +19,34 @@ export function DecisionTimeline({ decisions }: { decisions: AgentDecision[] }) 
   const sorted = [...decisions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 25);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
+    <div className="overflow-hidden glass-card">
+      <div className="flex items-center gap-2 border-b border-slate-800/60 bg-slate-950/30 px-5 py-4">
         <svg className="h-4 w-4 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
         <h3 className="text-sm font-semibold text-slate-200">Decision audit trail</h3>
-        <span className="ml-auto font-mono text-[10px] text-slate-500">{sorted.length} events</span>
+        <span className="ml-auto rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 font-mono text-[10px] text-slate-400">{sorted.length} events</span>
       </div>
       <div className="custom-scrollbar h-[450px] overflow-y-auto overflow-x-hidden p-4">
         {sorted.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-slate-500">No decisions recorded yet</p>
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <div className="brand-glow mb-3 flex h-12 w-12 items-center justify-center rounded-2xl">
+              <Clock className="h-5 w-5 text-indigo-300" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">Audit trail is empty</p>
+            <p className="mt-1 text-[11px] text-slate-500">Agent decisions will stream in here</p>
           </div>
         ) : (
-          <div className="relative ml-2 space-y-4 border-l border-slate-800 pl-6">
+          <div className="relative ml-2 space-y-3 pl-6">
+            <span className="pointer-events-none absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-indigo-500/40 via-slate-700/30 to-transparent" />
             {sorted.map((d, i) => {
               const colors = AGENT_COLORS[d.agentType] || AGENT_COLORS.treasury;
               const isLatest = i === 0;
               return (
-                <div key={d.id || i} className={`relative group ${isLatest ? 'animate-in slide-in-from-top-2 duration-300' : ''}`}>
+                <div key={d.id || i} className={`relative group ${isLatest ? 'animate-in slide-in-from-top-2 fade-in duration-300' : ''}`}>
                   {/* Timeline dot */}
-                  <span className={`absolute -left-[29px] top-2 flex h-2.5 w-2.5 rounded-full ring-[3px] ring-slate-950 ${colors.dot} ${isLatest ? 'ring-4 ring-indigo-500/20' : ''}`} />
+                  <span className={`absolute -left-[29px] top-2.5 flex h-2.5 w-2.5 rounded-full ring-[3px] ring-slate-950 ${colors.dot} ${isLatest ? 'shadow-[0_0_0_4px_rgba(99,102,241,0.18)]' : ''}`} />
 
                   {/* Card */}
-                  <div className={`rounded-lg border p-3 transition-colors ${isLatest ? 'border-slate-700 bg-slate-950/50' : 'border-slate-800/80 hover:border-slate-700 hover:bg-slate-950/30'}`}>
+                  <div className={`glass-tile rounded-lg p-3 transition-all ${isLatest ? 'border-indigo-500/30' : ''}`}>
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                       <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${colors.badge}`}>
                         {d.agentType}

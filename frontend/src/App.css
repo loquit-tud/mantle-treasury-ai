@@ -124,3 +124,341 @@ input:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
+
+/* ─────────────────────────────────────────────────────────
+ * Quorum design system — glass / linear-style polish
+ * ───────────────────────────────────────────────────────── */
+
+/* Animated mesh background — sits behind everything */
+.app-mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(900px 600px at 12% 8%, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(800px 600px at 88% 0%, rgba(56, 189, 248, 0.12), transparent 65%),
+    radial-gradient(900px 700px at 50% 110%, rgba(168, 85, 247, 0.14), transparent 65%),
+    #020617;
+  animation: mesh-drift 22s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes mesh-drift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  100% { background-position: 6% 4%, 94% 6%, 54% 96%; }
+}
+
+/* Glass surface — primary cards */
+.glass-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.65) 0%, rgba(2, 6, 23, 0.55) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 40px -20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 28px 60px -22px rgba(99, 102, 241, 0.25);
+}
+
+/* Glass tile — for KPI / metric cards (slightly tighter) */
+.glass-tile {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.45) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border-radius: 14px;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.glass-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.35), rgba(56, 189, 248, 0.05) 40%, transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.glass-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(165, 180, 252, 0.28);
+}
+
+/* Gradient text — for hero / brand */
+.text-gradient {
+  background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 30%, #67e8f9 70%, #a78bfa 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-brand {
+  background: linear-gradient(135deg, #818cf8 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Brand logo glow */
+.brand-glow {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.18));
+  border: 1px solid rgba(165, 180, 252, 0.30);
+  box-shadow:
+    0 0 0 1px rgba(165, 180, 252, 0.08),
+    0 0 24px -4px rgba(129, 140, 248, 0.45);
+}
+
+/* Pill button — primary CTA */
+.btn-pill-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #f8fafc;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: 1px solid rgba(165, 180, 252, 0.40);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.18) inset,
+    0 12px 28px -10px rgba(99, 102, 241, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.btn-pill-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.22) inset,
+    0 18px 36px -10px rgba(99, 102, 241, 0.65);
+}
+
+.btn-pill-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-pill-secondary:hover {
+  border-color: rgba(165, 180, 252, 0.45);
+  color: #f8fafc;
+}
+
+/* Nav pill — for top navigation */
+.nav-pill {
+  position: relative;
+  white-space: nowrap;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.nav-pill:hover {
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.nav-pill-active {
+  color: #f8fafc;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(56, 189, 248, 0.10));
+  border: 1px solid rgba(165, 180, 252, 0.32);
+  box-shadow: 0 6px 16px -8px rgba(99, 102, 241, 0.5);
+}
+
+/* Live status dot pulse */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  position: relative;
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid #34d399;
+  opacity: 0;
+  animation: live-ping 1.6s ease-out infinite;
+}
+
+@keyframes live-ping {
+  0%   { transform: scale(0.8); opacity: 0.7; }
+  80%  { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Skeleton shimmer */
+.shimmer {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 25%, rgba(51, 65, 85, 0.6) 50%, rgba(30, 41, 59, 0.5) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Reduce motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .app-mesh-bg,
+  .countdown-glow,
+  .live-dot::after,
+  .shimmer,
+  .page-fade,
+  .cursor-glow::before { animation: none !important; }
+}
+
+/* ============================================================
+   Page transitions — fade + tiny rise on route change
+   ============================================================ */
+.page-fade {
+  animation: page-fade-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes page-fade-in {
+  0% { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ============================================================
+   Cursor follow-glow — apply .cursor-glow on a card. The element
+   should set --x and --y CSS vars via onPointerMove (px relative
+   to the card top-left). Falls back gracefully when not set.
+   Applied globally to .glass-card so every tab benefits.
+   ============================================================ */
+.cursor-glow,
+.glass-card {
+  position: relative;
+  isolation: isolate;
+}
+.cursor-glow::before,
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    280px circle at var(--x, 50%) var(--y, 50%),
+    rgba(129, 140, 248, 0.18),
+    rgba(56, 189, 248, 0.06) 35%,
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 220ms ease;
+  z-index: 0;
+}
+.cursor-glow:hover::before,
+.glass-card:hover::before { opacity: 1; }
+.cursor-glow > *,
+.glass-card > * { position: relative; z-index: 1; }
+
+/* Subtle lift on hover for every glass card across all tabs */
+.glass-card {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 220ms ease,
+              box-shadow 260ms ease;
+}
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(129, 140, 248, 0.28);
+  box-shadow: 0 28px 60px -30px rgba(99, 102, 241, 0.45);
+}
+
+/* Same treatment for glass-tile (smaller stat cells) */
+.glass-tile {
+  transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+.glass-tile:hover {
+  transform: translateY(-1px);
+  border-color: rgba(129, 140, 248, 0.35);
+}
+
+/* ============================================================
+   Microinteractions on nav pills + buttons
+   ============================================================ */
+.nav-pill {
+  position: relative;
+  overflow: hidden;
+}
+.nav-pill::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #818cf8, #38bdf8);
+  transform: translateX(-50%);
+  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-pill:hover::after { width: 22px; }
+.nav-pill-active::after { width: 22px; }
+
+.btn-pill-primary,
+.btn-pill-secondary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease;
+}
+.btn-pill-primary::after,
+.btn-pill-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+  pointer-events: none;
+}
+.btn-pill-primary:hover,
+.btn-pill-secondary:hover {
+  transform: translateY(-1px);
+}
+.btn-pill-primary:hover::after,
+.btn-pill-secondary:hover::after {
+  transform: translateX(120%);
+}
+.btn-pill-primary:active,
+.btn-pill-secondary:active {
+  transform: translateY(0) scale(0.98);
+}

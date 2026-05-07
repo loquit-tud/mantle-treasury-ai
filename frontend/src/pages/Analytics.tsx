@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
@@ -210,7 +210,7 @@ export default function Analytics() {
     <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500">
       <div className="mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">Analytics</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-gradient-brand">Analytics</h2>
             <p className="text-sm text-slate-400">Treasury, credit, and agent performance metrics.</p>
          </div>
       </div>
@@ -475,21 +475,54 @@ export default function Analytics() {
 
 function KPICard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-colors hover:border-slate-700">
+    <div className="glass-tile p-5">
       <div className="mb-3 flex items-center gap-3">
-        {icon}
-        <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</span>
+        <div className="brand-glow flex h-9 w-9 items-center justify-center rounded-xl">{icon}</div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</span>
       </div>
-      <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="text-2xl font-semibold tracking-tight text-gradient">
+        <AnimatedKPI raw={value} />
+      </p>
       <p className="mt-2 text-xs font-medium text-slate-500">{sub}</p>
     </div>
   );
 }
 
+function AnimatedKPI({ raw }: { raw: string }) {
+  // Parse leading number (handles "$1,234.56 USDt", "42", "95.4%" etc.)
+  const match = raw.match(/^([^\d-]*)(-?[\d,.]+)(.*)$/);
+  if (!match) return <>{raw}</>;
+  const prefix = match[1] ?? '';
+  const num = parseFloat(match[2].replace(/,/g, ''));
+  const suffix = match[3] ?? '';
+  if (Number.isNaN(num)) return <>{raw}</>;
+  const [val, setVal] = useState(0);
+  const fromRef = useRef(0);
+  useEffect(() => {
+    const start = fromRef.current;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / 900);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const cur = start + (num - start) * eased;
+      setVal(cur);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else fromRef.current = num;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [num]);
+  const display = Number.isInteger(num) && Math.abs(num) >= 10
+    ? Math.round(val).toLocaleString()
+    : val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return <span>{prefix}{display}{suffix}</span>;
+}
+
 function Panel({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
+    <div className="flex flex-col overflow-hidden glass-card">
+      <div className="flex items-center gap-2 border-b border-slate-800/60 bg-slate-950/30 px-5 py-4">
         {icon}
         <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
       </div>

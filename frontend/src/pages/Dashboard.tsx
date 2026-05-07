@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   TrendingUp,
@@ -19,6 +19,7 @@ import {
 import { AgentChat } from '../components/AgentChat';
 import { FundFlowDiagram } from '../components/FundFlowDiagram';
 import { DecisionTimeline } from '../components/DecisionTimeline';
+import { ToastStack } from '../components/ToastStack';
 import { useDashboard } from '../hooks/useDashboard';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { formatAmount, formatPercentage } from '../utils/format';
@@ -346,7 +347,7 @@ export default function Dashboard() {
               <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-indigo-300">
                 <ArrowLeft className="w-3.5 h-3.5" /> Home
               </Link>
-              <h2 className="text-2xl font-semibold tracking-tight text-white">Dashboard</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gradient-brand">Dashboard</h2>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-sm text-slate-400">Live treasury health and agent activity</p>
@@ -794,15 +795,21 @@ export default function Dashboard() {
 
       {/* Loading overlay */}
       {isLoading && !data && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
-            <p className="text-sm text-slate-400">
-              Connecting to agents...
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md">
+          <div className="glass-card flex flex-col items-center gap-4 px-10 py-8">
+            <div className="brand-glow flex h-14 w-14 items-center justify-center rounded-2xl">
+              <RefreshCw className="h-6 w-6 animate-spin text-indigo-200" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-sm font-semibold text-slate-200">Connecting to agents</p>
+              <p className="text-[11px] text-slate-500">Loading treasury, credit & risk feeds…</p>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Live event toasts */}
+      <ToastStack lastMessage={lastMessage} />
 
     </div>
   );
@@ -826,10 +833,10 @@ function KPICard({
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   return (
-    <div className="group rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm transition-colors hover:border-slate-700">
+    <div className="group glass-tile p-5">
       <div className="mb-3 flex items-center gap-3">
         {icon}
-        <span className="flex-1 text-xs font-semibold uppercase tracking-widest text-slate-500">
+        <span className="flex-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
           {label}
         </span>
         {tooltip && (
@@ -853,7 +860,7 @@ function KPICard({
           </div>
         )}
       </div>
-      <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="text-2xl font-semibold tracking-tight text-white"><AnimatedValue value={value} /></p>
       <p className="mt-2 text-xs font-medium text-slate-500">{sub}</p>
     </div>
   );
@@ -869,8 +876,8 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
-      <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-5 py-4">
+    <div className="flex flex-col overflow-hidden glass-card">
+      <div className="flex items-center gap-2 border-b border-slate-800/60 bg-slate-950/30 px-5 py-4">
         {icon}
         <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
       </div>
@@ -888,6 +895,59 @@ function EmptyState({ text }: { text: string }) {
        <p className="text-sm font-medium text-slate-500">{text}</p>
     </div>
   );
+}
+
+/**
+ * AnimatedValue — animates from previous to current numeric value when it changes.
+ * Falls back to plain text if value is non-numeric.
+ */
+function AnimatedValue({ value, duration = 600 }: { value: string; duration?: number }) {
+  const [displayed, setDisplayed] = useState<string>(value);
+  const prevNumRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Try to extract a leading number; preserve prefix/suffix (e.g. "$1,234.56 USDt", "12 USDt")
+    const match = value.match(/^(\D*)([\d,]+(?:\.\d+)?)(.*)$/);
+    if (!match) {
+      setDisplayed(value);
+      prevNumRef.current = null;
+      return;
+    }
+    const prefix = match[1];
+    const suffix = match[3];
+    const target = parseFloat(match[2].replace(/,/g, ''));
+    if (Number.isNaN(target)) {
+      setDisplayed(value);
+      return;
+    }
+    const start = prevNumRef.current ?? 0;
+    if (start === target) {
+      setDisplayed(value);
+      prevNumRef.current = target;
+      return;
+    }
+    const startTime = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startTime) / duration);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      const current = start + (target - start) * eased;
+      const formatted = Number.isInteger(target) && Math.abs(target) >= 1
+        ? Math.round(current).toLocaleString()
+        : current.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      setDisplayed(`${prefix}${formatted}${suffix}`);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        prevNumRef.current = target;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+
+  return <span>{displayed}</span>;
 }
 
 

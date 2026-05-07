@@ -91,12 +91,12 @@ export function AgentActivityFeed() {
   const sources = [...new Set(decisions.map(d => d.source))];
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-sm flex flex-col">
-      <div className="px-5 py-4 border-b border-gray-700 flex items-center justify-between bg-gray-800/80">
+    <div className="glass-card overflow-hidden flex flex-col">
+      <div className="px-5 py-4 border-b border-slate-800/60 bg-slate-950/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-purple-400" />
-          <h3 className="text-sm font-semibold text-gray-200">Agent Activity Feed</h3>
-          <span className="text-[10px] text-gray-500 bg-gray-900 px-2 py-0.5 rounded-full ml-1">
+          <Brain className="w-4 h-4 text-indigo-300" />
+          <h3 className="text-sm font-semibold text-slate-200">Agent activity feed</h3>
+          <span className="text-[10px] text-slate-400 bg-slate-900/60 border border-slate-700/60 px-2 py-0.5 rounded-full ml-1">
             {filtered.length} events
           </span>
         </div>
@@ -105,8 +105,8 @@ export function AgentActivityFeed() {
         <div className="flex gap-1">
           <button
             onClick={() => setFilter('all')}
-            className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
-              filter === 'all' ? 'bg-gray-600 text-white' : 'bg-gray-900 text-gray-500 hover:text-gray-300'
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+              filter === 'all' ? 'bg-indigo-500/20 text-indigo-100 border border-indigo-400/40' : 'bg-slate-900/60 text-slate-500 border border-slate-800 hover:text-slate-200'
             }`}
           >
             All
@@ -116,8 +116,8 @@ export function AgentActivityFeed() {
             return (
               <button key={s}
                 onClick={() => setFilter(s)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
-                  filter === s ? 'bg-gray-600 text-white' : 'bg-gray-900 text-gray-500 hover:text-gray-300'
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                  filter === s ? 'bg-indigo-500/20 text-indigo-100 border border-indigo-400/40' : 'bg-slate-900/60 text-slate-500 border border-slate-800 hover:text-slate-200'
                 }`}
               >
                 {meta.label}
@@ -127,11 +127,17 @@ export function AgentActivityFeed() {
         </div>
       </div>
 
-      <div ref={scrollRef} className="overflow-y-auto max-h-[420px] divide-y divide-gray-700/50 custom-scrollbar">
+      <div ref={scrollRef} className="overflow-y-auto max-h-[420px] divide-y divide-slate-800/50 custom-scrollbar">
         {loading ? (
-          <div className="py-12 text-center text-gray-500 text-sm">Loading agent decisions…</div>
+          <div className="py-12 text-center text-slate-500 text-sm">Loading agent decisions…</div>
         ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-gray-500 text-sm">No agent activity yet</div>
+          <div className="py-12 flex flex-col items-center text-center">
+            <div className="brand-glow mb-3 flex h-12 w-12 items-center justify-center rounded-2xl">
+              <Brain className="h-5 w-5 text-indigo-300" />
+            </div>
+            <p className="text-sm font-semibold text-slate-300">No agent activity yet</p>
+            <p className="mt-1 text-[11px] text-slate-500">Decisions will stream in real time</p>
+          </div>
         ) : (
           filtered.slice(0, 50).map((d, idx) => {
             const meta = SOURCE_META[d.source] || SOURCE_META.treasury;
@@ -141,7 +147,7 @@ export function AgentActivityFeed() {
 
             return (
               <div key={idx}
-                className="px-4 py-3 hover:bg-gray-750/50 transition-colors cursor-pointer"
+                className="px-4 py-3 hover:bg-slate-900/40 transition-colors cursor-pointer animate-in fade-in duration-200"
                 onClick={() => toggleExpand(idx)}
               >
                 <div className="flex items-start gap-3">
@@ -153,7 +159,7 @@ export function AgentActivityFeed() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-semibold text-gray-200">
+                      <span className="text-xs font-semibold text-slate-200">
                         {formatType(d.type)}
                       </span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${STATUS_BADGE[status] || STATUS_BADGE.executed}`}>
@@ -161,9 +167,9 @@ export function AgentActivityFeed() {
                       </span>
                       {d.payload?.score != null && (
                         <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
-                          d.payload.score >= 70 ? 'bg-green-900/30 text-green-400'
-                          : d.payload.score >= 40 ? 'bg-amber-900/30 text-amber-400'
-                          : 'bg-red-900/30 text-red-400'
+                          d.payload.score >= 70 ? 'bg-emerald-900/30 text-emerald-300'
+                          : d.payload.score >= 40 ? 'bg-amber-900/30 text-amber-300'
+                          : 'bg-rose-900/30 text-rose-300'
                         }`}>
                           Score: {d.payload.score}
                         </span>
@@ -172,7 +178,7 @@ export function AgentActivityFeed() {
 
                     {/* Reasoning preview or full */}
                     {d.payload?.reasoning && (
-                      <p className={`text-[11px] text-gray-400 leading-relaxed ${
+                      <p className={`text-[11px] text-slate-400 leading-relaxed ${
                         isExpanded ? '' : 'line-clamp-2'
                       }`}>
                         {d.payload.reasoning}
@@ -181,7 +187,7 @@ export function AgentActivityFeed() {
 
                     {/* Expanded details */}
                     {isExpanded && d.payload?.data && (
-                      <pre className="mt-2 text-[10px] text-gray-500 bg-gray-900 rounded-lg p-2 overflow-x-auto max-h-32">
+                      <pre className="mt-2 text-[10px] text-slate-500 bg-slate-950/60 border border-slate-800/60 rounded-lg p-2 overflow-x-auto max-h-32">
                         {JSON.stringify(d.payload.data, null, 2)}
                       </pre>
                     )}
@@ -189,13 +195,13 @@ export function AgentActivityFeed() {
 
                   {/* Right side: time + expand */}
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[10px] text-gray-600 font-mono">
+                    <span className="text-[10px] text-slate-500 font-mono">
                       {relativeTime(d.timestamp)}
                     </span>
                     {isExpanded ? (
-                      <ChevronUp className="w-3 h-3 text-gray-600" />
+                      <ChevronUp className="w-3 h-3 text-slate-500" />
                     ) : (
-                      <ChevronDown className="w-3 h-3 text-gray-600" />
+                      <ChevronDown className="w-3 h-3 text-slate-500" />
                     )}
                   </div>
                 </div>
