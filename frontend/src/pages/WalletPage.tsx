@@ -25,7 +25,8 @@ import { setSelectedProvider, getEth } from '../hooks/selectedProvider';
 const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0';
 const USDT_ADDRESS = import.meta.env.VITE_USDT_ADDRESS || '0x779Ded0c9e1022225f8E0630b35a9b54bE713736';
 const CREDIT_LINE_ADDRESS = import.meta.env.VITE_CREDIT_LINE_ADDRESS || '0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c';
-const COLLATERAL_LOCK_ADDRESS = import.meta.env.VITE_COLLATERAL_LOCK_ADDRESS || '0x73136630885C6b74bAe6AdC56e8D17D055f3F2f6';
+// Note: CollateralLock is intentionally NOT used in the borrow flow anymore.
+// Quorum is uncollateralized credit (revenue-backed lending). MNT collateral coming in v2.
 const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '5000');
 const CHAIN_NAME = import.meta.env.VITE_CHAIN_NAME || 'Mantle Mainnet';
 const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://rpc.mantle.xyz';
@@ -186,8 +187,9 @@ export default function WalletPage() {
   // Auto-connect if already authorized (skip if user explicitly disconnected)
   useEffect(() => {
     if (localStorage.getItem('wallet-disconnected')) return;
-
     const lastName = localStorage.getItem('wallet-last');
+    if (!lastName) return; // never auto-connect a wallet the user hasn't picked
+
     let cancelled = false;
 
     const tryConnect = async (eth: EIP1193Provider) => {
@@ -204,31 +206,22 @@ export default function WalletPage() {
       }
     };
 
-    // 1) Try to re-discover the previously chosen wallet via EIP-6963
-    const detected = new Map<string, EIP1193Provider>();
+    // Re-discover ONLY the previously chosen wallet via EIP-6963 — no fallback to window.ethereum
+    // (window.ethereum is hijacked by whichever extension wins the race — usually MetaMask
+    //  even when the user actually connected Trust / Rabby / etc.)
     const onAnnounce = (e: Event) => {
       const detail = (e as CustomEvent).detail as { info?: { name?: string }; provider?: EIP1193Provider };
       if (!detail?.info?.name || !detail.provider) return;
-      detected.set(detail.info.name, detail.provider);
-      if (lastName && detail.info.name === lastName) {
+      if (detail.info.name === lastName) {
         tryConnect(detail.provider);
       }
     };
     window.addEventListener('eip6963:announceProvider', onAnnounce as EventListener);
     window.dispatchEvent(new Event('eip6963:requestProvider'));
 
-    // 2) Fallback after 600ms — if saved wallet not announced, try window.ethereum
-    const timer = window.setTimeout(() => {
-      if (cancelled) return;
-      if (lastName && detected.has(lastName)) return; // already handled
-      const eth = (window as { ethereum?: EIP1193Provider }).ethereum;
-      if (eth) tryConnect(eth);
-    }, 600);
-
     return () => {
       cancelled = true;
       window.removeEventListener('eip6963:announceProvider', onAnnounce as EventListener);
-      window.clearTimeout(timer);
     };
   }, [finishConnect]);
 
@@ -325,33 +318,9 @@ export default function WalletPage() {
     setIsBorrowing(true);
     setBorrowResult(null);
     try {
-      await ensureCorrectChain();
-      const provider = new BrowserProvider(getEth()!);
-      const signer = await provider.getSigner();
+      // Uncollateralized credit — the agent issues the loan based purely on the on-chain reputation score.
+      // No collateral lock here; that defeats the "revenue-backed lending" thesis.
       const parsedAmount = parseUnits(borrowAmount, 6);
-
-      // Step 1: Deposit 100% USDt collateral into CollateralLock
-      if (COLLATERAL_LOCK_ADDRESS) {
-        const COLLATERAL_ABI = [
-          'function depositCollateral(uint256 amount) external',
-          'function hasCollateral(address borrower, uint256 requiredAmount) view returns (bool)',
-        ];
-        const collateralContract = new Contract(COLLATERAL_LOCK_ADDRESS, COLLATERAL_ABI, signer);
-
-        const alreadyHas = await collateralContract.hasCollateral(target, parsedAmount);
-        if (!alreadyHas) {
-          const usdtContract = new Contract(USDT_ADDRESS, ERC20_ABI, signer);
-          const allowance = await usdtContract.allowance(target, COLLATERAL_LOCK_ADDRESS);
-          if (allowance < parsedAmount) {
-            const approveTx = await usdtContract.approve(COLLATERAL_LOCK_ADDRESS, parsedAmount);
-            await approveTx.wait();
-          }
-          const depositTx = await collateralContract.depositCollateral(parsedAmount);
-          await depositTx.wait();
-        }
-      }
-
-      // Step 2: Request loan from backend
       const wei = parsedAmount.toString();
       const res = await fetch(apiUrl(`/api/credit/${target.toLowerCase()}/borrow`), {
         method: 'POST',
@@ -360,12 +329,12 @@ export default function WalletPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setBorrowResult({ success: true, message: `Collateral locked + Borrowed ${borrowAmount} USDt — Loan #${data.data.id}` });
+        setBorrowResult({ success: true, message: `Borrowed ${borrowAmount} USDT0 — Loan #${data.data.id}` });
         setBorrowAmount('');
         checkCreditScore();
         fetchLoans();
       } else {
-        setBorrowResult({ success: false, message: data.error || 'Borrow declined (collateral deposited — contact support)' });
+        setBorrowResult({ success: false, message: data.error || 'Borrow declined by Credit Agent' });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Transaction error';
@@ -998,7 +967,10 @@ export default function WalletPage() {
                                     {isBorrowing ? 'Locking collateral...' : 'Lock & Borrow'}
                                  </button>
                               </div>
-                              <p className="mt-2 text-[10px] text-slate-500">100% USDt collateral is locked on-chain before the loan is issued. Returned on full repayment.</p>
+                              <p className="mt-2 text-[10px] text-slate-500">
+                                <strong className="text-indigo-300">Uncollateralized.</strong> The Credit Agent issues this loan purely against your on-chain reputation score — no USDT0 or MNT lock required.
+                                <span className="block mt-1 text-slate-600">Coming soon: MNT-collateralized loans with higher LTV for users who want to borrow above their score-based limit.</span>
+                              </p>
                               {borrowResult && (
                                 <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-indigo-950/30 border border-indigo-900/50 text-indigo-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
                                    {borrowResult.success ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
