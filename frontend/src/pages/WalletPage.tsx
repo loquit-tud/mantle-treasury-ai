@@ -581,15 +581,15 @@ export default function WalletPage() {
                         <LogOut className="w-3.5 h-3.5" /> Disconnect Wallet
                      </button>
                      <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/50">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ETH Balance</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">MNT Balance</p>
                         <p className="text-xl font-bold text-white">
-                           {ethBal ? Number(ethBal).toFixed(4) : '0.0000'} <span className="text-sm text-slate-400 font-medium">ETH</span>
+                           {ethBal ? Number(ethBal).toFixed(4) : '0.0000'} <span className="text-sm text-slate-400 font-medium">MNT</span>
                         </p>
                      </div>
                      <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800/50">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">USDt Balance</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">USDT0 Balance</p>
                         <p className="text-xl font-bold text-white">
-                           {usdtBal ? Number(usdtBal).toFixed(2) : '0.00'} <span className="text-sm text-slate-400 font-medium">USDt</span>
+                           {usdtBal ? Number(usdtBal).toFixed(2) : '0.00'} <span className="text-sm text-slate-400 font-medium">USDT0</span>
                         </p>
                      </div>
                   </div>
@@ -608,30 +608,47 @@ export default function WalletPage() {
               <div className="glass-card p-6">
                   <div className="flex items-center gap-2 mb-4">
                      <Upload className="w-4 h-4 text-indigo-400" />
-                     <h3 className="text-sm font-semibold text-white">Deposit to Treasury</h3>
+                     <h3 className="text-sm font-semibold text-white">Deposit USDT0 to Treasury</h3>
                   </div>
-                  <p className="text-xs text-slate-400 mb-4">Provide liquidity to the multi-sig vault. Approvals may be required.</p>
-                  
+                  <p className="text-xs text-slate-400 mb-2">Provide liquidity to the multi-sig vault. One-time approval required.</p>
+                  <div className="mb-4 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Wallet balance</span>
+                    <span className="font-mono text-slate-300">{usdtBal ? Number(usdtBal).toFixed(4) : '0.0000'} USDT0</span>
+                  </div>
+
                   <div className="space-y-3">
                      <div className="relative">
-                       <input 
-                         type="number" 
+                       <input
+                         type="number"
                          value={depositAmount}
                          onChange={(e) => setDepositAmount(e.target.value)}
-                         placeholder="Amount in USDt"
-                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono"
+                         placeholder="0.00"
+                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-28 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono"
                        />
-                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 uppercase tracking-wider">USDt</span>
+                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                         <button
+                           type="button"
+                           onClick={() => { if (usdtBal) setDepositAmount(usdtBal); }}
+                           disabled={!usdtBal || Number(usdtBal) <= 0}
+                           className="rounded-md border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-300 transition-colors hover:bg-indigo-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                         >
+                           Max
+                         </button>
+                         <span className="text-xs font-medium text-slate-500 uppercase tracking-wider pr-2">USDT0</span>
+                       </div>
                      </div>
+                     {depositAmount && usdtBal && Number(depositAmount) > Number(usdtBal) && (
+                       <p className="text-[11px] text-rose-400">Amount exceeds wallet balance ({Number(usdtBal).toFixed(4)} USDT0).</p>
+                     )}
                      <button
                         onClick={handleDeposit}
-                        disabled={isDepositing || !depositAmount}
+                        disabled={isDepositing || !depositAmount || Number(depositAmount) <= 0 || (!!usdtBal && Number(depositAmount) > Number(usdtBal))}
                         className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-500 transition-all shadow-[0_0_20px_-5px_rgba(99,102,241,0.45)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
                      >
                        {isDepositing ? (
                          <><RefreshCw className="w-4 h-4 animate-spin" /> Depositing...</>
                        ) : (
-                         'Process Deposit (WDK)'
+                         <>Deposit {depositAmount || '0'} USDT0</>
                        )}
                      </button>
                   </div>
