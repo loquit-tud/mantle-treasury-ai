@@ -181,6 +181,8 @@ export interface AgentConfig {
   usdtAddress: string;
   aavePoolAddress?: string;
   collateralLockAddress?: string;
+  /** Optional list of additional Aave V3-compatible pools to compare APY across (e.g. Lendle, Init Capital). */
+  yieldPools?: { name: string; address: string }[];
 
 }
 

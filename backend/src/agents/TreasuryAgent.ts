@@ -686,35 +686,45 @@ export class TreasuryAgent {
       logger.debug('Yield pool data unavailable, using on-chain fallback', { err });
     }
 
-    // 2. On-chain yield pool (Aave V3 compatible: Aurelius / Lendle) — getReserveData
-    try {
-      if (this.config.aavePoolAddress) {
-        const poolAbi = [
-          `function getReserveData(address asset) view returns (
-            tuple(
-              uint256 configuration,
-              uint128 liquidityIndex,
-              uint128 currentLiquidityRate,
-              uint128 variableBorrowIndex,
-              uint128 currentVariableBorrowRate,
-              uint128 currentStableBorrowRate,
-              uint40 lastUpdateTimestamp,
-              uint16 id,
-              address aTokenAddress,
-              address stableDebtTokenAddress,
-              address variableDebtTokenAddress,
-              address interestRateStrategyAddress,
-              uint128 accruedToTreasury,
-              uint128 unbacked,
-              uint128 isolationModeTotalDebt
-            ) data
-          )`,
-        ];
-        const pool = new ethers.Contract(this.config.aavePoolAddress, poolAbi, this.provider);
+    // 2. On-chain yield pool scan — combine primary pool + any extras configured via YIELD_POOLS env
+    const poolsToScan: { name: string; address: string }[] = [];
+    if (this.config.aavePoolAddress) {
+      poolsToScan.push({ name: 'aurelius', address: this.config.aavePoolAddress });
+    }
+    if (this.config.yieldPools && this.config.yieldPools.length > 0) {
+      for (const p of this.config.yieldPools) {
+        if (!poolsToScan.some(existing => existing.address.toLowerCase() === p.address.toLowerCase())) {
+          poolsToScan.push(p);
+        }
+      }
+    }
+
+    const poolAbi = [
+      `function getReserveData(address asset) view returns (
+        tuple(
+          uint256 configuration,
+          uint128 liquidityIndex,
+          uint128 currentLiquidityRate,
+          uint128 variableBorrowIndex,
+          uint128 currentVariableBorrowRate,
+          uint128 currentStableBorrowRate,
+          uint40 lastUpdateTimestamp,
+          uint16 id,
+          address aTokenAddress,
+          address stableDebtTokenAddress,
+          address variableDebtTokenAddress,
+          address interestRateStrategyAddress,
+          uint128 accruedToTreasury,
+          uint128 unbacked,
+          uint128 isolationModeTotalDebt
+        ) data
+      )`,
+    ];
+
+    for (const poolEntry of poolsToScan) {
+      try {
+        const pool = new ethers.Contract(poolEntry.address, poolAbi, this.provider);
         const reserveData = await pool.getReserveData(this.config.usdtAddress);
-        // Different pool implementations return either:
-        // - flattened struct fields on root object, or
-        // - nested tuple under `.data`.
         const liquidityRateRaw =
           reserveData?.currentLiquidityRate ??
           reserveData?.data?.currentLiquidityRate ??
@@ -723,24 +733,21 @@ export class TreasuryAgent {
         const apy = rawRate / 1e25; // ray (27 dec) → percentage
         if (apy > 0 && apy < 50) {
           opportunities.push({
-            protocol: 'aurelius',
+            protocol: poolEntry.name,
             apy: Math.round(apy * 100) / 100,
             tvl: '0',
             risk: 'low',
           });
-          logger.info('Yield pool on-chain yield data', { rawRate, apy: opportunities[0].apy });
+          logger.info('Yield pool on-chain APY', { pool: poolEntry.name, apy });
         } else {
-          logger.debug('Aave liquidityRate parsed to unreasonable APY', { rawRate, apy });
+          logger.debug('Pool returned unreasonable APY, skipping', { pool: poolEntry.name, rawRate, apy });
         }
+      } catch (err) {
+        logger.debug('On-chain yield pool query failed', { pool: poolEntry.name, err });
       }
-    } catch (err) {
-      logger.debug('On-chain yield pool query failed', { err });
     }
 
-    // 3. Lendle (Mantle-native lending) — on-chain supply rate query
-    // Note: Lendle uses a similar Aave V3 interface; pool address set via AAVE_POOL_ADDRESS
-    // Currently falls back to Aurelius pool above if addresses are the same.
-    // Add a separate LENDLE_POOL_ADDRESS env var if you want to compare both.
+    // 3. Lendle / Init Capital — configure via YIELD_POOLS env above instead of hardcoding.
 
     // 4. No fallback — if no live on-chain data, return empty (no fake APY)
     if (opportunities.length === 0) {

@@ -52,6 +52,16 @@ const config: AgentConfig = {
   usdtAddress: process.env.USDT_ADDRESS || '',
   aavePoolAddress: process.env.AAVE_POOL_ADDRESS,
   collateralLockAddress: process.env.COLLATERAL_LOCK_ADDRESS,
+  // YIELD_POOLS env format: "name1:0xaddr1,name2:0xaddr2" — extra Aave V3-compatible pools to compare APY across
+  yieldPools: (process.env.YIELD_POOLS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(entry => {
+      const [name, address] = entry.split(':').map(p => p.trim());
+      return name && address ? { name, address } : null;
+    })
+    .filter((p): p is { name: string; address: string } => !!p),
 };
 
 // Validate configuration

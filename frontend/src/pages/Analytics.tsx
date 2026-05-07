@@ -324,6 +324,16 @@ export default function Analytics() {
                  </div>
               )}
            </div>
+           {yieldData.length === 1 && (
+             <p className="mt-2 text-[11px] text-slate-500 leading-relaxed">
+               Only 1 live pool reachable on-chain right now. The agent compares <strong>real APY from any Aave V3-compatible pool</strong> on Mantle (Aurelius, Lendle, Init Capital). Add more pools by setting <code className="text-teal-300">YIELD_POOLS</code> env var on the backend; no fake APY is shown.
+             </p>
+           )}
+           {yieldData.length >= 2 && (
+             <p className="mt-2 text-[11px] text-slate-500 leading-relaxed">
+               Comparing live APY across <strong>{yieldData.length} on-chain pools</strong>. Best: <strong className="text-teal-300">{yieldData.reduce((a, b) => (a.apy > b.apy ? a : b)).protocol}</strong> @ {yieldData.reduce((a, b) => (a.apy > b.apy ? a : b)).apy.toFixed(2)}%. The Treasury Agent routes funds to the highest-APY pool that passes the Risk Agent's veto.
+             </p>
+           )}
         </Panel>
 
         {/* Credit System Stats */}
