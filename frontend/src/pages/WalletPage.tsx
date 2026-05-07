@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
+import { WalletPickerModal } from '../components/WalletPickerModal';
+import type { EIP1193Provider } from '../hooks/useWalletProviders';
 
 // Constants using Vite Env
 const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0';
@@ -75,45 +77,57 @@ export default function WalletPage() {
   const [ethBal, setEthBal] = useState<string | null>(null);
   const [usdtBal, setUsdtBal] = useState<string | null>(null);
   const [showNoWalletCard, setShowNoWalletCard] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
-  const connectWallet = useCallback(async () => {
-    if (!window.ethereum) { setShowNoWalletCard(true); return; }
+  const finishConnect = useCallback(async () => {
+    if (!window.ethereum) return;
+    localStorage.removeItem('wallet-disconnected');
+    await ensureCorrectChain();
+    const provider = new BrowserProvider(window.ethereum);
+
+    let accounts: string[] = [];
     try {
-      localStorage.removeItem('wallet-disconnected');
-      await ensureCorrectChain();
-      const provider = new BrowserProvider(window.ethereum);
-
-      // Force account picker so user can choose a different account/wallet.
-      // Falls back to eth_requestAccounts on wallets that don't support permissions.
-      let accounts: string[] = [];
-      try {
-        const perms = await window.ethereum.request({
-          method: 'wallet_requestPermissions',
-          params: [{ eth_accounts: {} }],
-        }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
-        const caveat = perms?.[0]?.caveats?.find((c) => c.type === 'restrictReturnedAccounts');
-        if (caveat && Array.isArray(caveat.value)) {
-          accounts = caveat.value as string[];
-        }
-      } catch {
-        // permissions not supported — fallback below
+      const perms = await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }],
+      }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
+      const caveat = perms?.[0]?.caveats?.find((c) => c.type === 'restrictReturnedAccounts');
+      if (caveat && Array.isArray(caveat.value)) {
+        accounts = caveat.value as string[];
       }
-      if (accounts.length === 0) {
-        accounts = await provider.send('eth_requestAccounts', []);
-      }
+    } catch {
+      // permissions not supported — fallback below
+    }
+    if (accounts.length === 0) {
+      accounts = await provider.send('eth_requestAccounts', []);
+    }
 
-      const addr = accounts[0] as string;
-      setAddress(addr);
-      setIsConnected(true);
-      // Fetch balances
-      const eth = await provider.getBalance(addr);
-      setEthBal(formatEther(eth));
-      const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
-      const bal = await usdt.balanceOf(addr);
-      setUsdtBal(formatUnits(bal, 6));
+    const addr = accounts[0] as string;
+    setAddress(addr);
+    setIsConnected(true);
+    const eth = await provider.getBalance(addr);
+    setEthBal(formatEther(eth));
+    const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
+    const bal = await usdt.balanceOf(addr);
+    setUsdtBal(formatUnits(bal, 6));
+  }, []);
+
+  const handleProviderSelected = useCallback(async (chosen: EIP1193Provider, name: string) => {
+    setPickerOpen(false);
+    try {
+      // Route all subsequent calls through the chosen provider.
+      (window as { ethereum?: EIP1193Provider }).ethereum = chosen;
+      localStorage.setItem('wallet-last', name);
+      await finishConnect();
     } catch (err) {
       console.error('Wallet connect failed:', err);
     }
+  }, [finishConnect]);
+
+  const connectWallet = useCallback(async () => {
+    if (!window.ethereum) { setShowNoWalletCard(true); return; }
+    // Always show picker so user can choose between MetaMask / Rabby / etc.
+    setPickerOpen(true);
   }, []);
 
   const disconnectWallet = useCallback(async () => {
@@ -144,10 +158,10 @@ export default function WalletPage() {
     if (window.ethereum && !localStorage.getItem('wallet-disconnected')) {
       const provider = new BrowserProvider(window.ethereum);
       provider.send('eth_accounts', []).then((accs: string[]) => {
-        if (accs.length > 0) connectWallet();
+        if (accs.length > 0) finishConnect();
       }).catch(() => {});
     }
-  }, [connectWallet]);
+  }, [finishConnect]);
 
   const [isCheckingCredit, setIsCheckingCredit] = useState(false);
   const [creditCheckError, setCreditCheckError] = useState<string | null>(null);
@@ -440,6 +454,7 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
+      <WalletPickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handleProviderSelected} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               {/* ── No Wallet Onboarding Card ── */}
               {showNoWalletCard && (
