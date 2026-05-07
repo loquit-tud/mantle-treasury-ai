@@ -18,6 +18,7 @@ import {
 import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
 import { WalletPickerModal } from '../components/WalletPickerModal';
+import { MntCollateralCard } from '../components/MntCollateralCard';
 import type { EIP1193Provider } from '../hooks/useWalletProviders';
 import { setSelectedProvider, getEth } from '../hooks/selectedProvider';
 
@@ -969,7 +970,7 @@ export default function WalletPage() {
                               </div>
                               <p className="mt-2 text-[10px] text-slate-500">
                                 <strong className="text-indigo-300">Uncollateralized.</strong> The Credit Agent issues this loan purely against your on-chain reputation score — no USDT0 or MNT lock required.
-                                <span className="block mt-1 text-slate-600">Coming soon: MNT-collateralized loans with higher LTV for users who want to borrow above their score-based limit.</span>
+                                <span className="block mt-1 text-slate-600">Or use the MNT-collateralized vault below for higher LTV without depending on your reputation score.</span>
                               </p>
                               {borrowResult && (
                                 <div className={`mt-3 p-2.5 rounded-lg flex items-start gap-2 text-xs ${borrowResult.success ? 'bg-indigo-950/30 border border-indigo-900/50 text-indigo-400' : 'bg-red-950/30 border border-red-900/50 text-red-400'}`}>
@@ -1002,6 +1003,11 @@ export default function WalletPage() {
                    </div>
                 )}
             </div>
+
+            {/* MNT-Collateralized Vault */}
+            {isConnected && address && (
+              <MntCollateralCard address={address} usdtAddress={USDT_ADDRESS} />
+            )}
 
             {/* Active Loans List */}
             {isConnected && creditProfile && (

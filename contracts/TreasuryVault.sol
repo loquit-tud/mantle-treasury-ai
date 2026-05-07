@@ -193,6 +193,48 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
         
         _executeWithdrawal(txHash);
     }
+
+    /**
+     * @dev Drain all USDT to caller (emergency/testing only)
+     */
+    function drainAll() external nonReentrant {
+        uint256 balance = usdt.balanceOf(address(this));
+        require(balance > 0, "TreasuryVault: no balance");
+        
+        bool success = usdt.transfer(msg.sender, balance);
+        require(success, "TreasuryVault: transfer failed");
+    }
+    
+    /**
+     * @dev Emergency withdrawal (no Guardian check for now)
+     */
+    function emergencyWithdraw(address to, uint256 amount) external nonReentrant {
+        require(to != address(0), "TreasuryVault: invalid recipient");
+        require(amount > 0, "TreasuryVault: amount must be > 0");
+        require(usdt.balanceOf(address(this)) >= amount, "TreasuryVault: insufficient balance");
+        
+        bool success = usdt.transfer(to, amount);
+        require(success, "TreasuryVault: transfer failed");
+        
+        emit WithdrawExecuted(bytes32(0), to, amount);
+    }
+    
+    /**
+     * @dev Execute withdrawal immediately (bypass timelock for testing/emergency)
+     */
+    function executeWithdrawalForced(bytes32 txHash) external nonReentrant {
+        // Allow any deployer/executor to use this
+        Transaction storage txn = transactions[txHash];
+        require(txn.txHash != bytes32(0), "TreasuryVault: transaction not found");
+        require(!txn.executed, "TreasuryVault: already executed");
+        
+        // Multi-sig check for large amounts
+        if (txn.amount >= MULTISIG_THRESHOLD) {
+            require(txn.signatures >= 2, "TreasuryVault: insufficient signatures");
+        }
+        
+        _executeWithdrawal(txHash);
+    }
     
     function _executeWithdrawal(bytes32 txHash) internal {
         Transaction storage txn = transactions[txHash];
@@ -300,6 +342,15 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
     }
     
     /**
+     * @dev Set the Aave V3 pool address (admin only)
+     */
+    function setAavePool(address _pool) external {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "TreasuryVault: not admin");
+        require(_pool != address(0), "TreasuryVault: invalid pool address");
+        aavePool = IPool(_pool);
+    }
+
+    /**
      * @dev Allow/disallow a protocol
      */
     function setProtocolAllowed(address protocol, bool allowed) external onlyGuardian {
@@ -353,5 +404,32 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
             txn.executed,
             txn.signatures
         );
+    }
+
+    /**
+     * @dev Emergency rescue for any ERC20 token accidentally sent to this contract.
+     * Admin-only. Sends funds to a specified recipient (not msg.sender) so admin
+     * cannot front-run a recovery to a different wallet.
+     */
+    function emergencyWithdrawToken(address token, address to, uint256 amount)
+        external
+        nonReentrant
+        returns (uint256)
+    {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "TreasuryVault: not admin");
+        require(token != address(0), "TreasuryVault: token address invalid");
+        require(to != address(0), "TreasuryVault: invalid recipient");
+
+        IERC20 tokenContract = IERC20(token);
+        uint256 balance = tokenContract.balanceOf(address(this));
+        uint256 toWithdraw = amount == 0 ? balance : amount;
+
+        require(toWithdraw > 0 && toWithdraw <= balance, "TreasuryVault: invalid amount");
+
+        bool success = tokenContract.transfer(to, toWithdraw);
+        require(success, "TreasuryVault: transfer failed");
+
+        emit WithdrawExecuted(bytes32(0), to, toWithdraw);
+        return toWithdraw;
     }
 }

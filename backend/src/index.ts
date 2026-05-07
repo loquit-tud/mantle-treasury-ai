@@ -26,6 +26,7 @@ import { checkSanctions } from './services/ComplianceCheck';
 import { RevenueTracker } from './services/RevenueTracker';
 import { DebtRestructuring } from './services/DebtRestructuring';
 import { initWdk, getAccount, getWdkAddress, disposeWdk } from './services/wdk';
+import { MntVaultService } from './services/MntVaultService';
 // CrossChainBridge is accessed via treasuryAgent.getCrossChainBridge()
 import { closeDB } from './services/StateDB';
 import logger from './utils/logger';
@@ -151,6 +152,7 @@ let agentDialogue: AgentDialogue | null = null;
 let interAgentLending: InterAgentLending | null = null;
 let revenueTracker: RevenueTracker | null = null;
 let debtRestructuring: DebtRestructuring | null = null;
+let mntVault: MntVaultService | null = null;
 
 // WebSocket clients
 const wsClients = new Set<import('ws').WebSocket>();
@@ -250,6 +252,26 @@ async function initializeAgents(): Promise<void> {
     EventBus.subscribeAll((event) => {
       broadcastEvent(event);
     });
+
+    // Initialize MNT collateral vault price keeper (if address configured)
+    const mntVaultAddress = process.env.MNT_COLLATERAL_VAULT_ADDRESS;
+    if (mntVaultAddress) {
+      try {
+        // Use deployer key for price keeper signing (granted ORACLE_ROLE at deploy)
+        const signer = config.privateKey
+          ? new ethers.Wallet(config.privateKey, provider)
+          : null;
+        if (signer) {
+          mntVault = new MntVaultService(mntVaultAddress, provider, signer);
+          mntVault.startPriceKeeper(5 * 60_000); // every 5min
+          logger.info(`MntCollateralVault keeper started @ ${mntVaultAddress}`);
+        } else {
+          logger.warn('MNT_COLLATERAL_VAULT_ADDRESS set but no DEPLOYER_PRIVATE_KEY — price keeper disabled');
+        }
+      } catch (err) {
+        logger.warn(`MntCollateralVault init failed: ${err instanceof Error ? err.message : err}`);
+      }
+    }
 
     logger.info('All agents initialized successfully (with inter-agent dialogue)');
   } catch (error) {
@@ -604,6 +626,55 @@ app.get('/api/yield/opportunities', async (_req, res) => {
     res.json({ success: true, data: opportunities });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to fetch yield opportunities' });
+  }
+});
+
+// ==================== MNT Collateral Vault ====================
+
+// Vault status (price, LTV params, reserves)
+app.get('/api/mnt-vault/status', async (_req, res) => {
+  if (!mntVault) {
+    res.status(503).json({ success: false, error: 'MntCollateralVault not configured' });
+    return;
+  }
+  try {
+    const status = await mntVault.getStatus();
+    res.json({ success: true, data: status });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'status failed' });
+  }
+});
+
+// User position
+app.get('/api/mnt-vault/position/:address', async (req, res) => {
+  if (!mntVault) {
+    res.status(503).json({ success: false, error: 'MntCollateralVault not configured' });
+    return;
+  }
+  const { address } = req.params;
+  if (!ethers.isAddress(address)) {
+    res.status(400).json({ success: false, error: 'Invalid address' });
+    return;
+  }
+  try {
+    const position = await mntVault.getPosition(address);
+    res.json({ success: true, data: position });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'position failed' });
+  }
+});
+
+// Force-refresh price (admin convenience for demo)
+app.post('/api/mnt-vault/refresh-price', requireApiKey, async (_req, res) => {
+  if (!mntVault) {
+    res.status(503).json({ success: false, error: 'MntCollateralVault not configured' });
+    return;
+  }
+  try {
+    const result = await mntVault.pushPrice();
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : 'refresh failed' });
   }
 });
 
