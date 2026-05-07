@@ -19,6 +19,7 @@ import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
 import { WalletPickerModal } from '../components/WalletPickerModal';
 import type { EIP1193Provider } from '../hooks/useWalletProviders';
+import { setSelectedProvider, getEth } from '../hooks/selectedProvider';
 
 // Constants using Vite Env
 const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0';
@@ -31,17 +32,18 @@ const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://rpc.mantle.xyz';
 
 /** Ensure MetaMask is on the correct chain; auto-add if missing */
 async function ensureCorrectChain(): Promise<void> {
-  if (!window.ethereum) return;
+  const eth = getEth();
+  if (!eth) return;
   const hexChainId = '0x' + EXPECTED_CHAIN_ID.toString(16);
   try {
-    await window.ethereum.request({
+    await eth.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: hexChainId }],
     });
   } catch (switchErr: unknown) {
     // 4902 = chain not added yet
     if ((switchErr as { code?: number }).code === 4902) {
-      await window.ethereum.request({
+      await eth.request({
         method: 'wallet_addEthereumChain',
         params: [{
           chainId: hexChainId,
@@ -81,13 +83,14 @@ export default function WalletPage() {
   const [connectError, setConnectError] = useState<string | null>(null);
 
   const finishConnect = useCallback(async () => {
-    if (!window.ethereum) return;
+    const eth = getEth();
+    if (!eth) return;
     localStorage.removeItem('wallet-disconnected');
 
     // 1. Request accounts FIRST (most wallets refuse chain switch without account permission)
     let accounts: string[] = [];
     try {
-      const perms = await window.ethereum.request({
+      const perms = await eth.request({
         method: 'wallet_requestPermissions',
         params: [{ eth_accounts: {} }],
       }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
@@ -99,7 +102,7 @@ export default function WalletPage() {
       // permissions not supported — fallback below
     }
     if (accounts.length === 0) {
-      accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+      accounts = await eth.request({ method: 'eth_requestAccounts' }) as string[];
     }
     if (!accounts || accounts.length === 0) {
       throw new Error('No account selected in wallet.');
@@ -112,13 +115,13 @@ export default function WalletPage() {
       console.warn('Chain switch failed (continuing):', chainErr);
     }
 
-    const provider = new BrowserProvider(window.ethereum);
+    const provider = new BrowserProvider(eth);
     const addr = accounts[0] as string;
     setAddress(addr);
     setIsConnected(true);
     try {
-      const eth = await provider.getBalance(addr);
-      setEthBal(formatEther(eth));
+      const ethBalRaw = await provider.getBalance(addr);
+      setEthBal(formatEther(ethBalRaw));
       const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
       const bal = await usdt.balanceOf(addr);
       setUsdtBal(formatUnits(bal, 6));
@@ -131,8 +134,8 @@ export default function WalletPage() {
     setPickerOpen(false);
     setConnectError(null);
     try {
-      // Route all subsequent calls through the chosen provider.
-      (window as { ethereum?: EIP1193Provider }).ethereum = chosen;
+      // Store globally so all subsequent calls use the chosen provider.
+      setSelectedProvider(chosen);
       localStorage.setItem('wallet-last', name);
       await finishConnect();
     } catch (err) {
@@ -143,7 +146,7 @@ export default function WalletPage() {
   }, [finishConnect]);
 
   const connectWallet = useCallback(async () => {
-    if (!window.ethereum) { setShowNoWalletCard(true); return; }
+    if (!getEth()) { setShowNoWalletCard(true); return; }
     // Always show picker so user can choose between MetaMask / Rabby / etc.
     setPickerOpen(true);
   }, []);
@@ -152,13 +155,14 @@ export default function WalletPage() {
     localStorage.setItem('wallet-disconnected', 'true');
     // Try revoking MetaMask permissions so eth_accounts returns []
     try {
-      await window.ethereum?.request({
+      await getEth()?.request({
         method: 'wallet_revokePermissions',
         params: [{ eth_accounts: {} }],
       });
     } catch {
       // Older MetaMask versions don't support this — flag handles it
     }
+    setSelectedProvider(null);
     setAddress(null);
     setIsConnected(false);
     setEthBal(null);
@@ -173,8 +177,9 @@ export default function WalletPage() {
 
   // Auto-connect if already authorized (skip if user explicitly disconnected)
   useEffect(() => {
-    if (window.ethereum && !localStorage.getItem('wallet-disconnected')) {
-      const provider = new BrowserProvider(window.ethereum);
+    const eth = getEth();
+    if (eth && !localStorage.getItem('wallet-disconnected')) {
+      const provider = new BrowserProvider(eth);
       provider.send('eth_accounts', []).then((accs: string[]) => {
         if (accs.length > 0) finishConnect();
       }).catch(() => {});
@@ -266,12 +271,12 @@ export default function WalletPage() {
   const handleBorrow = async () => {
     const target = lookupAddress || address;
     if (!target || !borrowAmount || isNaN(Number(borrowAmount)) || Number(borrowAmount) <= 0) return;
-    if (!window.ethereum) { setShowNoWalletCard(true); return; }
+    if (!getEth()) { setShowNoWalletCard(true); return; }
     setIsBorrowing(true);
     setBorrowResult(null);
     try {
       await ensureCorrectChain();
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(getEth()!);
       const signer = await provider.getSigner();
       const parsedAmount = parseUnits(borrowAmount, 6);
 
@@ -323,12 +328,12 @@ export default function WalletPage() {
   const handleRepay = async (loanId: number) => {
     const target = lookupAddress || address;
     if (!target || !repayAmount || isNaN(Number(repayAmount)) || Number(repayAmount) <= 0) return;
-    if (!window.ethereum) { setShowNoWalletCard(true); return; }
+    if (!getEth()) { setShowNoWalletCard(true); return; }
     setIsRepaying(true);
     setRepayResult(null);
     try {
       await ensureCorrectChain();
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(getEth()!);
       const signer = await provider.getSigner();
       const parsedAmount = parseUnits(repayAmount, 6);
 
@@ -407,17 +412,14 @@ export default function WalletPage() {
     if (!address || !depositAmount || isNaN(Number(depositAmount))) return;
     
     // Check if window.ethereum exists
-    if (!window.ethereum) {
-        setShowNoWalletCard(true);
-        return;
-    }
+    if (!getEth()) { setShowNoWalletCard(true); return; }
 
     setIsDepositing(true);
     setTxHash(null);
     try {
       await ensureCorrectChain();
       // 1. Setup Ethers Provider & Signer
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(getEth()!);
       const signer = await provider.getSigner();
       
       const usdtContract = new Contract(USDT_ADDRESS, ERC20_ABI, signer);
@@ -958,9 +960,9 @@ export default function WalletPage() {
                                           setRepayLoanId(loan.id);
                                           setRepayResult(null);
                                           // Auto-fill with exact amount due from on-chain
-                                          if (window.ethereum) {
+                                          if (getEth()) {
                                             try {
-                                              const prov = new BrowserProvider(window.ethereum);
+                                              const prov = new BrowserProvider(getEth()!);
                                               const cl = new Contract(CREDIT_LINE_ADDRESS, CREDIT_LINE_ABI, prov);
                                               const due = await cl.getAmountDue(loan.id);
                                               if (due > 0n) setRepayAmount(formatUnits(due, 6));

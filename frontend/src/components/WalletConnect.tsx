@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Wallet, ExternalLink, Copy, Check } from 'lucide-react';
 import { WalletPickerModal } from './WalletPickerModal';
 import type { EIP1193Provider } from '../hooks/useWalletProviders';
+import { setSelectedProvider, getEth } from '../hooks/selectedProvider';
 
 export function WalletConnect() {
   const [address, setAddress] = useState<string | null>(null);
@@ -18,19 +19,19 @@ export function WalletConnect() {
     checkConnection();
     
     // Listen for account changes (try/catch for MetaMask compatibility)
-    if (window.ethereum) {
+    if (getEth()) {
       try {
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
-        window.ethereum.on('chainChanged', () => window.location.reload());
+        getEth()?.on?.('accountsChanged', handleAccountsChanged);
+        getEth()?.on?.('chainChanged', () => window.location.reload());
       } catch {
         // MetaMask newer versions may not support .on()
       }
     }
 
     return () => {
-      if (window.ethereum) {
+      if (getEth()) {
         try {
-          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+          getEth()?.removeListener?.('accountsChanged', handleAccountsChanged);
         } catch {
           // ignore
         }
@@ -39,11 +40,11 @@ export function WalletConnect() {
   }, []);
 
   const checkConnection = async () => {
-    if (window.ethereum) {
+    if (getEth()) {
       // Respect user's explicit disconnect
       if (localStorage.getItem('wallet_disconnected') === 'true') return;
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' }) as string[];
+        const accounts = await getEth()!.request({ method: 'eth_accounts' }) as string[];
         if (accounts && accounts.length > 0) {
           setAddress(accounts[0]);
         }
@@ -63,10 +64,10 @@ export function WalletConnect() {
   };
 
   const finishConnect = async () => {
-    if (!window.ethereum) return;
+    if (!getEth()) return;
     let accounts: string[] = [];
     try {
-      const perms = await window.ethereum.request({
+      const perms = await getEth()!.request({
         method: 'wallet_requestPermissions',
         params: [{ eth_accounts: {} }],
       }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
@@ -78,7 +79,7 @@ export function WalletConnect() {
       // permissions not supported — fallback
     }
     if (accounts.length === 0) {
-      accounts = await window.ethereum.request({
+      accounts = await getEth()!.request({
         method: 'eth_requestAccounts',
       }) as string[];
     }
@@ -92,7 +93,7 @@ export function WalletConnect() {
     setPickerOpen(false);
     setIsConnecting(true);
     try {
-      (window as { ethereum?: EIP1193Provider }).ethereum = chosen;
+      setSelectedProvider(chosen);
       localStorage.setItem('wallet-last', name);
       await finishConnect();
     } catch (error) {
@@ -102,7 +103,7 @@ export function WalletConnect() {
   };
 
   const connect = async () => {
-    if (!window.ethereum) {
+    if (!getEth()) {
       alert('Please install MetaMask or another Web3 wallet');
       return;
     }
@@ -114,9 +115,9 @@ export function WalletConnect() {
     setAddress(null);
     localStorage.setItem('wallet_disconnected', 'true');
     // Revoke permissions so next connect shows the picker again (MetaMask 11+, Rabby).
-    if (window.ethereum) {
+    if (getEth()) {
       try {
-        await window.ethereum.request({
+        await getEth()!.request({
           method: 'wallet_revokePermissions',
           params: [{ eth_accounts: {} }],
         });
