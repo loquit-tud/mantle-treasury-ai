@@ -67,9 +67,26 @@ export function WalletConnect() {
 
     setIsConnecting(true);
     try {
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      }) as string[];
+      // Force account picker (works on MetaMask, Rabby, Frame, etc.)
+      // Falls back to eth_requestAccounts on wallets that don't support permissions.
+      let accounts: string[] = [];
+      try {
+        const perms = await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }],
+        }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
+        const caveat = perms?.[0]?.caveats?.find((c) => c.type === 'restrictReturnedAccounts');
+        if (caveat && Array.isArray(caveat.value)) {
+          accounts = caveat.value as string[];
+        }
+      } catch {
+        // permissions not supported — fallback
+      }
+      if (accounts.length === 0) {
+        accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        }) as string[];
+      }
       if (accounts && accounts.length > 0) {
         setAddress(accounts[0]);
         localStorage.removeItem('wallet_disconnected');
@@ -80,9 +97,20 @@ export function WalletConnect() {
     setIsConnecting(false);
   };
 
-  const disconnect = () => {
+  const disconnect = async () => {
     setAddress(null);
     localStorage.setItem('wallet_disconnected', 'true');
+    // Revoke permissions so next connect shows the picker again (MetaMask 11+, Rabby).
+    if (window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_revokePermissions',
+          params: [{ eth_accounts: {} }],
+        });
+      } catch {
+        // older wallets don't support — flag-based gate is still respected.
+      }
+    }
   };
 
   const copyAddress = () => {

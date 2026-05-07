@@ -82,7 +82,26 @@ export default function WalletPage() {
       localStorage.removeItem('wallet-disconnected');
       await ensureCorrectChain();
       const provider = new BrowserProvider(window.ethereum);
-      const accounts = await provider.send('eth_requestAccounts', []);
+
+      // Force account picker so user can choose a different account/wallet.
+      // Falls back to eth_requestAccounts on wallets that don't support permissions.
+      let accounts: string[] = [];
+      try {
+        const perms = await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }],
+        }) as Array<{ caveats?: Array<{ type: string; value: unknown }> }>;
+        const caveat = perms?.[0]?.caveats?.find((c) => c.type === 'restrictReturnedAccounts');
+        if (caveat && Array.isArray(caveat.value)) {
+          accounts = caveat.value as string[];
+        }
+      } catch {
+        // permissions not supported — fallback below
+      }
+      if (accounts.length === 0) {
+        accounts = await provider.send('eth_requestAccounts', []);
+      }
+
       const addr = accounts[0] as string;
       setAddress(addr);
       setIsConnected(true);
