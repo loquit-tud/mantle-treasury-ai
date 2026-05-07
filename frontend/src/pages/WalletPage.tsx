@@ -78,13 +78,13 @@ export default function WalletPage() {
   const [usdtBal, setUsdtBal] = useState<string | null>(null);
   const [showNoWalletCard, setShowNoWalletCard] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   const finishConnect = useCallback(async () => {
     if (!window.ethereum) return;
     localStorage.removeItem('wallet-disconnected');
-    await ensureCorrectChain();
-    const provider = new BrowserProvider(window.ethereum);
 
+    // 1. Request accounts FIRST (most wallets refuse chain switch without account permission)
     let accounts: string[] = [];
     try {
       const perms = await window.ethereum.request({
@@ -99,28 +99,46 @@ export default function WalletPage() {
       // permissions not supported — fallback below
     }
     if (accounts.length === 0) {
-      accounts = await provider.send('eth_requestAccounts', []);
+      accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+    }
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No account selected in wallet.');
     }
 
+    // 2. NOW switch chain (wallet has accounts authorized)
+    try {
+      await ensureCorrectChain();
+    } catch (chainErr) {
+      console.warn('Chain switch failed (continuing):', chainErr);
+    }
+
+    const provider = new BrowserProvider(window.ethereum);
     const addr = accounts[0] as string;
     setAddress(addr);
     setIsConnected(true);
-    const eth = await provider.getBalance(addr);
-    setEthBal(formatEther(eth));
-    const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
-    const bal = await usdt.balanceOf(addr);
-    setUsdtBal(formatUnits(bal, 6));
+    try {
+      const eth = await provider.getBalance(addr);
+      setEthBal(formatEther(eth));
+      const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
+      const bal = await usdt.balanceOf(addr);
+      setUsdtBal(formatUnits(bal, 6));
+    } catch (balErr) {
+      console.warn('Balance fetch failed:', balErr);
+    }
   }, []);
 
   const handleProviderSelected = useCallback(async (chosen: EIP1193Provider, name: string) => {
     setPickerOpen(false);
+    setConnectError(null);
     try {
       // Route all subsequent calls through the chosen provider.
       (window as { ethereum?: EIP1193Provider }).ethereum = chosen;
       localStorage.setItem('wallet-last', name);
       await finishConnect();
     } catch (err) {
+      const msg = (err as { message?: string })?.message || String(err);
       console.error('Wallet connect failed:', err);
+      setConnectError(`${name}: ${msg}`);
     }
   }, [finishConnect]);
 
@@ -455,6 +473,22 @@ export default function WalletPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <WalletPickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={handleProviderSelected} />
+      {connectError && (
+        <div className="flex items-start gap-3 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200" role="alert">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-300" />
+          <div className="flex-1">
+            <p className="font-medium text-rose-100">Wallet connection failed</p>
+            <p className="mt-1 break-words text-xs text-rose-200/80">{connectError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setConnectError(null)}
+            className="text-xs text-rose-200/70 transition-colors hover:text-white"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               {/* ── No Wallet Onboarding Card ── */}
               {showNoWalletCard && (
