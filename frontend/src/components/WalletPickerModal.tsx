@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { X, Wallet as WalletIcon } from 'lucide-react';
 import { useWalletProviders, type EIP1193Provider } from '../hooks/useWalletProviders';
 
@@ -15,7 +16,7 @@ export function WalletPickerModal({ open, onClose, onSelect }: Props) {
   const hasInjected = typeof window !== 'undefined' && !!(window as { ethereum?: unknown }).ethereum;
   const showFallback = providers.length === 0 && hasInjected;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
       onClick={onClose}
@@ -96,6 +97,7 @@ export function WalletPickerModal({ open, onClose, onSelect }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
