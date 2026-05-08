@@ -446,9 +446,16 @@ export default function Dashboard() {
         <KPICard
           icon={<DollarSign className="h-5 w-5 text-indigo-300" />}
           label="Treasury Balance"
-          tooltip="Total USDt held in the TreasuryVault smart contract on Mantle. Real on-chain capital managed by AI agents."
-          value={`$${(Number(treasury.balance) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USDt`}
-          sub="Vault holdings"
+          tooltip="Total USDt managed by the agent: liquid in vault + invested in Aave yield. Real on-chain capital."
+          value={`$${(
+            Number(treasury.balance) / 1e6 +
+            (treasury.yieldPositions || []).reduce(
+              (s: number, p: YieldPosition) => s + Number(p.amount) / 1e6, 0
+            )
+          ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDt`}
+          sub={`$${(Number(treasury.balance) / 1e6).toFixed(2)} liquid + $${(treasury.yieldPositions || []).reduce(
+            (s: number, p: YieldPosition) => s + Number(p.amount) / 1e6, 0
+          ).toFixed(2)} yield`}
         />
         <KPICard
           icon={<BarChart3 className="h-5 w-5 text-sky-300" />}

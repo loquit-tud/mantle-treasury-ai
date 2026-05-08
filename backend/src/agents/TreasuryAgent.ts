@@ -264,8 +264,57 @@ export class TreasuryAgent {
         }
       }
 
-      // Compute accrued yield — try real on-chain aToken balance first, fall back to APY estimate
+      // ── Recover orphaned aToken position (in-memory state lost on redeploy) ──
+      // Query reserveData → aToken → balanceOf(vault). If we have on-chain
+      // funds in Aave but no in-memory position, reconstruct a synthetic one
+      // so the dashboard reflects real AUM.
       const now = Date.now();
+      try {
+        if (this.config.aavePoolAddress) {
+          const POOL_ABI = [
+            'function getReserveData(address) view returns (uint256 configuration,uint128 liquidityIndex,uint128 currentLiquidityRate,uint128 variableBorrowIndex,uint128 currentVariableBorrowRate,uint128 currentStableBorrowRate,uint40 lastUpdateTimestamp,uint16 id,address aTokenAddress,address stableDebtTokenAddress,address variableDebtTokenAddress,address interestRateStrategyAddress,uint128 accruedToTreasury,uint128 unbacked,uint128 isolationModeTotalDebt)',
+          ];
+          const pool = new ethers.Contract(this.config.aavePoolAddress, POOL_ABI, this.provider);
+          const reserve = await pool.getReserveData(this.config.usdtAddress);
+          const aTokenAddr: string = reserve.aTokenAddress;
+          if (aTokenAddr && aTokenAddr !== ethers.ZeroAddress) {
+            const aToken = new ethers.Contract(aTokenAddr, ERC20_ABI, this.provider);
+            const aBal: bigint = await aToken.balanceOf(this.config.treasuryVaultAddress);
+            const aBalNum = Number(aBal);
+            if (aBalNum > 0) {
+              const totalTrackedPrincipal = this.yieldPositions.reduce(
+                (s, p) => s + Number(p.amount), 0
+              );
+              // Threshold: if on-chain balance is materially larger than our
+              // tracked principal (>0.1 USDT0 difference), there is an
+              // orphaned position — add it.
+              const drift = aBalNum - totalTrackedPrincipal;
+              if (this.yieldPositions.length === 0 || drift > 100_000) {
+                const opps = await this.fetchYieldOpportunities();
+                const aprPool = opps.find(
+                  (o: YieldOpportunity) => o.protocol.toLowerCase().includes('aurelius')
+                );
+                this.yieldPositions.push({
+                  protocol: 'aurelius (recovered)',
+                  amount: drift > 0 && this.yieldPositions.length > 0 ? String(drift) : aBal.toString(),
+                  apy: aprPool?.apy ?? 1.5,
+                  investedAt: now,
+                  harvested: '0',
+                });
+                logger.info('Recovered orphaned aToken yield position', {
+                  aToken: aTokenAddr,
+                  onchainBalance: aBal.toString(),
+                  trackedPrincipal: totalTrackedPrincipal.toString(),
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        logger.debug('aToken orphan recovery skipped', { err: err instanceof Error ? err.message : err });
+      }
+
+      // Compute accrued yield — try real on-chain aToken balance first, fall back to APY estimate
       let realYieldQueried = false;
       try {
         const aave = getAaveLending(this.wdkAccount);
