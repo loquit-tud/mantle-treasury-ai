@@ -499,31 +499,41 @@ function KPICard({ icon, label, value, sub }: { icon: React.ReactNode; label: st
 }
 
 function AnimatedKPI({ raw }: { raw: string }) {
-  // Parse leading number (handles "$1,234.56 USDt", "42", "95.4%" etc.)
-  const match = raw.match(/^([^\d-]*)(-?[\d,.]+)(.*)$/);
-  if (!match) return <>{raw}</>;
-  const prefix = match[1] ?? '';
-  const num = parseFloat(match[2].replace(/,/g, ''));
-  const suffix = match[3] ?? '';
-  if (Number.isNaN(num)) return <>{raw}</>;
   const [val, setVal] = useState(0);
   const fromRef = useRef(0);
+
+  // Parse leading number (handles "$1,234.56 USDt", "42", "95.4%" etc.)
+  const match = raw.match(/^([^\d-]*)(-?[\d,.]+)(.*)$/);
+  const prefix = match?.[1] ?? '';
+  const parsed = match ? parseFloat(match[2].replace(/,/g, '')) : NaN;
+  const suffix = match?.[3] ?? '';
+  const valid = !!match && Number.isFinite(parsed);
+  const target = valid ? parsed : 0;
+
   useEffect(() => {
+    if (!valid) {
+      setVal(0);
+      fromRef.current = 0;
+      return;
+    }
     const start = fromRef.current;
     const t0 = performance.now();
     let raf = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / 900);
       const eased = 1 - Math.pow(1 - t, 3);
-      const cur = start + (num - start) * eased;
+      const cur = start + (target - start) * eased;
       setVal(cur);
       if (t < 1) raf = requestAnimationFrame(tick);
-      else fromRef.current = num;
+      else fromRef.current = target;
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [num]);
-  const display = Number.isInteger(num) && Math.abs(num) >= 10
+  }, [target, valid]);
+
+  if (!valid) return <>{raw}</>;
+
+  const display = Number.isInteger(target) && Math.abs(target) >= 10
     ? Math.round(val).toLocaleString()
     : val.toLocaleString(undefined, { maximumFractionDigits: 2 });
   return <span>{prefix}{display}{suffix}</span>;

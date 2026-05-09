@@ -1043,6 +1043,108 @@ Respond in JSON: {"protocol": "<name or null>", "reasoning": "<1-2 sentences>"}`
   }
 
   /**
+   * AI-powered, single-run proof action for judges.
+   * Runs the same yield evaluation logic once and returns a txHash if an on-chain
+   * investment was executed. Intended for "2-minute demo" reproducibility.
+   */
+  async runAiYieldProofOnce(opts?: { amountRaw?: string }): Promise<{
+    selectedProtocol: string | null;
+    apy: number | null;
+    amountRaw: string;
+    txHash: string | null;
+    reason: string;
+    snapshot: {
+      vaultBalanceRaw: string;
+      vaultBalance: string;
+      totalInvestedRaw: string;
+      currentAllocationPct: number;
+      maxYieldAllocationPct: number;
+    };
+  }> {
+    const opportunities = await this.fetchYieldOpportunities();
+    const investable = this.filterInvestableOpportunities(opportunities);
+    const balance = BigInt(this.lastState?.balance || '0');
+    const totalInvested = this.yieldPositions.reduce((sum, p) => sum + BigInt(p.amount), 0n);
+    const totalAssets = balance + totalInvested;
+    const currentAllocationPct = totalAssets > 0n ? Number((totalInvested * 100n) / totalAssets) : 0;
+    const snapshot = {
+      vaultBalanceRaw: balance.toString(),
+      vaultBalance: ethers.formatUnits(balance, 6),
+      totalInvestedRaw: totalInvested.toString(),
+      currentAllocationPct,
+      maxYieldAllocationPct: CONSTRAINTS.MAX_YIELD_ALLOCATION,
+    };
+
+    if (investable.length === 0) {
+      return {
+        selectedProtocol: null,
+        apy: null,
+        amountRaw: '0',
+        txHash: null,
+        reason: `No investable opportunities (found=${opportunities.length}, investable=0).`,
+        snapshot,
+      };
+    }
+
+    const best = await this.selectBestYieldStrategy(investable);
+    if (!best) {
+      return {
+        selectedProtocol: null,
+        apy: null,
+        amountRaw: '0',
+        txHash: null,
+        reason: 'AI selected no opportunity (risk/return threshold not met).',
+        snapshot,
+      };
+    }
+
+    const minInvestment = ethers.parseUnits('0.5', 6);
+    if (balance < minInvestment) {
+      return {
+        selectedProtocol: best.protocol,
+        apy: best.apy,
+        amountRaw: '0',
+        txHash: null,
+        reason: `Insufficient vault balance (${ethers.formatUnits(balance, 6)} < 0.5).`,
+        snapshot,
+      };
+    }
+
+    if (currentAllocationPct >= CONSTRAINTS.MAX_YIELD_ALLOCATION) {
+      return {
+        selectedProtocol: best.protocol,
+        apy: best.apy,
+        amountRaw: '0',
+        txHash: null,
+        reason: `Yield allocation at ${currentAllocationPct}% (max ${CONSTRAINTS.MAX_YIELD_ALLOCATION}%).`,
+        snapshot,
+      };
+    }
+
+    // Default is a small, safe amount to maximize chance of success in a demo.
+    let amount = minInvestment;
+    if (opts?.amountRaw) {
+      try {
+        amount = BigInt(opts.amountRaw);
+      } catch {
+        // ignore invalid override
+      }
+    }
+    if (amount < minInvestment) amount = minInvestment;
+    if (amount > balance) amount = balance;
+
+    const txHash = await this.proposeYieldInvestment(best.protocol, amount, best.apy);
+    return {
+      selectedProtocol: best.protocol,
+      apy: best.apy,
+      amountRaw: amount.toString(),
+      txHash,
+      reason: txHash ? 'Executed on-chain' : 'No tx hash returned (execution failed or rejected).',
+      snapshot,
+    };
+  }
+
+  /**
    * Check and execute pending transactions via agent wallet
    */
   async checkPendingTransactions(): Promise<void> {

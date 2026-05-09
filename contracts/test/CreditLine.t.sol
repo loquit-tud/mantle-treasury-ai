@@ -204,8 +204,10 @@ contract CreditLineTest is Test {
         vm.warp(block.timestamp + 365 days);
 
         uint256 interest = credit.calculateInterest(0);
-        // Expected: 400e6 * 1500 * 365 days / (365 days * 10000) = 60e6
-        assertEq(interest, 60e6);
+        // Loan is overdue (default term is 30 days). Overdue >30 days triggers +15% penalty (1500 bps),
+        // so effective APR becomes 30% (3000 bps).
+        // Expected: 400e6 * 3000 * 365 days / (365 days * 10000) = 120e6
+        assertEq(interest, 120e6);
     }
 
     // ── Active Loans ──────────────────────────────────────
@@ -228,14 +230,13 @@ contract CreditLineTest is Test {
     function test_set_treasury_vault() public {
         address newTreasury = address(0xCCCC);
 
-        vm.prank(agent);
+        // setTreasuryVault is admin-only (DEFAULT_ADMIN_ROLE is granted to deployer in constructor)
         credit.setTreasuryVault(newTreasury);
 
         assertEq(credit.treasuryVault(), newTreasury);
     }
 
     function test_set_treasury_vault_zero_reverts() public {
-        vm.prank(agent);
         vm.expectRevert("CreditLine: invalid treasury");
         credit.setTreasuryVault(address(0));
     }

@@ -122,9 +122,18 @@ export class RiskAgent {
 
   private setupEventListeners(): void {
     EventBus.subscribe('credit:profile_updated', (event: AgentEvent) => {
-      const profile = event.payload?.data as Record<string, unknown> | undefined;
-      if (profile?.address) {
-        this.onProfileUpdated(profile as unknown as CreditProfile);
+      // NOTE: `credit:profile_updated` is emitted as an AgentDecision whose `data` is a small summary
+      // (e.g. { address, score, tier }) — not a full CreditProfile. We only ingest full profiles via
+      // CreditAgent.ingestProfile(...). Ignore partial payloads to avoid corrupting knownProfiles.
+      const data = event.payload?.data as Record<string, unknown> | undefined;
+      const maybeFullProfile =
+        data &&
+        typeof data.address === 'string' &&
+        typeof data.limit === 'string' &&
+        typeof data.borrowed === 'string' &&
+        typeof data.score === 'number';
+      if (maybeFullProfile) {
+        this.onProfileUpdated(data as unknown as CreditProfile);
       }
     });
 
@@ -151,9 +160,11 @@ export class RiskAgent {
     });
 
     EventBus.subscribe('treasury:state_synced', (event: AgentEvent) => {
-      const balance = event.payload?.balance as string | undefined;
+      const balance = (event.payload?.data as Record<string, unknown>)?.balance as string
+        ?? event.payload?.balance as string
+        ?? undefined;
       if (balance) {
-        this.metrics.vaultBalance = BigInt(balance);
+        this.metrics.vaultBalance = BigInt(Math.round(Number(balance) * 1e6));
       }
     });
 
@@ -200,7 +211,8 @@ export class RiskAgent {
   }
 
   private onLoanDefaulted(data: Record<string, unknown>): void {
-    const principal = BigInt(data.principal as string || '0');
+    // CreditAgent emits `amount` (principal) in default events; accept both for compatibility.
+    const principal = BigInt((data.principal as string) || (data.amount as string) || '0');
     this.metrics.defaultedLoans += 1;
     this.metrics.totalDefaulted += principal;
     this.metrics.activeLoans = Math.max(0, this.metrics.activeLoans - 1);

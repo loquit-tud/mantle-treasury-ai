@@ -222,8 +222,8 @@ contract CreditLine is ReentrancyGuard, AccessControl {
      * Direct borrower calls are disabled to prevent phantom loans (credit consumed, funds never received).
      * Users should request loans through the backend API which calls borrowFor().
      */
-    function borrow(uint256 amount) external onlyAgent nonReentrant {
-        _borrowFor(msg.sender, amount, 0, 0);
+    function borrow(address borrower, uint256 amount) external onlyAgent nonReentrant {
+        _borrowFor(borrower, amount, 0, 0);
     }
 
     /**
@@ -396,7 +396,22 @@ contract CreditLine is ReentrancyGuard, AccessControl {
         if (!loan.active) return 0;
         
         uint256 timeElapsed = block.timestamp - loan.borrowedAt;
-        uint256 interest = (loan.principal * loan.interestRate * timeElapsed) / (365 days * 10000);
+        uint256 rate = loan.interestRate;
+
+        // Penalty tiers for overdue loans:
+        // 0-7 days overdue: +5% (500 bps), 7-30 days: +10%, >30 days: +15%
+        if (block.timestamp > loan.dueDate) {
+            uint256 overdue = block.timestamp - loan.dueDate;
+            if (overdue > 30 days) {
+                rate += 1500;
+            } else if (overdue > 7 days) {
+                rate += 1000;
+            } else {
+                rate += 500;
+            }
+        }
+
+        uint256 interest = (loan.principal * rate * timeElapsed) / (365 days * 10000);
         
         return interest;
     }
@@ -487,7 +502,7 @@ contract CreditLine is ReentrancyGuard, AccessControl {
     /**
      * @dev Update treasury vault address
      */
-    function setTreasuryVault(address _treasuryVault) external onlyAgent {
+    function setTreasuryVault(address _treasuryVault) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_treasuryVault != address(0), "CreditLine: invalid treasury");
         treasuryVault = _treasuryVault;
         emit TreasuryUpdated(_treasuryVault);
@@ -503,6 +518,10 @@ contract CreditLine is ReentrancyGuard, AccessControl {
         uint256 _activeLoans,
         uint256 _loanCount
     ) {
-        return (totalLent, totalRepaid, totalDefaults, loanCount, loanCount);
+        uint256 active = 0;
+        for (uint256 i = 0; i < loanCount; i++) {
+            if (loans[i].active) active++;
+        }
+        return (totalLent, totalRepaid, totalDefaults, active, loanCount);
     }
 }

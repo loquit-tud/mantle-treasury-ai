@@ -4,7 +4,7 @@
 
 > **One-line pitch:** Quorum is an autonomous treasury system that tokenizes short-term credit instruments (revenue-backed loans, revolving credit lines) on Mantle — three AI agents manage the full lending lifecycle from origination to restructuring without human intervention.
 
-Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (Board Meetings every 45 seconds) and a pub/sub EventBus for consensus on capital allocation.
+Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (**Board Meetings run periodically**) and a pub/sub EventBus for consensus on capital allocation.
 
 ## Hackathon Submission
 
@@ -190,6 +190,61 @@ curl http://localhost:3001/health
 curl http://localhost:3001/api/dashboard
 ```
 
+## How to verify (DoraHacks judge checklist)
+
+These steps are designed to be copy-paste friendly and produce **verifiable evidence** (API responses + on-chain tx hash when applicable).
+
+### 1) Backend is live and agents are running
+
+```bash
+curl https://mantle-treasury-ai-production.up.railway.app/health
+```
+
+### 2) Dashboard data is real and persists
+
+```bash
+curl https://mantle-treasury-ai-production.up.railway.app/api/dashboard
+curl https://mantle-treasury-ai-production.up.railway.app/api/db/stats
+```
+
+### 3) AI decision log and audit trail
+
+```bash
+curl "https://mantle-treasury-ai-production.up.railway.app/api/ai-decisions?limit=25"
+curl "https://mantle-treasury-ai-production.up.railway.app/api/audit/trail?limit=25"
+```
+
+### 4) Protected mutation endpoints (requires API secret)
+
+Mutation endpoints require `x-api-key` when `API_SECRET` is set on the server.
+
+Example (admin/demo): refresh MNT vault price (only if MNT vault is configured on the server):
+
+```bash
+curl -X POST \
+  -H "content-type: application/json" \
+  -H "x-api-key: $API_SECRET" \
+  https://mantle-treasury-ai-production.up.railway.app/api/mnt-vault/refresh-price
+```
+
+### 5) AI-powered on-chain proof (fast judge demo)
+
+This endpoint triggers **one** AI yield decision + on-chain execution attempt (Treasury Agent).
+It returns a `txHash` on success so judges can verify it on the explorer immediately.
+
+```bash
+curl -X POST \
+  -H "content-type: application/json" \
+  -H "x-api-key: $API_SECRET" \
+  -d '{"amount":"500000"}' \
+  https://mantle-treasury-ai-production.up.railway.app/api/proof/ai-yield
+```
+
+Notes:
+- `amount` is optional and uses **6 decimals** (USDT0). `500000` = **0.5 USDT0** (safe demo amount).
+- If `txHash` is null, the response includes a `reason` (e.g. allocation cap reached).
+- This is what we mean by **AI-powered on-chain**: the agent selects a strategy (LLM or deterministic fallback), then executes a real Mantle tx and returns a verifiable `txHash` + writes an audit record (`correlationId`).
+
 ### Full Setup (Mantle Network)
 
 #### 1. Install
@@ -314,7 +369,8 @@ OpenClaw config (`openclaw.config.json`):
 ## Security
 
 - Agent wallet uses a server-side seed phrase (`AGENT_SEED_PHRASE`) — keep `.env` out of version control
-- All vault writes go through timelock + multi-sig
+- Vault withdrawals are designed to go through timelock + multi-sig on the normal path (`proposeWithdrawal` → signatures → `executeWithdrawal`).
+- **Emergency-only escape hatches exist** (admin/guardian) and are intentionally gated for hackathon operations. For production, move all privileged execution behind a Safe + timelock/governance.
 - ReentrancyGuard on every `external` function
 - Daily volume + single-tx caps
 - Emergency pause via GUARDIAN_ROLE

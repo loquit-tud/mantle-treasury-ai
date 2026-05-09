@@ -270,6 +270,10 @@ export default function Dashboard() {
     yieldPositions: [],
     lastUpdated: 0,
   };
+  const recentOnchain = [...decisions]
+    .filter(d => d.status === 'executed' && !!d.txHash)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 5);
   const activeLoans = (data?.activeLoans ?? []).filter(
     (loan) => loan.borrower.toLowerCase() !== DUMMY_BORROWER_ADDRESS
   );
@@ -446,16 +450,17 @@ export default function Dashboard() {
         <KPICard
           icon={<DollarSign className="h-5 w-5 text-indigo-300" />}
           label="Treasury Balance"
-          tooltip="Total USDt managed by the agent: liquid in vault + invested in Aave yield. Real on-chain capital."
+          tooltip="Total USDT0 managed by the system: liquid in TreasuryVault + invested in Aurelius (Aave V3) + allocated as lending reserves in MntCollateralVault. Real on-chain capital."
           value={`$${(
             Number(treasury.balance) / 1e6 +
             (treasury.yieldPositions || []).reduce(
               (s: number, p: YieldPosition) => s + Number(p.amount) / 1e6, 0
             )
+            + (data?.mntVaultStatus?.usdtReserves ? Number(data.mntVaultStatus.usdtReserves) / 1e6 : 0)
           ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDt`}
           sub={`$${(Number(treasury.balance) / 1e6).toFixed(2)} liquid + $${(treasury.yieldPositions || []).reduce(
             (s: number, p: YieldPosition) => s + Number(p.amount) / 1e6, 0
-          ).toFixed(2)} yield`}
+          ).toFixed(2)} yield + $${(data?.mntVaultStatus?.usdtReserves ? (Number(data.mntVaultStatus.usdtReserves) / 1e6) : 0).toFixed(2)} reserves`}
         />
         <KPICard
           icon={<BarChart3 className="h-5 w-5 text-sky-300" />}
@@ -487,6 +492,41 @@ export default function Dashboard() {
           value={String(data?.creditProfiles?.length ?? 0)}
           sub={`${activeLoans.length} active loans`}
         />
+      </div>
+
+      {/* Recent on-chain transactions (judge-friendly proof surface) */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Recent on-chain tx</span>
+          <span className="rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5 font-mono text-[10px] text-slate-400">
+            {recentOnchain.length} shown
+          </span>
+        </div>
+        {recentOnchain.length === 0 ? (
+          <p className="text-sm text-slate-500">No executed transactions yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {recentOnchain.map((d) => (
+              <a
+                key={`${d.id}-${d.txHash}`}
+                href={`https://mantlescan.xyz/tx/${d.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 rounded-lg border border-slate-800/70 bg-slate-950/20 px-3 py-2 text-sm hover:border-slate-700"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-slate-200">{(d.action || 'action').replace(/_/g, ' ')}</div>
+                  <div className="truncate font-mono text-[11px] text-slate-500">
+                    {d.txHash?.slice(0, 10)}...{d.txHash?.slice(-6)}
+                  </div>
+                </div>
+                <div className="shrink-0 text-[11px] text-slate-500">
+                  {new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Treasury Health */}

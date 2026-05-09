@@ -15,6 +15,7 @@
     "contracts:build": "cd contracts && forge build",
     "contracts:test": "cd contracts && forge test -vvv",
     "contracts:deploy": "cd contracts && forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast --verify",
+    "smoke": "node scripts/smoke.mjs",
     "demo:video": "node scripts/record-demo.mjs",
     "demo:voiceover": "node scripts/add-voiceover.mjs"
   },

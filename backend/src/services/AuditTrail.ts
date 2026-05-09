@@ -48,6 +48,9 @@ export function insertAuditEvent(args: {
 }): void {
   const db = getDB();
   const ts = args.timestamp ?? Date.now();
+  const dataJson = args.data
+    ? JSON.stringify(args.data, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
+    : null;
   db.prepare(`
     INSERT INTO audit_events
       (correlation_id, stage, action, actor, timestamp, ok, reason, amount_raw, to_address, tx_hash, data_json)
@@ -63,7 +66,7 @@ export function insertAuditEvent(args: {
     args.amountRaw ?? null,
     args.toAddress ?? null,
     args.txHash ?? null,
-    args.data ? JSON.stringify(args.data) : null,
+    dataJson,
   );
 }
 

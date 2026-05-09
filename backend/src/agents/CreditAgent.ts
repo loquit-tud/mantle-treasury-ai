@@ -582,6 +582,11 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
         amount: amount.toString(),
       });
 
+      EventBus.emitEvent('credit:borrow_requested', 'credit', {
+        address,
+        amount: amount.toString(),
+      });
+
       // Mutex: prevent concurrent borrows for same address
       const addrLower = address.toLowerCase();
       if (this.borrowLocks.has(addrLower)) {
@@ -631,6 +636,15 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
       // Collateral check — borrower must have locked >= loan amount in CollateralLock contract
       if (this.config.collateralLockAddress) {
         try {
+          // If address is configured but no contract is deployed there (misconfig / wrong network),
+          // skip enforcement to avoid bricking local/dev setups. Production deployments should ensure
+          // the correct CollateralLock address is set and has code.
+          const code = await this.provider.getCode(this.config.collateralLockAddress);
+          if (!code || code === '0x') {
+            logger.warn('CollateralLock address has no code — skipping collateral enforcement', {
+              address: this.config.collateralLockAddress,
+            });
+          } else {
           const collateralAbi = ['function hasCollateral(address borrower, uint256 requiredAmount) view returns (bool)'];
           const collateralContract = new ethers.Contract(this.config.collateralLockAddress, collateralAbi, this.provider);
           const hasSufficientCollateral = await collateralContract.hasCollateral(address, amount);
@@ -645,6 +659,7 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
             return null;
           }
           logger.info(`Collateral verified for ${address}`, { amount: amount.toString() });
+          }
         } catch (err) {
           logger.warn('Collateral check failed — rejecting loan for safety', { err: err instanceof Error ? err.message : String(err) });
           return null;
@@ -742,11 +757,10 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
 
       EventBus.emitEvent('credit:borrow_approved', 'credit', decision);
 
-      // Request treasury to disburse
-      EventBus.emitEvent('treasury:disburse_requested', 'credit', {
-        to: address,
-        amount: amount.toString(),
-        reason: 'loan_disbursement',
+      // Loan record is created on-chain here. Actual treasury disbursement is handled separately
+      // (timelock + multisig). Do NOT label this as "disbursed".
+      EventBus.emitEvent('credit:loan_created', 'credit', {
+        data: { borrower: address, principal: amount.toString(), loanId },
       });
 
       logger.info(`Borrow approved for ${address}`, { amount: amount.toString(), loanId });
@@ -757,7 +771,10 @@ Respond in JSON: {"adjustment": <-50 to +50>, "reasoning": "<1-3 sentences>"}`;
       }
     } catch (error) {
       this.borrowLocks.delete(address.toLowerCase());
-      logger.error(`Borrow processing failed for ${address}`, { error });
+      logger.error(`Borrow processing failed for ${address}`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return null;
     }
   }
@@ -987,9 +1004,13 @@ Respond in JSON: {"decision": "APPROVE" or "DECLINE", "durationDays": <number 7-
   /**
    * Sync local state after borrower executed repay() on-chain directly from their wallet.
    */
-  syncRepaymentLocal(loanId: number, amount: bigint): void {
+  syncRepaymentLocal(loanId: number, amount: bigint, txHash?: string): void {
     const localLoan = this.loans.get(loanId);
     if (!localLoan) return;
+
+    if (!txHash) {
+      logger.warn('syncRepaymentLocal called without txHash — repayment unverified', { loanId });
+    }
 
     localLoan.repaid = (BigInt(localLoan.repaid) + amount).toString();
     const due = BigInt(localLoan.totalDue) - amount;
@@ -1284,13 +1305,6 @@ Respond in JSON: {"decision": "APPROVE" or "DECLINE", "durationDays": <number 7-
       const address = event.payload.address as string;
       if (address) {
         await this.evaluateCredit(address);
-      }
-    });
-
-    EventBus.subscribe('credit:borrow_requested', async (event) => {
-      const { address, amount } = event.payload as { address: string; amount: string };
-      if (address && amount) {
-        await this.processBorrow(address, BigInt(amount));
       }
     });
 

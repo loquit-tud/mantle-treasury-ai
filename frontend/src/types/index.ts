@@ -91,6 +91,11 @@ export interface DashboardData {
   agentDecisions: AgentDecision[];
   agentStatus: Record<AgentType, AgentStatus>;
   dialogueRounds?: DialogueRound[];
+  mntVaultStatus?: {
+    address: string;
+    /** USDT0 reserves available to lend (6 decimals, raw units) */
+    usdtReserves: string;
+  } | null;
 }
 
 export interface WebSocketMessage {

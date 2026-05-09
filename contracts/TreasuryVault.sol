@@ -195,9 +195,9 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
     }
 
     /**
-     * @dev Drain all USDT to caller (emergency/testing only)
+     * @dev Drain all USDT to caller — restricted to admin only.
      */
-    function drainAll() external nonReentrant {
+    function drainAll() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant whenPaused {
         uint256 balance = usdt.balanceOf(address(this));
         require(balance > 0, "TreasuryVault: no balance");
         
@@ -206,11 +206,12 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
     }
     
     /**
-     * @dev Emergency withdrawal (no Guardian check for now)
+     * @dev Emergency withdrawal — restricted to guardian only.
      */
-    function emergencyWithdraw(address to, uint256 amount) external nonReentrant {
+    function emergencyWithdraw(address to, uint256 amount) external onlyGuardian nonReentrant whenPaused {
         require(to != address(0), "TreasuryVault: invalid recipient");
         require(amount > 0, "TreasuryVault: amount must be > 0");
+        require(amount <= MAX_SINGLE_TX, "TreasuryVault: exceeds max single tx");
         require(usdt.balanceOf(address(this)) >= amount, "TreasuryVault: insufficient balance");
         
         bool success = usdt.transfer(to, amount);
@@ -220,18 +221,16 @@ contract TreasuryVault is ReentrancyGuard, AccessControl, Pausable {
     }
     
     /**
-     * @dev Execute withdrawal immediately (bypass timelock for testing/emergency)
+     * @dev Execute withdrawal bypassing timelock — restricted to admin + multisig still enforced.
      */
-    function executeWithdrawalForced(bytes32 txHash) external nonReentrant {
-        // Allow any deployer/executor to use this
+    function executeWithdrawalForced(bytes32 txHash) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant whenPaused {
         Transaction storage txn = transactions[txHash];
         require(txn.txHash != bytes32(0), "TreasuryVault: transaction not found");
         require(!txn.executed, "TreasuryVault: already executed");
         
-        // Multi-sig check for large amounts
-        if (txn.amount >= MULTISIG_THRESHOLD) {
-            require(txn.signatures >= 2, "TreasuryVault: insufficient signatures");
-        }
+        // Forced execution is an emergency-only escape hatch.
+        // Always require multisig so admin cannot unilaterally execute.
+        require(txn.signatures >= 2, "TreasuryVault: insufficient signatures");
         
         _executeWithdrawal(txHash);
     }

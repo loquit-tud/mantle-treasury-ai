@@ -151,6 +151,20 @@ export interface DialogueRound {
   timestamp: number;
 }
 
+// MNT Collateral Vault (optional)
+export interface MntVaultStatus {
+  address: string;
+  priceUsd8: string;
+  priceUsd: number;
+  priceUpdatedAt: number;
+  priceFresh: boolean;
+  ltvBps: number;
+  liquidationLtvBps: number;
+  maxPriceAgeSec: number;
+  /** USDT0 reserves available to lend (6 decimals, raw units) */
+  usdtReserves: string;
+}
+
 export interface DashboardData {
   treasury: TreasuryState;
   creditProfiles: CreditProfile[];
@@ -161,6 +175,7 @@ export interface DashboardData {
   revenueTracking?: Record<string, unknown> | null;
   debtRestructuring?: Record<string, unknown> | null;
   crossChainBridge?: Record<string, unknown> | null;
+  mntVaultStatus?: MntVaultStatus | null;
 }
 
 // Configuration Types

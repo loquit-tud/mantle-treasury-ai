@@ -342,10 +342,27 @@ export class AgentDialogue {
       const actions: Array<{ action: string; params: Record<string, unknown>; reasoning: string }> =
         JSON.parse(jsonStr);
 
+      const MAX_LLM_ACTION_USDT = 500_000_000; // 500 USDt — max single action from LLM consensus
+
       for (const act of actions) {
+        const actionAmount = Number(act.params.amount || 0);
+        if (actionAmount > MAX_LLM_ACTION_USDT) {
+          logger.warn('LLM consensus action exceeds spending cap — skipped', {
+            action: act.action,
+            amount: actionAmount,
+            cap: MAX_LLM_ACTION_USDT,
+          });
+          EventBus.emitEvent('dialogue:action_capped', 'treasury', {
+            action: act.action,
+            requestedAmount: actionAmount,
+            cap: MAX_LLM_ACTION_USDT,
+            reasoning: `Blocked: LLM requested ${actionAmount} but cap is ${MAX_LLM_ACTION_USDT}`,
+          });
+          continue;
+        }
+
         logger.info('Executing dialogue consensus action', { action: act.action, params: act.params });
 
-        // Emit actionable event — agents listen and execute
         EventBus.emitEvent('dialogue:consensus_action', 'treasury', {
           action: act.action,
           params: act.params,
@@ -353,7 +370,6 @@ export class AgentDialogue {
           topicId,
         });
 
-        // Direct agent calls for treasury actions
         if (act.action === 'harvest_yield' && act.params.protocol) {
           EventBus.emitEvent('yield:harvest_requested', 'treasury', {
             protocol: String(act.params.protocol).toLowerCase(),

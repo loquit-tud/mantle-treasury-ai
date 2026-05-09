@@ -63,6 +63,8 @@ contract CollateralLock is ReentrancyGuard, AccessControl {
      */
     function linkToLoan(address borrower, uint256 loanId) external onlyRole(AGENT_ROLE) {
         require(collaterals[borrower].locked, "CollateralLock: no collateral");
+        require(loanId > 0, "CollateralLock: invalid loanId");
+        require(collaterals[borrower].loanId == 0, "CollateralLock: already linked");
         collaterals[borrower].loanId = loanId;
     }
 
