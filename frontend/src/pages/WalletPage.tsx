@@ -14,6 +14,7 @@ import {
   AlertCircle,
   LogOut,
   Shield,
+  Zap,
 } from 'lucide-react';
 import { formatAmount, formatPercentage } from '../utils/format';
 import type { CreditProfile, Loan, DefaultPrediction } from '../types';
@@ -21,6 +22,7 @@ import { WalletPickerModal } from '../components/WalletPickerModal';
 import { MntCollateralCard } from '../components/MntCollateralCard';
 import type { EIP1193Provider } from '../hooks/useWalletProviders';
 import { setSelectedProvider, getEth } from '../hooks/selectedProvider';
+import { Link } from 'react-router-dom';
 
 // Constants using Vite Env
 const TREASURY_VAULT_ADDRESS = import.meta.env.VITE_TREASURY_VAULT_ADDRESS || '0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0';
@@ -85,6 +87,7 @@ export default function WalletPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [reconnectFailedFor, setReconnectFailedFor] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(() => !sessionStorage.getItem('wallet-onboarding-dismissed'));
 
   const finishConnect = useCallback(async () => {
     const eth = getEth();
@@ -654,9 +657,49 @@ export default function WalletPage() {
 
          <div>
             <h2 className="text-2xl font-bold tracking-tight text-gradient-brand">Your Portfolio</h2>
-            <p className="text-sm text-slate-400">Manage your connected wallet, credit, and vault deposits.</p>
+            <p className="text-sm text-slate-400">Manage your wallet, treasury deposits, and credit actions on Mantle.</p>
          </div>
       </div>
+
+      {/* Beginner-first onboarding */}
+      {showOnboarding && (
+        <div className="relative flex flex-col gap-4 rounded-2xl border border-indigo-500/25 bg-slate-900/60 p-5 sm:flex-row sm:items-center">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-indigo-500/30 bg-indigo-500/10">
+            <Shield className="h-5 w-5 text-indigo-300" />
+          </div>
+          <div className="flex-1">
+            <p className="mb-0.5 text-sm font-semibold text-slate-100">Beginner mode</p>
+            <p className="text-xs leading-relaxed text-slate-400">
+              You can explore the product without a wallet. Connect only when you want to deposit, borrow, or repay.
+              Every action is verifiable on the explorer.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                to="/dashboard?proof=1"
+                className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/25 bg-indigo-950/30 px-3 py-2 text-xs font-semibold text-indigo-200 transition hover:border-indigo-400/40 hover:bg-indigo-950/50"
+              >
+                Run AI proof demo
+                <Zap className="h-3.5 w-3.5" />
+              </Link>
+              <button
+                type="button"
+                onClick={connectWallet}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-950/60"
+              >
+                Connect wallet
+                <Wallet className="h-3.5 w-3.5 text-indigo-200" />
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setShowOnboarding(false); sessionStorage.setItem('wallet-onboarding-dismissed', '1'); }}
+            className="shrink-0 rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
@@ -698,10 +741,20 @@ export default function WalletPage() {
                   </div>
                 ) : (
                   <div className="py-8 flex flex-col items-center justify-center text-center">
-                     <p className="text-sm text-slate-500 mb-4">Connect wallet to view balances</p>
-                     <button onClick={connectWallet} className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-400 transition-all">
-                        <Wallet className="w-4 h-4" /> Connect MetaMask
+                     <p className="text-sm text-slate-500 mb-4">Connect a wallet to view balances and perform on-chain actions.</p>
+                     <button
+                       type="button"
+                       onClick={connectWallet}
+                       className="inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-5 py-2.5 text-sm font-semibold text-indigo-200 hover:bg-indigo-500/20 transition-all"
+                     >
+                        <Wallet className="w-4 h-4" /> Connect wallet
                      </button>
+                     <Link
+                       to="/dashboard"
+                       className="mt-3 text-xs text-slate-500 hover:text-indigo-200"
+                     >
+                       Or explore the dashboard without connecting
+                     </Link>
                   </div>
                 )}
             </div>

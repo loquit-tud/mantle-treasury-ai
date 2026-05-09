@@ -155,6 +155,10 @@ export default function Landing() {
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
                   Explorer links + audit trail included
                 </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/50 px-3 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  Preview → confirm for AI actions
+                </span>
               </div>
             </div>
 

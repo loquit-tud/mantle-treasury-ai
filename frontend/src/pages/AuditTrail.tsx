@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, FileSearch, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ExternalLink, FileSearch, RefreshCw, ShieldCheck, Copy, Check } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 
 type AuditEvent = {
@@ -49,6 +49,8 @@ export default function AuditTrail() {
   const [chains, setChains] = useState<AuditChain[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -75,6 +77,30 @@ export default function AuditTrail() {
     const withTx = chains.filter(c => c.events.some(e => !!e.txHash)).length;
     return { total, withExec, withTx };
   }, [chains]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return chains;
+    return chains.filter((c) =>
+      c.correlationId.toLowerCase().includes(q) ||
+      c.action.toLowerCase().includes(q) ||
+      c.events.some((e) =>
+        (e.txHash || '').toLowerCase().includes(q) ||
+        (e.toAddress || '').toLowerCase().includes(q) ||
+        (e.reason || '').toLowerCase().includes(q),
+      )
+    );
+  }, [chains, query]);
+
+  const copy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(value);
+      window.setTimeout(() => setCopiedId(null), 1200);
+    } catch {
+      // ignore
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -105,6 +131,28 @@ export default function AuditTrail() {
         <StatCard label="With txHash" value={String(stats.withTx)} />
       </div>
 
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by action, correlationId, txHash, address…"
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600"
+          />
+          <p className="mt-1 text-[11px] text-slate-500">
+            Tip: paste a txHash or correlationId from a judge proof response.
+          </p>
+        </div>
+        <a
+          href={apiUrl('/api/audit/trail?limit=25')}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-slate-500 hover:text-indigo-200"
+        >
+          View JSON
+        </a>
+      </div>
+
       {error && (
         <div className="flex items-center gap-3 rounded-xl border border-red-800/60 bg-red-950/40 p-4">
           <FileSearch className="h-5 w-5 shrink-0 text-red-400" />
@@ -113,10 +161,10 @@ export default function AuditTrail() {
       )}
 
       <div className="space-y-3">
-        {chains.length === 0 && !loading ? (
+        {filtered.length === 0 && !loading ? (
           <EmptyState text="No audit chains yet — trigger a withdrawal proposal, borrow, invest, or bridge execute." />
         ) : (
-          chains.map((c) => (
+          filtered.map((c) => (
             <div key={c.correlationId} className="glass-card p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -125,7 +173,21 @@ export default function AuditTrail() {
                 </div>
                 <div className="flex flex-col items-start gap-1 sm:items-end">
                   <p className="text-[11px] text-slate-500">Correlation</p>
-                  <code className="text-[11px] text-slate-300">{c.correlationId}</code>
+                  <div className="flex items-center gap-2">
+                    <code className="text-[11px] text-slate-300">{c.correlationId}</code>
+                    <button
+                      type="button"
+                      onClick={() => copy(c.correlationId)}
+                      className="rounded p-1 transition-colors hover:bg-slate-800"
+                      aria-label="Copy correlationId"
+                    >
+                      {copiedId === c.correlationId ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
