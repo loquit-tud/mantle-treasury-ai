@@ -5,6 +5,7 @@ import {
   BrainCircuit,
   CheckCircle2,
   ExternalLink,
+  GraduationCap,
   Landmark,
   LineChart,
   Shield,
@@ -127,6 +128,14 @@ export default function Landing() {
                   Open live dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Link>
+                <Link to="/dashboard?proof=1" className="btn-pill-secondary">
+                  Run AI proof demo
+                  <Sparkles className="h-4 w-4" />
+                </Link>
+                <Link to="/agents" className="btn-pill-secondary">
+                  Agent leaderboard
+                  <LineChart className="h-4 w-4" />
+                </Link>
                 <a
                   href="https://github.com/loquit-tud/mantle-treasury-ai"
                   target="_blank"
@@ -136,6 +145,16 @@ export default function Landing() {
                   Review Source Code
                   <ExternalLink className="h-4 w-4" />
                 </a>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/50 px-3 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  No wallet needed to view the demo
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/50 px-3 py-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                  Explorer links + audit trail included
+                </span>
               </div>
             </div>
 
@@ -154,6 +173,51 @@ export default function Landing() {
                   <StatItem label="Agent Decisions" value={String(stats?.decisions ?? 0)} numeric={stats?.decisions ?? 0} />
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Beginner-first onboarding (progressive disclosure) */}
+        <section className="border-b border-slate-800/70">
+          <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  <GraduationCap className="h-3.5 w-3.5" /> Beginner-friendly
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold text-white">Start here (2 minutes, judge-ready)</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                  Follow a safe path: view the live dashboard, run one AI proof action, then verify the transaction on the explorer.
+                </p>
+              </div>
+              <Link to="/dashboard?proof=1" className="btn-pill-primary">
+                Run AI proof now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <OnboardingCard
+                step="Step 1"
+                title="Open dashboard"
+                desc="See status, KPIs, safety policy, and recent on-chain transactions (view-only)."
+                ctaLabel="Go to dashboard"
+                to="/dashboard"
+              />
+              <OnboardingCard
+                step="Step 2"
+                title="AI proof (preview → confirm)"
+                desc="Trigger one AI-driven yield decision and get a verifiable explorer link."
+                ctaLabel="Open AI proof"
+                to="/dashboard?proof=1"
+              />
+              <OnboardingCard
+                step="Step 3"
+                title="Inspect agents + consensus"
+                desc="Check reputation leaderboard and recent consensus rounds."
+                ctaLabel="View agents"
+                to="/agents"
+              />
             </div>
           </div>
         </section>
@@ -264,6 +328,24 @@ export default function Landing() {
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ))}
+              <a
+                href={apiUrl('/api/safety/policy')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300 transition hover:border-indigo-400/40 hover:text-white"
+              >
+                <span>Safety policy (JSON)</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <a
+                href={apiUrl('/api/agents/reputation')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300 transition hover:border-indigo-400/40 hover:text-white"
+              >
+                <span>Agent reputation (JSON)</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
 
             <div className="mt-6 space-y-2">
@@ -287,6 +369,36 @@ export default function Landing() {
         </section>
       </main>
     </div>
+  );
+}
+
+function OnboardingCard({
+  step,
+  title,
+  desc,
+  ctaLabel,
+  to,
+}: {
+  step: string;
+  title: string;
+  desc: string;
+  ctaLabel: string;
+  to: string;
+}) {
+  const { ref, onPointerMove } = useCursorGlow<HTMLElement>();
+  return (
+    <article ref={ref} onPointerMove={onPointerMove} className="glass-card cursor-glow p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">{step}</p>
+      <h3 className="mt-2 text-base font-semibold text-white">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-slate-400">{desc}</p>
+      <Link
+        to={to}
+        className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-700 hover:bg-slate-950/60"
+      >
+        {ctaLabel}
+        <ArrowRight className="h-4 w-4 text-indigo-200" />
+      </Link>
+    </article>
   );
 }
 

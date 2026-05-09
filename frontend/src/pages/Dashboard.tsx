@@ -70,6 +70,7 @@ type HealthData = {
 export default function Dashboard() {
   const { data, isLoading, error, refresh } = useDashboard();
   const { isConnected, lastMessage } = useWebSocket(WS_URL);
+  const [openedFromQuery, setOpenedFromQuery] = useState(false);
 
   const [decisions, setDecisions] = useState<AgentDecision[]>([]);
   const [dialogueRounds, setDialogueRounds] = useState<DashboardData['dialogueRounds']>();
@@ -304,6 +305,20 @@ export default function Dashboard() {
 
   // Onboarding banner (dismiss once per session)
   const [showOnboarding, setShowOnboarding] = useState(() => !sessionStorage.getItem('onboarding-dismissed'));
+
+  // Deep link for judges: /dashboard?proof=1 opens AI proof modal
+  useEffect(() => {
+    if (openedFromQuery) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('proof') === '1') {
+        setActionModalOpen(true);
+        setOpenedFromQuery(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [openedFromQuery]);
 
   const persistApiKey = (next: string) => {
     setApiKey(next);
