@@ -125,6 +125,27 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
+/* ============================================================
+   Accessibility: consistent focus-visible rings (keyboard)
+   ============================================================ */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.28);
+  border-radius: 10px;
+}
+
+:where(button, a).btn-pill-primary:focus-visible,
+:where(button, a).btn-pill-secondary:focus-visible,
+.nav-pill:focus-visible {
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22), 0 0 0 1px rgba(129, 140, 248, 0.25) inset;
+}
+
+/* Touch targets (mobile) */
+button,
+a.nav-pill {
+  min-height: 44px;
+}
+
 /* ─────────────────────────────────────────────────────────
  * Quorum design system — glass / linear-style polish
  * ───────────────────────────────────────────────────────── */

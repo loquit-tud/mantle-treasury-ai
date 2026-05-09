@@ -170,6 +170,13 @@ export default function Dashboard() {
   // Inline confirm for Emergency Pause
   const [confirmingPause, setConfirmingPause] = useState(false);
 
+  // Demo / Judge UX: action preview + optional API key (stored in session)
+  const [apiKey, setApiKey] = useState<string>(() => sessionStorage.getItem('api-key') || '');
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [aiProofAmount, setAiProofAmount] = useState<string>('500000'); // 0.5 USDT0 (6 decimals)
+  const [actionResult, setActionResult] = useState<null | { ok: boolean; title: string; details?: string; explorer?: string }>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+
   // Normalize raw EventBus events ({ type, source, payload }) into AgentDecision shape
   const normalizeDecision = (raw: Record<string, unknown>): AgentDecision => {
     if (raw.action && raw.agentType) return raw as unknown as AgentDecision;
@@ -298,6 +305,53 @@ export default function Dashboard() {
   // Onboarding banner (dismiss once per session)
   const [showOnboarding, setShowOnboarding] = useState(() => !sessionStorage.getItem('onboarding-dismissed'));
 
+  const persistApiKey = (next: string) => {
+    setApiKey(next);
+    sessionStorage.setItem('api-key', next);
+  };
+
+  const postWithOptionalApiKey = async (path: string, body?: unknown) => {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (apiKey) headers['x-api-key'] = apiKey;
+    const res = await fetch(apiUrl(path), { method: 'POST', headers, body: body ? JSON.stringify(body) : undefined });
+    const json = await res.json().catch(() => null);
+    return { res, json };
+  };
+
+  const runAiYieldProof = async () => {
+    setActionBusy(true);
+    setActionResult(null);
+    try {
+      const { res, json } = await postWithOptionalApiKey('/api/proof/ai-yield', { amount: aiProofAmount });
+      if (!res.ok) {
+        setActionResult({
+          ok: false,
+          title: 'AI yield proof failed',
+          details: json?.error || `HTTP ${res.status}`,
+        });
+        return;
+      }
+      const explorer = json?.data?.explorer ?? (json?.data?.txHash ? `https://mantlescan.xyz/tx/${json.data.txHash}` : undefined);
+      setActionResult({
+        ok: true,
+        title: 'AI yield proof executed',
+        details: json?.data?.txHash
+          ? `txHash: ${json.data.txHash}`
+          : (json?.data?.reason ? `No txHash: ${json.data.reason}` : 'Completed (no txHash returned)'),
+        explorer,
+      });
+      await refresh();
+    } catch (err) {
+      setActionResult({
+        ok: false,
+        title: 'Network error',
+        details: err instanceof Error ? err.message : 'Unknown error',
+      });
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
 
@@ -399,6 +453,14 @@ export default function Dashboard() {
                <RefreshCw className={`h-4 w-4 text-indigo-300 ${syncing ? 'animate-spin' : ''}`} />
                {syncing ? 'Syncing...' : 'Sync treasury'}
              </button>
+             <button
+               type="button"
+               onClick={() => { setActionModalOpen(true); setActionResult(null); }}
+               className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/25 bg-indigo-950/30 px-4 py-2 text-sm font-medium text-indigo-200 transition-colors hover:border-indigo-400/40 hover:bg-indigo-950/50"
+             >
+               <Shield className="h-4 w-4 text-indigo-200" />
+               AI proof
+             </button>
              {confirmingPause ? (
                <div className="flex animate-in items-center gap-2 rounded-lg border border-red-500/35 bg-red-950/40 px-3 py-2 fade-in duration-150">
                  <span className="text-xs font-medium text-red-200">Pause all agents?</span>
@@ -494,103 +556,113 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Recent on-chain transactions (judge-friendly proof surface) */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Recent on-chain tx</span>
-          <span className="rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5 font-mono text-[10px] text-slate-400">
-            {recentOnchain.length} shown
-          </span>
+      {/* Status / Proof / Safety (bento) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent on-chain transactions (judge-friendly proof surface) */}
+        <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Recent on-chain tx</span>
+            <span className="rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5 font-mono text-[10px] text-slate-400">
+              {recentOnchain.length} shown
+            </span>
+          </div>
+          {recentOnchain.length === 0 ? (
+            <p className="text-sm text-slate-500">No executed transactions yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {recentOnchain.map((d) => (
+                <a
+                  key={`${d.id}-${d.txHash}`}
+                  href={`https://mantlescan.xyz/tx/${d.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-800/70 bg-slate-950/20 px-3 py-2 text-sm hover:border-slate-700"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-slate-200">{(d.action || 'action').replace(/_/g, ' ')}</div>
+                    <div className="truncate font-mono text-[11px] text-slate-500">
+                      {d.txHash?.slice(0, 10)}...{d.txHash?.slice(-6)}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-[11px] text-slate-500">
+                    {new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
-        {recentOnchain.length === 0 ? (
-          <p className="text-sm text-slate-500">No executed transactions yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {recentOnchain.map((d) => (
+
+        {/* Treasury Health Score + Safety policy in a stack */}
+        <div className="space-y-6">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <Shield className="h-5 w-5" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }} />
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Treasury health score</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-semibold tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }}>
+                  {healthData?.score ?? '—'}
+                </span>
+                <span className="text-lg font-medium text-slate-500">/100</span>
+              </div>
+              <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
+                !healthData ? 'border-slate-700 bg-slate-800 text-slate-400'
+                : healthData.score >= 80 ? 'border-indigo-500/35 bg-indigo-500/15 text-indigo-200'
+                : healthData.score >= 60 ? 'border-amber-500/35 bg-amber-500/15 text-amber-200'
+                : healthData.score >= 40 ? 'border-orange-500/35 bg-orange-500/15 text-orange-200'
+                : 'border-red-500/35 bg-red-500/15 text-red-200'
+              }`}>
+                {healthData?.rating ?? 'Loading...'}
+              </span>
+              <div className="hidden flex-1 sm:block">
+                <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{
+                      width: `${healthData?.score ?? 0}%`,
+                      backgroundColor: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b'
+                    }}
+                  />
+                </div>
+                {healthData?.breakdown && (
+                  <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
+                    {Object.entries(healthData.breakdown).slice(0, 4).map(([key, val]) => (
+                      <span key={key} className="capitalize">{key.replace(/_/g, ' ')}: {Math.round(val.score)}%</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-emerald-400" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Safety policy</span>
+              </div>
               <a
-                key={`${d.id}-${d.txHash}`}
-                href={`https://mantlescan.xyz/tx/${d.txHash}`}
+                href={apiUrl('/api/safety/policy')}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-800/70 bg-slate-950/20 px-3 py-2 text-sm hover:border-slate-700"
+                className="text-[11px] text-slate-500 hover:text-indigo-200"
               >
-                <div className="min-w-0">
-                  <div className="truncate font-semibold text-slate-200">{(d.action || 'action').replace(/_/g, ' ')}</div>
-                  <div className="truncate font-mono text-[11px] text-slate-500">
-                    {d.txHash?.slice(0, 10)}...{d.txHash?.slice(-6)}
-                  </div>
-                </div>
-                <div className="shrink-0 text-[11px] text-slate-500">
-                  {new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
+                View JSON
               </a>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Treasury Health */}
-      <div className="grid grid-cols-1 gap-4">
-        {/* Health Score */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <Shield className="h-5 w-5" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }} />
-            <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Treasury health score</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-semibold tabular-nums" style={{ color: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b' }}>
-                {healthData?.score ?? '—'}
-              </span>
-              <span className="text-lg font-medium text-slate-500">/100</span>
             </div>
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-              !healthData ? 'border-slate-700 bg-slate-800 text-slate-400'
-              : healthData.score >= 80 ? 'border-indigo-500/35 bg-indigo-500/15 text-indigo-200'
-              : healthData.score >= 60 ? 'border-amber-500/35 bg-amber-500/15 text-amber-200'
-              : healthData.score >= 40 ? 'border-orange-500/35 bg-orange-500/15 text-orange-200'
-              : 'border-red-500/35 bg-red-500/15 text-red-200'
-            }`}>
-              {healthData?.rating ?? 'Loading...'}
-            </span>
-            {/* Health bar */}
-            <div className="hidden flex-1 sm:block">
-              <div className="h-3 overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full transition-all duration-1000 ease-out"
-                  style={{
-                    width: `${healthData?.score ?? 0}%`,
-                    backgroundColor: healthData ? (healthData.score >= 80 ? '#818cf8' : healthData.score >= 60 ? '#fbbf24' : healthData.score >= 40 ? '#fb923c' : '#f87171') : '#64748b'
-                  }}
-                />
-              </div>
-              {healthData?.breakdown && (
-                <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
-                  {Object.entries(healthData.breakdown).slice(0, 4).map(([key, val]) => (
-                    <span key={key} className="capitalize">{key.replace(/_/g, ' ')}: {Math.round(val.score)}%</span>
-                  ))}
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <PolicyBadge label="Max single tx" value="1,000 USDT0" />
+              <PolicyBadge label="Daily limit" value="10,000 USDT0" />
+              <PolicyBadge label="Multisig" value="2-of-N for >1k" />
+              <PolicyBadge label="Timelock" value="1 hour delay" />
+              <PolicyBadge label="Guard cap" value="2,500 USDT0/tx" />
+              <PolicyBadge label="LLM action cap" value="500 USDT0" />
+              <PolicyBadge label="Reentrancy guard" value="Enabled" color="emerald" />
+              <PolicyBadge label="Pausable" value="Enabled" color="emerald" />
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Safety Policy Transparency */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Shield className="h-5 w-5 text-emerald-400" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Safety policy</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <PolicyBadge label="Max single tx" value="1,000 USDT0" />
-          <PolicyBadge label="Daily limit" value="10,000 USDT0" />
-          <PolicyBadge label="Multisig" value="2-of-N for >1k" />
-          <PolicyBadge label="Timelock" value="1 hour delay" />
-          <PolicyBadge label="Guard cap" value="2,500 USDT0/tx" />
-          <PolicyBadge label="LLM action cap" value="500 USDT0" />
-          <PolicyBadge label="Reentrancy guard" value="Enabled" color="emerald" />
-          <PolicyBadge label="Pausable" value="Enabled" color="emerald" />
         </div>
       </div>
 
@@ -900,6 +972,92 @@ export default function Dashboard() {
 
       {/* Live event toasts */}
       <ToastStack lastMessage={lastMessage} />
+
+      {/* AI action preview / confirm modal */}
+      {actionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-100">AI-powered on-chain proof</p>
+                <p className="text-[11px] text-slate-500">Preview → confirm → explorer link. Optional API key for production.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setActionModalOpen(false); setActionResult(null); }}
+                className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-600 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Request preview</p>
+                <div className="mt-3 grid grid-cols-1 gap-3">
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-slate-400">API key (optional)</span>
+                    <input
+                      value={apiKey}
+                      onChange={(e) => persistApiKey(e.target.value)}
+                      placeholder="x-api-key (only needed in production)"
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-slate-400">Amount (raw, 6 decimals)</span>
+                    <input
+                      value={aiProofAmount}
+                      onChange={(e) => setAiProofAmount(e.target.value.replace(/[^\d]/g, ''))}
+                      className="w-full rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 font-mono text-sm text-slate-100"
+                    />
+                    <p className="text-[10px] text-slate-500">Example: <span className="font-mono">500000</span> = 0.5 USDT0</p>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={runAiYieldProof}
+                  disabled={actionBusy}
+                  className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/35 bg-indigo-950/40 px-4 py-2 text-sm font-semibold text-indigo-100 hover:border-indigo-400/50 disabled:opacity-50"
+                >
+                  <Shield className="h-4 w-4" />
+                  {actionBusy ? 'Executing…' : 'Confirm & execute'}
+                </button>
+                <a
+                  href={apiUrl('/api/proof/ai-yield')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-slate-500 hover:text-indigo-200"
+                >
+                  Endpoint docs
+                </a>
+              </div>
+
+              {actionResult && (
+                <div className={`rounded-xl border p-4 ${actionResult.ok ? 'border-emerald-500/25 bg-emerald-950/20' : 'border-red-500/25 bg-red-950/20'}`}>
+                  <p className={`text-sm font-semibold ${actionResult.ok ? 'text-emerald-200' : 'text-red-200'}`}>{actionResult.title}</p>
+                  {actionResult.details && (
+                    <p className="mt-1 text-xs text-slate-400">{actionResult.details}</p>
+                  )}
+                  {actionResult.explorer && (
+                    <a
+                      href={actionResult.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex text-xs font-semibold text-indigo-200 hover:text-indigo-100"
+                    >
+                      Open on explorer
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
