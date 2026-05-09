@@ -34,6 +34,10 @@ const EXPECTED_CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID || '5000');
 const CHAIN_NAME = import.meta.env.VITE_CHAIN_NAME || 'Mantle Mainnet';
 const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://rpc.mantle.xyz';
 
+// Aave V3 on Mantle — for redeeming aUSDT0 yield positions
+const AAVE_POOL_ADDRESS = '0x458F293454fE0d67EC0655f3672301301DD51422';
+const AUSDT0_ADDRESS   = '0x7053bAD224F0C021839f6AC645BdaE5F8b585b69';
+
 /** Ensure MetaMask is on the correct chain; auto-add if missing */
 async function ensureCorrectChain(): Promise<void> {
   const eth = getEth();
@@ -76,6 +80,9 @@ const ERC20_ABI = [
 const CREDIT_LINE_ABI = [
   "function repay(uint256 loanId, uint256 amount) external",
   "function getAmountDue(uint256 loanId) external view returns (uint256)",
+];
+const AAVE_POOL_ABI = [
+  "function withdraw(address asset, uint256 amount, address to) external returns (uint256)",
 ];
 
 export default function WalletPage() {
@@ -126,22 +133,28 @@ export default function WalletPage() {
     const addr = accounts[0] as string;
     setAddress(addr);
     setIsConnected(true);
-    try {
-      const ethBalRaw = await provider.getBalance(addr);
-      setEthBal(formatEther(ethBalRaw));
-      const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
-      const bal = await usdt.balanceOf(addr);
-      setUsdtBal(formatUnits(bal, 6));
       try {
-        const vault = new Contract(TREASURY_VAULT_ADDRESS, VAULT_ABI, provider);
-        const vBal = await vault.getBalance();
-        setVaultBal(formatUnits(vBal, 6));
-      } catch {
-        // vault read optional
+        const ethBalRaw = await provider.getBalance(addr);
+        setEthBal(formatEther(ethBalRaw));
+        const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
+        const bal = await usdt.balanceOf(addr);
+        setUsdtBal(formatUnits(bal, 6));
+        // Check aUSDT0 (Aave yield token) balance for recovery UI
+        try {
+          const aToken = new Contract(AUSDT0_ADDRESS, ERC20_ABI, provider);
+          const aBal = await aToken.balanceOf(addr);
+          setATokenBal(formatUnits(aBal, 6));
+        } catch { /* optional */ }
+        try {
+          const vault = new Contract(TREASURY_VAULT_ADDRESS, VAULT_ABI, provider);
+          const vBal = await vault.getBalance();
+          setVaultBal(formatUnits(vBal, 6));
+        } catch {
+          // vault read optional
+        }
+      } catch (balErr) {
+        console.warn('Balance fetch failed:', balErr);
       }
-    } catch (balErr) {
-      console.warn('Balance fetch failed:', balErr);
-    }
   }, []);
 
   const handleProviderSelected = useCallback(async (chosen: EIP1193Provider, name: string) => {
@@ -273,6 +286,12 @@ export default function WalletPage() {
 
   // ML Prediction state (populated from evaluate response)
   const [mlPrediction, setMlPrediction] = useState<DefaultPrediction | null>(null);
+
+  // Aave yield recovery (aUSDT0 → USDT0)
+  const [aTokenBal, setATokenBal] = useState<string | null>(null);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoverTxHash, setRecoverTxHash] = useState<string | null>(null);
+  const [recoverError, setRecoverError] = useState<string | null>(null);
 
   // Loan history state (all loans including repaid/defaulted)
   const [loanHistory, setLoanHistory] = useState<Loan[]>([]);
@@ -445,6 +464,38 @@ export default function WalletPage() {
       setCreditCheckError('Network error while evaluating wallet. Please retry.');
     } finally {
       setIsCheckingCredit(false);
+    }
+  };
+
+  const handleRecoverAave = async () => {
+    if (!address || !getEth()) return;
+    setIsRecovering(true);
+    setRecoverError(null);
+    setRecoverTxHash(null);
+    try {
+      await ensureCorrectChain();
+      const provider = new BrowserProvider(getEth()!);
+      const signer = await provider.getSigner();
+      const pool = new Contract(AAVE_POOL_ADDRESS, AAVE_POOL_ABI, signer);
+      // maxUint256 = withdraw everything
+      const MAX = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+      const tx = await pool.withdraw(USDT_ADDRESS, MAX, address);
+      await tx.wait();
+      setRecoverTxHash(tx.hash);
+      // Refresh balances
+      const usdt = new Contract(USDT_ADDRESS, ERC20_ABI, provider);
+      setUsdtBal(formatUnits(await usdt.balanceOf(address), 6));
+      const aToken = new Contract(AUSDT0_ADDRESS, ERC20_ABI, provider);
+      setATokenBal(formatUnits(await aToken.balanceOf(address), 6));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('user rejected') || msg.includes('ACTION_REJECTED')) {
+        setRecoverError('Transaction cancelled.');
+      } else {
+        setRecoverError(msg.slice(0, 150));
+      }
+    } finally {
+      setIsRecovering(false);
     }
   };
 
@@ -758,6 +809,53 @@ export default function WalletPage() {
                   </div>
                 )}
             </div>
+
+            {/* Aave Yield Recovery — shown when wallet holds aUSDT0 */}
+            {isConnected && aTokenBal && Number(aTokenBal) > 0.001 && (
+              <div className="glass-card p-6 border border-amber-500/30 bg-amber-500/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <ArrowDownCircle className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-semibold text-amber-200">Yield Position Recovery</h3>
+                </div>
+                <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                  Your wallet holds <span className="font-mono font-bold text-amber-300">{Number(aTokenBal).toFixed(6)} aUSDT0</span> — an Aave yield token.
+                  Click below to convert it back to USDT0 instantly.
+                </p>
+                <button
+                  onClick={handleRecoverAave}
+                  disabled={isRecovering}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white hover:bg-amber-500 transition-all shadow-[0_0_20px_-5px_rgba(245,158,11,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRecovering ? (
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Converting...</>
+                  ) : (
+                    <><ArrowDownCircle className="w-4 h-4" /> Recover {Number(aTokenBal).toFixed(4)} USDT0</>
+                  )}
+                </button>
+                {recoverError && (
+                  <p className="mt-3 text-xs text-rose-400 flex items-start gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    {recoverError}
+                  </p>
+                )}
+                {recoverTxHash && (
+                  <div className="mt-3 p-3 rounded-lg bg-amber-950/30 border border-amber-900/50 flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="overflow-hidden flex-1">
+                      <p className="text-xs text-amber-300 font-medium mb-0.5">Recovery successful!</p>
+                      <a
+                        href={`https://mantlescan.xyz/tx/${recoverTxHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-amber-200 hover:text-white underline font-mono block truncate"
+                      >
+                        {recoverTxHash}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Deposit Form */}
             {isConnected && (
