@@ -576,6 +576,24 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Safety Policy Transparency */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <Shield className="h-5 w-5 text-emerald-400" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Safety policy</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <PolicyBadge label="Max single tx" value="1,000 USDT0" />
+          <PolicyBadge label="Daily limit" value="10,000 USDT0" />
+          <PolicyBadge label="Multisig" value="2-of-N for >1k" />
+          <PolicyBadge label="Timelock" value="1 hour delay" />
+          <PolicyBadge label="Guard cap" value="2,500 USDT0/tx" />
+          <PolicyBadge label="LLM action cap" value="500 USDT0" />
+          <PolicyBadge label="Reentrancy guard" value="Enabled" color="emerald" />
+          <PolicyBadge label="Pausable" value="Enabled" color="emerald" />
+        </div>
+      </div>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Panel title="Treasury balance (last 24 updates)" icon={<Activity className="h-4 w-4 text-indigo-300" />}>
@@ -973,6 +991,15 @@ function EmptyState({ text }: { text: string }) {
  * AnimatedValue — animates from previous to current numeric value when it changes.
  * Falls back to plain text if value is non-numeric.
  */
+function PolicyBadge({ label, value, color = 'indigo' }: { label: string; value: string; color?: 'indigo' | 'emerald' }) {
+  return (
+    <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={`mt-0.5 text-sm font-semibold ${color === 'emerald' ? 'text-emerald-300' : 'text-slate-200'}`}>{value}</p>
+    </div>
+  );
+}
+
 function AnimatedValue({ value, duration = 600 }: { value: string; duration?: number }) {
   const [displayed, setDisplayed] = useState<string>(value);
   const prevNumRef = useRef<number | null>(null);

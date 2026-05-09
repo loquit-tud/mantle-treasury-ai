@@ -16,6 +16,7 @@ import type { RiskAgent } from '../agents/RiskAgent';
 import type { AgentConfig } from '../types';
 import { ethers } from 'ethers';
 import { saveDialogues, loadDialogues } from '../services/StatePersistence';
+import { AgentReputation, type ReputationSummary } from '../services/AgentReputation';
 
 // Topic library — selected dynamically based on current system state
 const TOPIC_LIBRARY: Record<string, { id: string; prompt: string; context: string }> = {
@@ -79,6 +80,7 @@ export class AgentDialogue {
   private roundCount = 0;
   private recentDialogues: DialogueRound[] = [];
   private readonly maxHistory = 10;
+  private reputation: AgentReputation;
 
   constructor(
     _config: AgentConfig,
@@ -91,6 +93,8 @@ export class AgentDialogue {
     this.creditAgent = creditAgent;
     this.riskAgent = riskAgent || null;
     this.llm = llmClient;
+
+    this.reputation = new AgentReputation();
 
     // Restore persisted dialogues
     const persisted = loadDialogues();
@@ -201,6 +205,9 @@ export class AgentDialogue {
       data: { topic: topic.id, turn: 1, speaker: 'treasury' },
       status: 'executed',
     });
+    EventBus.emitEvent('agent:service_payment', 'treasury', {
+      from: 'strategy_engine', to: 'treasury', amount: '0.01', token: 'USDT0', reason: 'intelligence_contribution',
+    });
 
     await new Promise(r => setTimeout(r, 2000));
 
@@ -213,6 +220,9 @@ export class AgentDialogue {
       reasoning: `💬 [Board Meeting — ${topic.id}] ${creditMessage}`,
       data: { topic: topic.id, turn: 2, speaker: 'credit' },
       status: 'executed',
+    });
+    EventBus.emitEvent('agent:service_payment', 'credit', {
+      from: 'strategy_engine', to: 'credit', amount: '0.01', token: 'USDT0', reason: 'intelligence_contribution',
     });
 
     await new Promise(r => setTimeout(r, 2000));
@@ -229,6 +239,9 @@ export class AgentDialogue {
       data: { topic: topic.id, turn: 3, speaker: 'risk' },
       status: 'executed',
     });
+    EventBus.emitEvent('agent:service_payment', 'risk', {
+      from: 'strategy_engine', to: 'risk', amount: '0.01', token: 'USDT0', reason: 'intelligence_contribution',
+    });
 
     await new Promise(r => setTimeout(r, 2000));
 
@@ -242,6 +255,9 @@ export class AgentDialogue {
       data: { topic: topic.id, turn: 4, speaker: 'treasury' },
       status: 'executed',
     });
+    EventBus.emitEvent('agent:service_payment', 'treasury', {
+      from: 'strategy_engine', to: 'treasury', amount: '0.01', token: 'USDT0', reason: 'intelligence_contribution',
+    });
 
     await new Promise(r => setTimeout(r, 2000));
 
@@ -254,6 +270,9 @@ export class AgentDialogue {
       reasoning: `💬 [Board Meeting — ${topic.id}] ${creditReaction}`,
       data: { topic: topic.id, turn: 5, speaker: 'credit' },
       status: 'executed',
+    });
+    EventBus.emitEvent('agent:service_payment', 'credit', {
+      from: 'strategy_engine', to: 'credit', amount: '0.01', token: 'USDT0', reason: 'intelligence_contribution',
     });
 
     await new Promise(r => setTimeout(r, 2000));
@@ -277,6 +296,17 @@ export class AgentDialogue {
 
     // Persist dialogues
     saveDialogues(this.recentDialogues, this.roundCount);
+
+    // Track agent reputation: check each agent's last turn against consensus
+    const agentSpeakers = ['treasury', 'credit', 'risk'] as const;
+    const alignments: Record<string, boolean> = {};
+    for (const agent of agentSpeakers) {
+      const lastTurn = [...turns].reverse().find(t => t.speaker === agent);
+      if (lastTurn) {
+        alignments[agent] = AgentReputation.checkAlignment(lastTurn.message, consensus);
+      }
+    }
+    this.reputation.recordRound(this.roundCount, topic.id, alignments);
 
     // Emit consensus as a special event
     EventBus.emitEvent('dialogue:consensus', 'treasury', {
@@ -577,5 +607,12 @@ Write a 1-2 sentence consensus decision that all three agents would agree on. Be
    */
   getRecentDialogues(limit: number = 5): DialogueRound[] {
     return this.recentDialogues.slice(-limit).reverse();
+  }
+
+  /**
+   * Get agent reputation summary across all consensus rounds
+   */
+  getReputation(): ReputationSummary {
+    return this.reputation.getSummary();
   }
 }

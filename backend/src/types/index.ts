@@ -176,6 +176,7 @@ export interface DashboardData {
   debtRestructuring?: Record<string, unknown> | null;
   crossChainBridge?: Record<string, unknown> | null;
   mntVaultStatus?: MntVaultStatus | null;
+  agentReputation?: { agents: any[]; totalRounds: number; leaderboard: any[] } | null;
 }
 
 // Configuration Types

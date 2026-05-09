@@ -95,6 +95,12 @@ export default function App() {
                  Analytics
               </NavLink>
               <NavLink
+                to="/agents"
+                className={({ isActive }) => `nav-pill ${isActive ? 'nav-pill-active' : ''}`}
+              >
+                 Agents
+              </NavLink>
+              <NavLink
                 to="/audit"
                 className={({ isActive }) => `nav-pill ${isActive ? 'nav-pill-active' : ''}`}
               >

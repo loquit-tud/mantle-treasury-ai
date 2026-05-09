@@ -96,6 +96,19 @@ export interface DashboardData {
     /** USDT0 reserves available to lend (6 decimals, raw units) */
     usdtReserves: string;
   } | null;
+  agentReputation?: {
+    agents: {
+      agentType: string;
+      score: number;
+      wins: number;
+      losses: number;
+      streak: number;
+      lastUpdated: number;
+      history: { round: number; topic: string; aligned: boolean; delta: number; timestamp: number }[];
+    }[];
+    totalRounds: number;
+    leaderboard: { agent: string; score: number; winRate: number }[];
+  } | null;
 }
 
 export interface WebSocketMessage {

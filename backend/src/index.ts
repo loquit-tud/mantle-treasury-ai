@@ -365,6 +365,7 @@ async function getDashboardData(): Promise<DashboardData> {
     debtRestructuring: debtRestructuring?.getSummary() || null,
     crossChainBridge: treasuryAgent?.getCrossChainBridge()?.getSummary() || null,
     mntVaultStatus,
+    agentReputation: agentDialogue?.getReputation() || null,
   };
 }
 
@@ -1523,6 +1524,47 @@ app.post('/api/restructuring/trigger-demo', requireApiKey, async (_req, res) => 
   } catch (error) {
     res.status(500).json({ success: false, error: 'Restructuring demo trigger failed' });
   }
+});
+
+// ==================== Safety & Reputation ====================
+
+app.get('/api/safety/policy', (_req, res) => {
+  res.json({
+    success: true,
+    data: {
+      onChain: {
+        maxDailyVolume: '10,000 USDT0',
+        maxSingleTx: '1,000 USDT0',
+        multisigThreshold: '1,000 USDT0 (2 signatures required)',
+        timelockDelay: '1 hour',
+        roles: ['AGENT_ROLE', 'GUARDIAN_ROLE', 'EXECUTOR_ROLE'],
+        pausable: true,
+        reentrancyGuard: true,
+      },
+      offChain: {
+        guardEnabled: (process.env.GUARD_ENABLED ?? '1') !== '0',
+        maxTxUsdt: process.env.GUARD_MAX_TX_USDT ?? '2,500',
+        maxDailyUsdt: process.env.GUARD_MAX_DAILY_USDT ?? '10,000',
+        apiKeyRequired: !!process.env.API_SECRET,
+        llmActionCap: '500 USDT0 per consensus action',
+        circuitBreakers: ['pause_all_agents', 'freeze_credit_line', 'emergency_withdraw'],
+      },
+      compliance: {
+        sanctionsCheck: true,
+        creditScoreGate: 'min 500 for borrowing',
+        collateralRequired: 'yes (CollateralLock)',
+      },
+    },
+  });
+});
+
+app.get('/api/agents/reputation', (_req, res) => {
+  const reputation = agentDialogue?.getReputation();
+  if (!reputation) {
+    res.status(503).json({ success: false, error: 'AgentDialogue not initialized' });
+    return;
+  }
+  res.json({ success: true, data: reputation });
 });
 
 // ==================== WebSocket ====================
