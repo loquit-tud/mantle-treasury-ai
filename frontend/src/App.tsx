@@ -94,6 +94,12 @@ export default function App() {
               >
                  Analytics
               </NavLink>
+              <NavLink
+                to="/audit"
+                className={({ isActive }) => `nav-pill ${isActive ? 'nav-pill-active' : ''}`}
+              >
+                 Audit Trail
+              </NavLink>
 
            </nav>
         </div>

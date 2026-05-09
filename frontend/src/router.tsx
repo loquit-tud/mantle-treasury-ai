@@ -30,6 +30,12 @@ export const router = createBrowserRouter([
           Component: (await import('./pages/Analytics')).default,
         }),
       },
+      {
+        path: 'audit',
+        lazy: async () => ({
+          Component: (await import('./pages/AuditTrail')).default,
+        }),
+      },
     ],
   },
 ], { basename: '/mantle-treasury-ai' });

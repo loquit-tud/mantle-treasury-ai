@@ -155,6 +155,25 @@ function runMigrations(db: Database.Database): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_snapshots_ts ON history_snapshots(timestamp);
+
+    -- Unified audit trail: intent → guard → execution (grouped by correlation_id)
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      correlation_id TEXT NOT NULL,
+      stage          TEXT NOT NULL,           -- intent | guard | execution
+      action         TEXT NOT NULL,
+      actor          TEXT NOT NULL,           -- api | agent
+      timestamp      INTEGER NOT NULL,
+      ok             INTEGER,                 -- for guard/execution
+      reason         TEXT,                    -- for guard decisions / execution errors
+      amount_raw     TEXT,                    -- USDt raw units (6 decimals)
+      to_address     TEXT,
+      tx_hash        TEXT,
+      data_json      TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_events(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_audit_corr ON audit_events(correlation_id);
   `);
 
   logger.info('StateDB migrations complete');

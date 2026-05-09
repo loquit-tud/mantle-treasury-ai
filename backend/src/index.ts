@@ -3,7 +3,7 @@
  * Multi-agent system for DAO treasury management
  */
 
-import { timingSafeEqual } from 'crypto';
+import crypto, { timingSafeEqual } from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -29,6 +29,8 @@ import { initWdk, getAccount, getWdkAddress, disposeWdk } from './services/wdk';
 import { MntVaultService } from './services/MntVaultService';
 // CrossChainBridge is accessed via treasuryAgent.getCrossChainBridge()
 import { closeDB } from './services/StateDB';
+import { insertAuditEvent, listRecentAuditChains } from './services/AuditTrail';
+import { evaluateGuard } from './services/AgentGuard';
 import logger from './utils/logger';
 import { AgentConfig, DashboardData, AgentStatus } from './types';
 
@@ -522,6 +524,17 @@ app.get('/api/decisions', async (req, res) => {
   }
 });
 
+// Audit Trail — unified chain-of-custody for judge-proof verification
+app.get('/api/audit/trail', (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 25, 100);
+    const chains = listRecentAuditChains(limit);
+    res.json({ success: true, data: { chains } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch audit trail' });
+  }
+});
+
 // AI Decision Log — structured audit trail proving AI → decision → execution
 app.get('/api/ai-decisions', async (req, res) => {
   try {
@@ -701,7 +714,20 @@ app.get('/api/risk/metrics', (_req, res) => {
 // Emergency pause
 app.post('/api/emergency/pause', requireApiKey, async (_req, res) => {
   try {
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({ correlationId, stage: 'intent', action: 'emergency.pause', actor: 'api' });
+    const guard = await evaluateGuard({ action: 'emergency.pause' });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'emergency.pause',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      data: { policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
     await treasuryAgent?.emergencyPause();
+    insertAuditEvent({ correlationId, stage: 'execution', action: 'emergency.pause', actor: 'api', ok: true });
     res.json({ success: true, message: 'Emergency pause activated' });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to activate emergency pause' });
@@ -711,7 +737,20 @@ app.post('/api/emergency/pause', requireApiKey, async (_req, res) => {
 // Emergency unpause
 app.post('/api/emergency/unpause', requireApiKey, async (_req, res) => {
   try {
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({ correlationId, stage: 'intent', action: 'emergency.unpause', actor: 'api' });
+    const guard = await evaluateGuard({ action: 'emergency.unpause' });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'emergency.unpause',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      data: { policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
     await treasuryAgent?.emergencyUnpause();
+    insertAuditEvent({ correlationId, stage: 'execution', action: 'emergency.unpause', actor: 'api', ok: true });
     res.json({ success: true, message: 'Emergency unpause — vault operations resumed' });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to unpause vault' });
@@ -733,11 +772,33 @@ app.post('/api/credit/:address/borrow', async (req, res) => {
       res.status(400).json({ success: false, error: 'Missing amount' });
       return;
     }
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({ correlationId, stage: 'intent', action: 'credit.borrow', actor: 'api', amountRaw: amount, toAddress: address });
+
+    const guard = await evaluateGuard({ action: 'credit.borrow', amountRaw: BigInt(amount), toAddress: address });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'credit.borrow',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      amountRaw: amount,
+      toAddress: address,
+      data: { policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
+    if (!guard.ok) {
+      res.status(403).json({ success: false, error: `Guard rejected: ${guard.reason}`, correlationId });
+      return;
+    }
+
     const loan = await creditAgent?.processBorrow(address, BigInt(amount));
     if (!loan) {
+      insertAuditEvent({ correlationId, stage: 'execution', action: 'credit.borrow', actor: 'api', ok: false, reason: 'declined', amountRaw: amount, toAddress: address });
       res.status(403).json({ success: false, error: 'Borrow declined or insufficient credit' });
       return;
     }
+    insertAuditEvent({ correlationId, stage: 'execution', action: 'credit.borrow', actor: 'api', ok: true, amountRaw: amount, toAddress: address, txHash: (loan as any).txHash ?? null });
     res.json({ success: true, data: loan });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Borrow failed' });
@@ -787,15 +848,42 @@ app.post('/api/yield/invest', requireApiKey, async (req, res) => {
       res.status(400).json({ success: false, error: 'Missing protocol or amount' });
       return;
     }
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({
+      correlationId,
+      stage: 'intent',
+      action: 'treasury.yield.invest',
+      actor: 'api',
+      amountRaw: amount,
+      data: { protocol, apy: apy || 0 },
+    });
+    const guard = await evaluateGuard({ action: 'treasury.yield.invest', amountRaw: BigInt(amount) });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'treasury.yield.invest',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      amountRaw: amount,
+      data: { protocol, apy: apy || 0, policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
+    if (!guard.ok) {
+      res.status(403).json({ success: false, error: `Guard rejected: ${guard.reason}`, correlationId });
+      return;
+    }
+
     const hash = await treasuryAgent?.proposeYieldInvestment(
       protocol,
       BigInt(amount),
       apy || 0
     );
     if (!hash) {
+      insertAuditEvent({ correlationId, stage: 'execution', action: 'treasury.yield.invest', actor: 'api', ok: false, reason: 'rejected', amountRaw: amount });
       res.status(400).json({ success: false, error: 'Investment rejected' });
       return;
     }
+    insertAuditEvent({ correlationId, stage: 'execution', action: 'treasury.yield.invest', actor: 'api', ok: true, amountRaw: amount, txHash: hash, data: { protocol, apy: apy || 0 } });
     res.json({ success: true, data: { txHash: hash } });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Yield investment failed' });
@@ -873,6 +961,31 @@ app.post('/api/bridge/execute', requireApiKey, async (req, res) => {
       res.status(400).json({ success: false, error: `Invalid chain. Must be one of: ${validChains.join(', ')}` });
       return;
     }
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({
+      correlationId,
+      stage: 'intent',
+      action: 'bridge.execute',
+      actor: 'api',
+      amountRaw: amount,
+      data: { targetChain },
+    });
+    const guard = await evaluateGuard({ action: 'bridge.execute', amountRaw: BigInt(amount) });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'bridge.execute',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      amountRaw: amount,
+      data: { targetChain, policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
+    if (!guard.ok) {
+      res.status(403).json({ success: false, error: `Guard rejected: ${guard.reason}`, correlationId });
+      return;
+    }
+
     const wdkAddr = await getWdkAddress(await initWdk({ seedPhrase: config.seedPhrase, rpcUrl: config.rpcUrl }));
     const result = await bridge.bridge(
       targetChain as 'ethereum' | 'arbitrum' | 'polygon',
@@ -881,9 +994,20 @@ app.post('/api/bridge/execute', requireApiKey, async (req, res) => {
       config.usdtAddress,
     );
     if (!result) {
+      insertAuditEvent({ correlationId, stage: 'execution', action: 'bridge.execute', actor: 'api', ok: false, reason: 'bridge_failed', amountRaw: amount, data: { targetChain } });
       res.status(400).json({ success: false, error: 'Bridge execution failed or amount below minimum' });
       return;
     }
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'bridge.execute',
+      actor: 'api',
+      ok: true,
+      amountRaw: amount,
+      txHash: (result as any).txHash ?? null,
+      data: { targetChain, result },
+    });
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Bridge execution failed' });
@@ -946,11 +1070,33 @@ app.post('/api/treasury/withdrawal/propose', requireApiKey, async (req, res) => 
       res.status(400).json({ success: false, error: 'Missing to or amount' });
       return;
     }
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({ correlationId, stage: 'intent', action: 'treasury.withdraw.propose', actor: 'api', amountRaw: amount, toAddress: to });
+
+    const guard = await evaluateGuard({ action: 'treasury.withdraw.propose', amountRaw: BigInt(amount), toAddress: to });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'treasury.withdraw.propose',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      amountRaw: amount,
+      toAddress: to,
+      data: { policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
+    if (!guard.ok) {
+      res.status(403).json({ success: false, error: `Guard rejected: ${guard.reason}`, correlationId });
+      return;
+    }
+
     const hash = await treasuryAgent?.proposeWithdrawal(to, BigInt(amount));
     if (!hash) {
+      insertAuditEvent({ correlationId, stage: 'execution', action: 'treasury.withdraw.propose', actor: 'api', ok: false, reason: 'rejected', amountRaw: amount, toAddress: to });
       res.status(400).json({ success: false, error: 'Proposal rejected' });
       return;
     }
+    insertAuditEvent({ correlationId, stage: 'execution', action: 'treasury.withdraw.propose', actor: 'api', ok: true, amountRaw: amount, toAddress: to, txHash: hash });
     res.json({ success: true, data: { txHash: hash } });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Withdrawal proposal failed' });
