@@ -946,6 +946,76 @@ app.post('/api/yield/invest', requireApiKey, async (req, res) => {
   }
 });
 
+// Withdraw from yield back into treasury (Aurelius/Aave). Safe judge operation.
+// NOTE: WDK withdraw sends funds to the agent wallet; TreasuryAgent will sweep wallet → vault best-effort.
+app.post('/api/yield/withdraw', requireApiKey, async (req, res) => {
+  try {
+    if (!treasuryAgent) {
+      res.status(503).json({ success: false, error: 'TreasuryAgent not initialized' });
+      return;
+    }
+    const { protocol, amount } = req.body as { protocol?: string; amount?: string };
+    const p = String(protocol || 'aurelius').toLowerCase();
+    if (!amount) {
+      res.status(400).json({ success: false, error: 'Missing amount' });
+      return;
+    }
+    const amountRaw = BigInt(amount);
+    const correlationId = crypto.randomUUID();
+    insertAuditEvent({
+      correlationId,
+      stage: 'intent',
+      action: 'treasury.yield.withdraw',
+      actor: 'api',
+      amountRaw: amount,
+      data: { protocol: p },
+    });
+
+    const guard = await evaluateGuard({ action: 'treasury.yield.withdraw', amountRaw });
+    insertAuditEvent({
+      correlationId,
+      stage: 'guard',
+      action: 'treasury.yield.withdraw',
+      actor: 'api',
+      ok: guard.ok,
+      reason: guard.reason,
+      amountRaw: amount,
+      data: { protocol: p, policy: guard.policy, usage: { usedTodayRaw: guard.usage.usedTodayRaw.toString() } },
+    });
+    if (!guard.ok) {
+      res.status(403).json({ success: false, error: `Guard rejected: ${guard.reason}`, correlationId });
+      return;
+    }
+
+    const txHash = await treasuryAgent.harvestYield(p, amountRaw);
+    const explorer = txHash ? `https://mantlescan.xyz/tx/${txHash}` : null;
+
+    // Best-effort: sync now so dashboard reflects updated balances faster
+    try { await treasuryAgent.syncState(); } catch { /* ignore */ }
+
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'treasury.yield.withdraw',
+      actor: 'api',
+      ok: !!txHash,
+      reason: txHash ? 'withdraw_submitted' : 'withdraw_failed',
+      amountRaw: amount,
+      txHash: txHash ?? undefined,
+      data: { protocol: p, explorer },
+    });
+
+    res.json({
+      success: true,
+      correlationId,
+      data: { protocol: p, amountRaw: amount, txHash, explorer },
+    });
+  } catch (error) {
+    logger.error('Yield withdraw failed', { error: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ success: false, error: 'Yield withdraw failed' });
+  }
+});
+
 // ==================== Judge Proof Routes ====================
 
 /**

@@ -3,6 +3,7 @@ import { sumExecutedAmountSince } from './AuditTrail';
 export type GuardAction =
   | 'treasury.withdraw.propose'
   | 'treasury.yield.invest'
+  | 'treasury.yield.withdraw'
   | 'credit.borrow'
   | 'bridge.execute'
   | 'emergency.pause'
@@ -102,6 +103,7 @@ export async function evaluateGuard(args: {
   const amountSensitiveActions: GuardAction[] = [
     'treasury.withdraw.propose',
     'treasury.yield.invest',
+    'treasury.yield.withdraw',
     'credit.borrow',
     'bridge.execute',
   ];
