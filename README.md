@@ -2,7 +2,7 @@
 
 **AI-native RWA lending & treasury application on Mantle Network.**
 
-> **One-line pitch:** Quorum is an autonomous treasury system that tokenizes short-term credit instruments (revenue-backed loans, revolving credit lines) on Mantle — three AI agents manage the full lending lifecycle from origination to restructuring without human intervention.
+> **One-line pitch:** Quorum is an autonomous treasury stack on Mantle that **models** short-term credit facilities and revenue-backed lending **workflows** (on-chain credit state, limits, repayment) — three AI agents drive proposals and board-meeting consensus; the hackathon demo uses **transparent seeded / synthetic borrower signals** unless you attach real attestations or oracles.
 
 Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (**Board Meetings run periodically**) and a pub/sub EventBus for consensus on capital allocation.
 
@@ -17,18 +17,18 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 | **Live Demo** | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
 | **Backend (Live)** | [https://mantle-treasury-ai-production.up.railway.app/health](https://mantle-treasury-ai-production.up.railway.app/health) |
 | **Demo Video** | _(linked in DoraHacks submission — ≥2 min walkthrough of board meeting → on-chain tx)_ |
-| **Contract Verification** | Both contracts verified on Mantlescan — see address links above |
+| **Contract Verification** | **CreditLine** source is verified on Mantlescan. **TreasuryVault** is deployed on Mantle mainnet; **source verification on Mantlescan is pending** — complete “Verify and Publish” on its contract page before claiming full explorer verification. Step-by-step: [How to verify](#how-to-verify-dorahacks-judge-checklist). |
 
 ### Track Submission Answers
 
 **What type of real-world asset are you bringing on-chain?**
-Tokenized credit facilities — short-term, revenue-backed lending instruments. These mirror real-world financial primitives: revolving credit lines (like corporate LOCs), invoice factoring (borrowing against projected future earnings), and money-market lending (tiered APR by creditworthiness). Each loan is a structured on-chain debt instrument with defined terms, interest accrual, and default provisions.
+**Modeled** short-term credit facilities and revenue-backed lending **primitives** (not a claim of attested real invoices or off-chain collateral without an oracle/legal wrapper). On-chain state includes borrower profiles, limits, repayment history, and default flags — analogous to revolving LOCs, factoring-style cashflow borrowing, and tiered money-market-style APR.
 
 **How does AI play a role?**
 Three autonomous LLM-powered agents (Groq LLaMA 3.3 70B) manage the full credit lifecycle: (1) Treasury Agent optimizes idle capital deployment into Aave V3 yield, (2) Credit Agent scores borrowers using on-chain data + ML default prediction, approves/rejects loans, and (3) Risk Agent enforces exposure limits and triggers autonomous debt restructuring. Every 45 seconds, agents hold a Board Meeting (structured LLM debate → consensus → on-chain execution).
 
 **How is it realized on Mantle?**
-Both smart contracts (TreasuryVault + CreditLine) are deployed and verified on Mantle Mainnet. All agent decisions result in on-chain transactions — yield deposits via Aurelius Finance (Aave V3 fork), loan disbursements, repayment tracking, and credit score updates. Mantle's low gas fees enable the high-frequency autonomous operation cycle (every 45s) that would be cost-prohibitive on L1.
+Both contracts are **deployed** on Mantle Mainnet. **CreditLine** source is **verified** on Mantlescan. **TreasuryVault** is **live** but treat **Mantlescan source verification as pending** until published. Where the agent wallet and flows permit, decisions map to on-chain transactions — yield via Aurelius Finance (Aave V3 fork), loan disbursements, repayment tracking, and credit score updates. Mantle's low gas fees enable a high-frequency autonomous cycle (every 45s) that would be costly on L1.
 
 ### RWA Context: Why This Qualifies
 
@@ -193,6 +193,12 @@ curl http://localhost:3001/api/dashboard
 ## How to verify (DoraHacks judge checklist)
 
 These steps are designed to be copy-paste friendly and produce **verifiable evidence** (API responses + on-chain tx hash when applicable).
+
+### 0) Mantlescan contract source (do this first)
+
+- **Network:** Mantle mainnet, chain ID **5000**.
+- **CreditLine** [`0xACd7…B18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c): open the **Contract** tab and confirm **verified source** is published.
+- **TreasuryVault** [`0xb527…17F0`](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0): confirm the contract is **deployed** and has txs; if Mantlescan shows **Verify and Publish**, source verification is **not** done yet — do not claim “both verified” in submissions until this is closed.
 
 ### 1) Backend is live and agents are running
 
@@ -391,7 +397,7 @@ Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBAC
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
 | Smart contract on Mantle Mainnet | Done | [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) (USDT0 + Aave V3) · [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
-| Contract verified on Explorer | Done | Both verified on Mantlescan |
+| Contract verified on Explorer | Partial | [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) verified · [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) — publish source on Mantlescan to close this row |
 | AI-powered function callable on-chain | Done | Board Meeting consensus → on-chain loan approvals, yield deposits, credit score updates (every 45s cycle) |
 | Frontend publicly accessible | Done | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
 | Deployment address in submission | Done | See table above |
