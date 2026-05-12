@@ -355,6 +355,8 @@ Constructor: `constructor(address _usdt, address _aavePool)` with mainnet args:
 
 Match compiler settings from `foundry.toml`: Solidity **0.8.20**, optimizer **on**, **200** runs, EVM **paris**.
 
+**Bytecode mismatch on `master`:** the live TreasuryVault (`0xb527…17F0`) was deployed from creation tx [`0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b`](https://mantlescan.xyz/tx/0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b) (block time **2026-05-07** UTC). The **git commit whose `forge build` output matches that tx `input` byte-for-byte** is **`5093265`** (`feat(mnt-collateral): MntCollateralVault.sol live on Mantle…`). To verify from the matching tree: `git checkout 5093265`, then run the `forge verify-contract` command or `pwsh ./scripts/verify-treasury-vault.ps1`, then return to your branch. To re-derive this later: `node scripts/find-treasuryvault-deploy-commit.mjs`.
+
 **Important:** `forge verify-contract` against `https://api.mantlescan.xyz/api` can fail with a **deprecated Etherscan V1** message on current Foundry. Use the **Etherscan API v2 multichain** endpoint with **chain id 5000** and your existing [Etherscan API key](https://etherscan.io/apis) — **no second key is required** if Quorum already uses one; pass it as `ETHERSCAN_API_KEY` in the shell (you can keep the same name in `backend/.env` for convenience, but Foundry does not load that file automatically).
 
 ```bash
