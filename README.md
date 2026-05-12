@@ -1,8 +1,8 @@
 # Quorum
 
-**AI-native RWA lending & treasury application on Mantle Network.**
+**AI-native treasury & credit-control stack on Mantle Network.**
 
-> **One-line pitch:** Quorum is an autonomous treasury stack on Mantle that **models** short-term credit facilities and revenue-backed lending **workflows** (on-chain credit state, limits, repayment) — three AI agents drive proposals and board-meeting consensus; the hackathon demo uses **transparent seeded / synthetic borrower signals** unless you attach real attestations or oracles.
+> **One-line pitch:** Quorum **models** tokenized short-term credit **primitives** for DAO/protocol treasuries: revenue-backed loan **workflows**, revolving credit lines, credit scoring, repayment tracking, and autonomous restructuring — with three AI agents driving proposals and board-meeting consensus. **These are RWA-inspired credit primitives**, demonstrated with **transparent demo data** and on-chain state. The hackathon version **does not claim to tokenize legally enforceable invoices**; it demonstrates the autonomous treasury and credit control layer needed for such workflows.
 
 Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (**Board Meetings run periodically**) and a pub/sub EventBus for consensus on capital allocation.
 
@@ -11,7 +11,7 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 | Field | Value |
 |-------|-------|
 | **Track** | AI & RWA Track — Path B (AI Driven Application) |
-| **Asset Category** | Tokenized short-term credit instruments (revenue-backed loans, revolving credit facilities) |
+| **Asset Category** | RWA-inspired short-term credit primitives (revenue-backed loan workflows, revolving lines, scoring, repayment) — transparent demo data |
 | **Target Users** | DAOs, on-chain operator teams, and protocol treasuries seeking autonomous credit & yield management |
 | **Mantle Deployment** | TreasuryVault [`0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0`](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) (USDT0 + Aave V3) · CreditLine [`0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
 | **Live Demo** | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
@@ -19,10 +19,12 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 | **Demo Video** | _(linked in DoraHacks submission — ≥2 min walkthrough of board meeting → on-chain tx)_ |
 | **Contract Verification** | **CreditLine** and **TreasuryVault** source are verified on Mantlescan — see address links above. Step-by-step: [How to verify](#how-to-verify-dorahacks-judge-checklist). |
 
+> **Verification note:** TreasuryVault source verified on Mantlescan matches the deployed bytecode built from commit `5093265`. Current `master` may include post-deployment documentation/frontend updates and contract-side iteration; judges should use the Mantlescan verified source as the canonical deployed source for the live TreasuryVault address.
+
 ### Track Submission Answers
 
 **What type of real-world asset are you bringing on-chain?**
-**Modeled** short-term credit facilities and revenue-backed lending **primitives** (not a claim of attested real invoices or off-chain collateral without an oracle/legal wrapper). On-chain state includes borrower profiles, limits, repayment history, and default flags — analogous to revolving LOCs, factoring-style cashflow borrowing, and tiered money-market-style APR.
+**Modeled** short-term credit **primitives** and revenue-backed **workflows** (transparent demo / synthetic signals unless you attach real attestations, oracles, or a legal wrapper). On-chain state includes borrower profiles, limits, repayment history, and default flags — **analogous** to revolving LOCs and treasury-style APR tiers, **without claiming** tokenized, legally enforceable receivables in this hackathon build.
 
 **How does AI play a role?**
 Three autonomous LLM-powered agents (Groq LLaMA 3.3 70B) manage the full credit lifecycle: (1) Treasury Agent optimizes idle capital deployment into Aave V3 yield, (2) Credit Agent scores borrowers using on-chain data + ML default prediction, approves/rejects loans, and (3) Risk Agent enforces exposure limits and triggers autonomous debt restructuring. Every 45 seconds, agents hold a Board Meeting (structured LLM debate → consensus → on-chain execution).
@@ -37,7 +39,7 @@ Traditional finance equivalents of what Quorum does on-chain:
 | On-Chain Feature | Real-World Equivalent |
 |-----------------|----------------------|
 | CreditLine loans (30-day, tiered APR) | Commercial paper / revolving credit facilities |
-| Revenue-backed lending | Invoice factoring / accounts receivable financing |
+| Revenue-backed workflows (demo) | AR-style cashflow borrowing patterns (not claimed as enforceable invoices) |
 | ML credit scoring (7 features) | Credit bureau scoring (FICO-equivalent for DAOs) |
 | Tiered penalty interest | Late payment fees in commercial lending |
 | Autonomous debt restructuring | Workout / loan modification (normally done by bank credit officers) |
@@ -56,7 +58,7 @@ The key insight: **DAOs need the same financial services as corporations** (cred
 ### Feature Highlights
 - ✅ **Inter-agent lending** — Credit Agent borrows capital from Treasury's pool via EventBus (`credit:capital_request` → `treasury:capital_allocated`). Treasury evaluates and caps at 20% of balance per request.
 - ✅ **ML default prediction** — Logistic regression predicts default probability (0–100%) from 7 features. Critical risk (>60%) auto-blocks loans before LLM evaluation.
-- ✅ **Revenue-backed lending** — Borrow against projected future earnings (invoice factoring for the agent economy). Tracks 24h/7d/30d rolling revenue and borrow capacity.
+- ✅ **Revenue-backed workflows (demo)** — Borrow-capacity style signals from rolling revenue metrics (transparent demo data; not a claim of legal invoice tokenization).
 - ✅ **Autonomous debt restructuring** — ML-triggered, LLM-negotiated term modification. Extend duration, reduce rate, partial forgiveness, split into tranches.
 - ✅ **Idle capital detection** — Agent reads vault balance on-chain, detects idle capital, and proactively extends loans in aggressive mode (>2000 USDt idle).
 - ✅ **Tiered penalty interest** — Overdue loans accrue 5/10/15% penalty by age. Credit freeze on default.
@@ -250,6 +252,19 @@ Notes:
 - `amount` is optional and uses **6 decimals** (USDT0). `500000` = **0.5 USDT0** (safe demo amount).
 - If `txHash` is null, the response includes a `reason` (e.g. allocation cap reached).
 - This is what we mean by **AI-powered on-chain**: the agent selects a strategy (LLM or deterministic fallback), then executes a real Mantle tx and returns a verifiable `txHash` + writes an audit record (`correlationId`).
+
+### 6) 90s judge demo (board → policy → tx or reason)
+
+Runs a **forced** sequence: AI board meeting (Treasury → Credit → Risk → consensus) → credit/ML signal → safety policy **ALLOW** or **BLOCK** → on-chain proof **only if ALLOW**. Audit trail rows use the returned `correlationId`.
+
+```bash
+curl -X POST \
+  -H "content-type: application/json" \
+  -H "x-api-key: $API_SECRET" \
+  https://mantle-treasury-ai-production.up.railway.app/api/demo/judge-90s
+```
+
+In the live dashboard, use **Run 90s Judge Demo** (same flow; optional API key when `API_SECRET` is set).
 
 ### Full Setup (Mantle Network)
 

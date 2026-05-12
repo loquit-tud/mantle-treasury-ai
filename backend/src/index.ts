@@ -369,6 +369,79 @@ async function getDashboardData(): Promise<DashboardData> {
   };
 }
 
+/** Same formula as GET /api/treasury/health — used by judge demo policy layer. */
+function computeTreasuryHealthSnapshot(): { health: number; rating: string } | null {
+  try {
+    const state = treasuryAgent?.getState();
+    if (!state) return null;
+    const loans = creditAgent?.getAllActiveLoans() || [];
+    const lending = interAgentLending?.getSummary();
+
+    const balance = Number(state.balance) / 1e6;
+    const dailyVol = Number(state.dailyVolume) / 1e6;
+    const yieldTotal = (state.yieldPositions || []).reduce(
+      (s, p) => s + Number(p.amount) / 1e6,
+      0,
+    );
+    const totalLent = loans.reduce((s, l) => s + Number(l.principal) / 1e6, 0);
+    const overdue = loans.filter(l => l.dueDate < Date.now() / 1000 && l.active).length;
+    const interAgentDebt = lending
+      ? (Number(lending.totalAllocated || 0) - Number(lending.totalRepaid || 0)) / 1e6
+      : 0;
+
+    const liquidityScore = Math.min(100, (balance / 10000) * 100);
+    const utilizationScore = balance > 0 ? Math.max(0, 100 - (totalLent / balance) * 200) : 50;
+    const overdueScore = Math.max(0, 100 - overdue * 25);
+    const yieldScore = balance > 0 ? Math.min(100, (yieldTotal / balance) * 300) : 0;
+    const volumeScore = Math.max(0, 100 - (dailyVol / 10000) * 100);
+    const debtScore = balance > 0 ? Math.max(0, 100 - (interAgentDebt / balance) * 500) : 50;
+
+    const weights = {
+      liquidity: 0.3,
+      utilization: 0.2,
+      overdue: 0.2,
+      yield: 0.1,
+      volume: 0.1,
+      debt: 0.1,
+    };
+    const health = Math.round(
+      liquidityScore * weights.liquidity +
+        utilizationScore * weights.utilization +
+        overdueScore * weights.overdue +
+        yieldScore * weights.yield +
+        volumeScore * weights.volume +
+        debtScore * weights.debt,
+    );
+    const rating =
+      health >= 80 ? 'Excellent' : health >= 60 ? 'Good' : health >= 40 ? 'Fair' : 'Critical';
+    return { health, rating };
+  } catch {
+    return null;
+  }
+}
+
+async function broadcastDashboardUpdate(): Promise<void> {
+  try {
+    const data = await getDashboardData();
+    const message = JSON.stringify({
+      type: 'dashboard:update',
+      data,
+      timestamp: Date.now(),
+    });
+    wsClients.forEach((client) => {
+      try {
+        client.send(message);
+      } catch {
+        wsClients.delete(client);
+      }
+    });
+  } catch (error) {
+    logger.warn('broadcastDashboardUpdate failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 // ==================== API Routes ====================
 
 // Health check
@@ -1052,6 +1125,237 @@ app.post('/api/proof/ai-yield', requireApiKey, async (req, res) => {
     logger.error('AI yield proof failed', { error });
     res.status(500).json({ success: false, error: 'AI yield proof failed' });
   }
+});
+
+/**
+ * Forced ~90s judge narrative: board meeting → credit/ML signal → policy ALLOW|BLOCK → txHash or reason.
+ */
+app.post('/api/demo/judge-90s', requireApiKey, async (_req, res) => {
+  const correlationId = crypto.randomUUID();
+  const demoBorrower = '0x0000000000000000000000000000000000000001';
+  const proofAmountRaw = '500000';
+
+  insertAuditEvent({
+    correlationId,
+    stage: 'intent',
+    action: 'demo.judge_90s',
+    actor: 'api',
+  });
+
+  if (!agentDialogue || !treasuryAgent || !creditAgent) {
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'demo.judge_90s',
+      actor: 'api',
+      ok: false,
+      reason: 'agents_not_initialized',
+    });
+    res.status(503).json({ success: false, error: 'Agents not initialized', correlationId });
+    return;
+  }
+
+  const steps: Array<Record<string, unknown>> = [];
+
+  steps.push({
+    id: 'board_start',
+    title: 'AI Board Meeting',
+    detail: 'Treasury → Credit → Risk → consensus (judge demo round)',
+    status: 'running',
+  });
+
+  let dialogueRound;
+  try {
+    dialogueRound = await agentDialogue.runJudgeDemoRound();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'demo.judge_90s',
+      actor: 'api',
+      ok: false,
+      reason: 'board_meeting_failed',
+      data: { error: msg },
+    });
+    res.status(500).json({ success: false, error: 'Board meeting failed', correlationId, details: msg });
+    return;
+  }
+
+  steps[0] = {
+    ...steps[0],
+    status: 'ok',
+    detail: `Topic: ${dialogueRound.topic} — ${dialogueRound.topicPrompt}`,
+  };
+
+  const tTurn = dialogueRound.turns.find(t => t.speaker === 'treasury');
+  const cTurn = dialogueRound.turns.find(t => t.speaker === 'credit');
+  const rTurn = dialogueRound.turns.find(t => t.speaker === 'risk');
+  steps.push({
+    id: 'treasury',
+    title: 'Treasury Agent — capital / yield',
+    detail: (tTurn?.message || '').slice(0, 400),
+    status: 'ok',
+  });
+  steps.push({
+    id: 'credit',
+    title: 'Credit Agent — capital need / borrower view',
+    detail: (cTurn?.message || '').slice(0, 400),
+    status: 'ok',
+  });
+  steps.push({
+    id: 'risk',
+    title: 'Risk Agent — exposure / tail risks',
+    detail: (rTurn?.message || '').slice(0, 400),
+    status: 'ok',
+  });
+  steps.push({
+    id: 'consensus',
+    title: 'Board consensus',
+    detail: dialogueRound.consensus.slice(0, 500),
+    status: 'ok',
+  });
+
+  let defaultProb: number | null = null;
+  let riskBucket: string | null = null;
+  let creditEvalDetail =
+    'Demo borrower (0x…01): evaluation uses transparent seeded / on-chain signals.';
+  try {
+    const profile = await creditAgent.getProfile(demoBorrower);
+    const history = await creditAgent.fetchCreditHistory(demoBorrower);
+    if (profile && history) {
+      const prediction = predictDefault(history, profile);
+      defaultProb = prediction.probability;
+      riskBucket = prediction.riskBucket;
+      creditEvalDetail = `ML default probability ~${(defaultProb * 100).toFixed(1)}% (${prediction.riskBucket}). Demo data — not a legal underwriting claim.`;
+    }
+  } catch {
+    // optional enrichment
+  }
+
+  steps.push({
+    id: 'credit_eval',
+    title: 'Credit Agent — borrower / default signal',
+    detail: creditEvalDetail,
+    status: 'ok',
+    defaultProbability: defaultProb,
+    riskBucket,
+  });
+
+  const healthSnap = computeTreasuryHealthSnapshot();
+  const guard = await evaluateGuard({
+    action: 'treasury.yield.invest',
+    amountRaw: BigInt(proofAmountRaw),
+  });
+
+  let verdict: 'ALLOW' | 'BLOCK' = 'ALLOW';
+  let reasonCode = 'POLICY_OK';
+
+  if (healthSnap && healthSnap.health < 30) {
+    verdict = 'BLOCK';
+    reasonCode = 'POLICY_HEALTH_CRITICAL';
+  } else if (defaultProb != null && defaultProb >= 0.6) {
+    verdict = 'BLOCK';
+    reasonCode = 'POLICY_ML_DEFAULT_CRITICAL';
+  } else if (!guard.ok) {
+    verdict = 'BLOCK';
+    reasonCode = guard.reason;
+  }
+
+  steps.push({
+    id: 'policy',
+    title: 'Safety policy layer (constitution / caps)',
+    detail:
+      verdict === 'ALLOW'
+        ? `ALLOW — health ${healthSnap?.health ?? 'n/a'} (${healthSnap?.rating ?? '—'}), guard: ${guard.reason}`
+        : `BLOCK — ${reasonCode}`,
+    verdict,
+    reasonCode,
+    health: healthSnap,
+    guardOk: guard.ok,
+    status: 'ok',
+  });
+
+  insertAuditEvent({
+    correlationId,
+    stage: 'guard',
+    action: 'demo.judge_90s.policy',
+    actor: 'api',
+    ok: verdict === 'ALLOW',
+    reason: reasonCode,
+    amountRaw: proofAmountRaw,
+    data: { health: healthSnap, defaultProbability: defaultProb, guardReason: guard.reason },
+  });
+
+  let proofResult: Awaited<ReturnType<TreasuryAgent['runAiYieldProofOnce']>> | null = null;
+  if (verdict === 'ALLOW') {
+    proofResult = await treasuryAgent.runAiYieldProofOnce({ amountRaw: proofAmountRaw });
+    const explorer = proofResult.txHash ? `https://mantlescan.xyz/tx/${proofResult.txHash}` : null;
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'demo.judge_90s.proof',
+      actor: 'api',
+      ok: !!proofResult.txHash,
+      reason: proofResult.reason,
+      amountRaw: proofResult.amountRaw,
+      txHash: proofResult.txHash || undefined,
+      data: { explorer, selectedProtocol: proofResult.selectedProtocol },
+    });
+    steps.push({
+      id: 'execution',
+      title: 'On-chain execution',
+      detail: proofResult.txHash
+        ? `txHash: ${proofResult.txHash}`
+        : `No transaction: ${proofResult.reason}`,
+      txHash: proofResult.txHash,
+      explorer,
+      reasonCode: proofResult.txHash ? 'EXEC_OK' : proofResult.reason,
+      status: proofResult.txHash ? 'ok' : 'blocked',
+    });
+  } else {
+    insertAuditEvent({
+      correlationId,
+      stage: 'execution',
+      action: 'demo.judge_90s.skipped',
+      actor: 'api',
+      ok: false,
+      reason: reasonCode,
+      data: { verdict: 'BLOCK' },
+    });
+    steps.push({
+      id: 'execution',
+      title: 'On-chain execution',
+      detail: 'Skipped — policy BLOCK',
+      txHash: null,
+      explorer: null,
+      reasonCode,
+      status: 'skipped',
+    });
+  }
+
+  await broadcastDashboardUpdate();
+
+  res.json({
+    success: true,
+    correlationId,
+    data: {
+      verdict,
+      reasonCode,
+      steps,
+      dialogue: {
+        topic: dialogueRound.topic,
+        consensus: dialogueRound.consensus,
+      },
+      proof: proofResult
+        ? {
+            txHash: proofResult.txHash,
+            reason: proofResult.reason,
+            explorer: proofResult.txHash ? `https://mantlescan.xyz/tx/${proofResult.txHash}` : null,
+          }
+        : null,
+    },
+  });
 });
 
 // ==================== Withdrawal Routes ====================

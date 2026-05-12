@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   CalendarClock,
   Lock,
+  PlayCircle,
 } from 'lucide-react';
 import { AgentChat } from '../components/AgentChat';
 import { FundFlowDiagram } from '../components/FundFlowDiagram';
@@ -71,6 +72,7 @@ export default function Dashboard() {
   const { data, isLoading, error, refresh } = useDashboard();
   const { isConnected, lastMessage } = useWebSocket(WS_URL);
   const [openedFromQuery, setOpenedFromQuery] = useState(false);
+  const [openedJudgeFromQuery, setOpenedJudgeFromQuery] = useState(false);
 
   const [decisions, setDecisions] = useState<AgentDecision[]>([]);
   const [dialogueRounds, setDialogueRounds] = useState<DashboardData['dialogueRounds']>();
@@ -174,9 +176,20 @@ export default function Dashboard() {
   // Demo / Judge UX: action preview + optional API key (stored in session)
   const [apiKey, setApiKey] = useState<string>(() => sessionStorage.getItem('api-key') || '');
   const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [judgeDemoModalOpen, setJudgeDemoModalOpen] = useState(false);
   const [aiProofAmount, setAiProofAmount] = useState<string>('500000'); // 0.5 USDT0 (6 decimals)
   const [actionResult, setActionResult] = useState<null | { ok: boolean; title: string; details?: string; explorer?: string }>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [judgeDemoBusy, setJudgeDemoBusy] = useState(false);
+  const [judgeDemoResult, setJudgeDemoResult] = useState<null | {
+    ok: boolean;
+    correlationId?: string;
+    error?: string;
+    steps?: Array<Record<string, unknown>>;
+    verdict?: string;
+    reasonCode?: string;
+    proof?: { txHash: string | null; explorer: string | null; reason: string } | null;
+  }>(null);
 
   // Normalize raw EventBus events ({ type, source, payload }) into AgentDecision shape
   const normalizeDecision = (raw: Record<string, unknown>): AgentDecision => {
@@ -320,6 +333,20 @@ export default function Dashboard() {
     }
   }, [openedFromQuery]);
 
+  // /dashboard?judgeDemo=1 opens the 90s judge demo modal
+  useEffect(() => {
+    if (openedJudgeFromQuery) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('judgeDemo') === '1') {
+        setJudgeDemoModalOpen(true);
+        setOpenedJudgeFromQuery(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [openedJudgeFromQuery]);
+
   const persistApiKey = (next: string) => {
     setApiKey(next);
     sessionStorage.setItem('api-key', next);
@@ -331,6 +358,40 @@ export default function Dashboard() {
     const res = await fetch(apiUrl(path), { method: 'POST', headers, body: body ? JSON.stringify(body) : undefined });
     const json = await res.json().catch(() => null);
     return { res, json };
+  };
+
+  const runJudge90sDemo = async () => {
+    setJudgeDemoBusy(true);
+    setJudgeDemoResult(null);
+    try {
+      const { res, json } = await postWithOptionalApiKey('/api/demo/judge-90s', {});
+      if (!res.ok) {
+        setJudgeDemoResult({
+          ok: false,
+          error: json?.error || `HTTP ${res.status}`,
+          correlationId: json?.correlationId,
+        });
+        return;
+      }
+      const payload = json?.data;
+      setJudgeDemoResult({
+        ok: true,
+        correlationId: json?.correlationId,
+        steps: payload?.steps,
+        verdict: payload?.verdict,
+        reasonCode: payload?.reasonCode,
+        proof: payload?.proof ?? null,
+      });
+      await refresh();
+      await fetchHealth();
+    } catch (err) {
+      setJudgeDemoResult({
+        ok: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
+    } finally {
+      setJudgeDemoBusy(false);
+    }
   };
 
   const runAiYieldProof = async () => {
@@ -458,7 +519,7 @@ export default function Dashboard() {
             </div>
          </div>
          {/* Quick Actions Panel */}
-         <div className="flex gap-3">
+         <div className="flex flex-wrap gap-3">
              <button
                type="button"
                onClick={syncTreasury}
@@ -467,6 +528,17 @@ export default function Dashboard() {
              >
                <RefreshCw className={`h-4 w-4 text-indigo-300 ${syncing ? 'animate-spin' : ''}`} />
                {syncing ? 'Syncing...' : 'Sync treasury'}
+             </button>
+             <button
+               type="button"
+               onClick={() => {
+                 setJudgeDemoModalOpen(true);
+                 setJudgeDemoResult(null);
+               }}
+               className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-950/25 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-400/45 hover:bg-emerald-950/40"
+             >
+               <PlayCircle className="h-4 w-4 text-emerald-300" />
+               Run 90s Judge Demo
              </button>
              <button
                type="button"
@@ -989,6 +1061,128 @@ export default function Dashboard() {
       <ToastStack lastMessage={lastMessage} />
 
       {/* AI action preview / confirm modal */}
+      {judgeDemoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-emerald-500/20 bg-slate-900/70 p-5 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-100">90s judge demo</p>
+                <p className="text-[11px] text-slate-500">
+                  Board meeting → agents → policy ALLOW/BLOCK → txHash or reason → audit trail.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setJudgeDemoModalOpen(false);
+                  setJudgeDemoResult(null);
+                }}
+                className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-600 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <label className="space-y-1">
+                <span className="text-[11px] text-slate-400">API key (optional — required when server has API_SECRET)</span>
+                <input
+                  value={apiKey}
+                  onChange={(e) => persistApiKey(e.target.value)}
+                  placeholder="x-api-key"
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={runJudge90sDemo}
+                disabled={judgeDemoBusy}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/35 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-100 hover:border-emerald-400/50 disabled:opacity-50"
+              >
+                <PlayCircle className="h-4 w-4" />
+                {judgeDemoBusy ? 'Running demo…' : 'Run 90s Judge Demo'}
+              </button>
+
+              {judgeDemoResult && (
+                <div className="space-y-3">
+                  {judgeDemoResult.correlationId && (
+                    <p className="font-mono text-[11px] text-slate-400">
+                      correlationId: {judgeDemoResult.correlationId}
+                    </p>
+                  )}
+                  {judgeDemoResult.ok && judgeDemoResult.verdict && (
+                    <div
+                      className={`rounded-xl border p-3 ${
+                        judgeDemoResult.verdict === 'ALLOW'
+                          ? 'border-emerald-500/30 bg-emerald-950/20'
+                          : 'border-amber-500/30 bg-amber-950/20'
+                      }`}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Policy</p>
+                      <p className="mt-1 text-lg font-bold text-white">{judgeDemoResult.verdict}</p>
+                      {judgeDemoResult.reasonCode && (
+                        <p className="mt-1 font-mono text-xs text-slate-300">reason: {judgeDemoResult.reasonCode}</p>
+                      )}
+                    </div>
+                  )}
+                  {judgeDemoResult.ok && judgeDemoResult.proof?.txHash && judgeDemoResult.proof.explorer && (
+                    <a
+                      href={judgeDemoResult.proof.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex text-sm font-semibold text-indigo-200 hover:text-indigo-100"
+                    >
+                      Open tx on Mantlescan
+                    </a>
+                  )}
+                  {judgeDemoResult.ok && judgeDemoResult.proof && !judgeDemoResult.proof.txHash && judgeDemoResult.verdict === 'ALLOW' && (
+                    <p className="text-xs text-slate-400">No tx broadcast: {judgeDemoResult.proof.reason}</p>
+                  )}
+                  {!judgeDemoResult.ok && judgeDemoResult.error && (
+                    <div className="rounded-xl border border-red-500/25 bg-red-950/20 p-3 text-sm text-red-200">
+                      {judgeDemoResult.error}
+                    </div>
+                  )}
+                  {judgeDemoResult.steps && judgeDemoResult.steps.length > 0 && (
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Steps</p>
+                      <ol className="list-decimal space-y-2 pl-4 text-xs text-slate-300">
+                        {judgeDemoResult.steps.map((s, i) => (
+                          <li key={`${String(s.id)}-${i}`} className="marker:text-slate-500">
+                            <span className="font-medium text-slate-200">{String(s.title ?? s.id ?? 'step')}</span>
+                            {s.detail != null && String(s.detail).length > 0 && (
+                              <p className="mt-0.5 whitespace-pre-wrap text-[11px] leading-relaxed text-slate-500">
+                                {String(s.detail)}
+                              </p>
+                            )}
+                            {s.verdict != null && (
+                              <p className="mt-0.5 font-mono text-[10px] text-slate-400">
+                                verdict: {String(s.verdict)}
+                                {s.reasonCode != null ? ` · ${String(s.reasonCode)}` : ''}
+                              </p>
+                            )}
+                            {s.txHash != null && String(s.txHash).length > 0 && (
+                              <p className="mt-0.5 font-mono text-[10px] text-emerald-400/90">tx: {String(s.txHash)}</p>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                  <Link
+                    to="/audit"
+                    className="inline-block text-xs font-medium text-indigo-300 hover:text-indigo-200"
+                  >
+                    View audit trail →
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {actionModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl">

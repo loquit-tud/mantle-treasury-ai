@@ -63,7 +63,7 @@ interface DialogueTurn {
   timestamp: number;
 }
 
-interface DialogueRound {
+export interface DialogueRound {
   topic: string;
   topicPrompt: string;
   turns: DialogueTurn[];
@@ -327,6 +327,87 @@ export class AgentDialogue {
       turns: turns.length,
       consensusLength: consensus.length,
     });
+  }
+
+  /**
+   * Compact board round for judge demo: Treasury → Credit → Risk → consensus only.
+   * Does not run consensus action extraction (on-chain execution is handled by the demo API).
+   */
+  async runJudgeDemoRound(): Promise<DialogueRound> {
+    const topic = TOPIC_LIBRARY.capital_allocation;
+    this.roundCount++;
+
+    const turns: DialogueTurn[] = [];
+    const stateContext = this.gatherStateContext();
+    const pauseMs = 600;
+
+    const emitTurn = (speaker: 'treasury' | 'credit' | 'risk', turn: number, message: string) => {
+      EventBus.emitEvent('dialogue:turn', speaker, {
+        action: 'dialogue',
+        reasoning: `💬 [Judge Demo — ${topic.id}] ${message}`,
+        data: { topic: topic.id, turn, speaker, judgeDemo: true },
+        status: 'executed',
+      });
+    };
+
+    const treasuryMessage = await this.agentSpeak('treasury', topic, stateContext, []);
+    turns.push({ speaker: 'treasury', message: treasuryMessage, timestamp: Date.now() });
+    emitTurn('treasury', 1, treasuryMessage);
+    await new Promise(r => setTimeout(r, pauseMs));
+
+    const creditMessage = await this.agentSpeak('credit', topic, stateContext, turns);
+    turns.push({ speaker: 'credit', message: creditMessage, timestamp: Date.now() });
+    emitTurn('credit', 2, creditMessage);
+    await new Promise(r => setTimeout(r, pauseMs));
+
+    const riskMessage = this.riskAgent
+      ? await this.agentSpeak('risk', topic, stateContext, turns)
+      : this.fallbackMessage('risk', topic.id);
+    turns.push({ speaker: 'risk', message: riskMessage, timestamp: Date.now() });
+    emitTurn('risk', 3, riskMessage);
+    await new Promise(r => setTimeout(r, pauseMs));
+
+    const consensus = await this.synthesizeConsensus(topic, stateContext, turns);
+    turns.push({ speaker: 'consensus', message: consensus, timestamp: Date.now() });
+
+    const round: DialogueRound = {
+      topic: topic.id,
+      topicPrompt: topic.prompt,
+      turns,
+      consensus,
+      timestamp: Date.now(),
+    };
+
+    this.recentDialogues.push(round);
+    if (this.recentDialogues.length > this.maxHistory) {
+      this.recentDialogues.shift();
+    }
+    saveDialogues(this.recentDialogues, this.roundCount);
+
+    const agentSpeakers = ['treasury', 'credit', 'risk'] as const;
+    const alignments: Record<string, boolean> = {};
+    for (const agent of agentSpeakers) {
+      const lastTurn = [...turns].reverse().find(t => t.speaker === agent);
+      if (lastTurn) {
+        alignments[agent] = AgentReputation.checkAlignment(lastTurn.message, consensus);
+      }
+    }
+    this.reputation.recordRound(this.roundCount, topic.id, alignments);
+
+    EventBus.emitEvent('dialogue:consensus', 'treasury', {
+      action: 'board_consensus',
+      reasoning: `✅ [Judge Demo — ${topic.id}] ${consensus}`,
+      data: {
+        topic: topic.id,
+        turns: turns.length,
+        speakers: turns.map(t => t.speaker),
+        judgeDemo: true,
+      },
+      status: 'executed',
+    });
+
+    logger.info(`Judge demo dialogue round complete: ${topic.id}`, { turns: turns.length });
+    return round;
   }
 
   /**
