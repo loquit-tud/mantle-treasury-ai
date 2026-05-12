@@ -376,6 +376,12 @@ forge verify-contract \
   contracts/TreasuryVault.sol:TreasuryVault
 ```
 
+**Windows:** from repo root, `ETHERSCAN_API_KEY` can be read from `backend/.env` automatically:
+
+```powershell
+pwsh ./scripts/verify-treasury-vault.ps1
+```
+
 Contract path must include the `contracts/` prefix (project `src` is `contracts/`).
 
 **Manual fallback (Standard JSON):** `forge verify-contract --show-standard-json-input 0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0 contracts/TreasuryVault.sol:TreasuryVault > treasuryvault-standard-json.json` then upload on [Mantlescan Verify](https://mantlescan.xyz/verifyContract) as **Solidity (Standard-Json-Input)** with the same compiler settings; paste **constructor arguments** as the hex from `cast abi-encode` above (with `0x` prefix).
