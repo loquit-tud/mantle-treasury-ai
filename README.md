@@ -355,7 +355,7 @@ Constructor: `constructor(address _usdt, address _aavePool)` with mainnet args:
 
 Match compiler settings from `foundry.toml`: Solidity **0.8.20**, optimizer **on**, **200** runs, EVM **paris**.
 
-**Important:** `forge verify-contract` against `https://api.mantlescan.xyz/api` can fail with a **deprecated Etherscan V1** message on current Foundry. Use the **Etherscan API v2 multichain** endpoint with **chain id 5000** and an [Etherscan API key](https://etherscan.io/apis) (same key works across [supported chains](https://docs.etherscan.io/contract-verification/supported-chains), including Mantle mainnet).
+**Important:** `forge verify-contract` against `https://api.mantlescan.xyz/api` can fail with a **deprecated Etherscan V1** message on current Foundry. Use the **Etherscan API v2 multichain** endpoint with **chain id 5000** and your existing [Etherscan API key](https://etherscan.io/apis) — **no second key is required** if Quorum already uses one; pass it as `ETHERSCAN_API_KEY` in the shell (you can keep the same name in `backend/.env` for convenience, but Foundry does not load that file automatically).
 
 ```bash
 cd mantle-treasury-ai
