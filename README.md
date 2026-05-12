@@ -1,4 +1,18 @@
-# Quorum
+# Quorum — Archived Prototype
+
+This was an earlier RWA credit-line prototype.  
+The active **Mantle Turing Test Hackathon** submission is now **TreasuryOS**.
+
+- **Live project:** [https://treasuryos-web-production.up.railway.app/](https://treasuryos-web-production.up.railway.app/)
+- **TreasuryOS repo:** [https://github.com/loquit-tud/TreasuryOS](https://github.com/loquit-tud/TreasuryOS)
+
+**GitHub:** To retire this as a competing “live product” while keeping history and verified-contract evidence, use **Settings → General → Danger Zone → Archive this repository** (do not delete the repo).
+
+---
+
+The documentation below describes the **Quorum prototype** as last maintained in this tree (agents, Mantle contracts, judge demo, verification notes). It remains for **reproducibility and on-chain audit context**; it is not the canonical hackathon submission anymore.
+
+# Quorum (historical codebase)
 
 **AI-native treasury & credit-control stack on Mantle Network.**
 
@@ -6,7 +20,7 @@
 
 Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optimization, lending, and risk monitoring — via structured LLM debates (**Board Meetings run periodically**) and a pub/sub EventBus for consensus on capital allocation.
 
-## Hackathon Submission
+## Historical snapshot: hackathon-era table (Quorum)
 
 | Field | Value |
 |-------|-------|
@@ -470,6 +484,12 @@ Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBAC
 **Why EventBus?** Agents communicate via pub/sub rather than direct calls. This decouples them, exposes all activity to WebSocket clients, and makes adding new subscribers trivial.
 
 **Why Mantle?** Mantle's low gas fees (~$0.001/tx) enable the high-frequency autonomous operation cycle (every 45s) that would be cost-prohibitive on L1. The 3-agent architecture generates 10-20+ transactions per hour — Mantle makes this economically viable.
+
+## Historical note
+
+**TreasuryOS** is the active Mantle Turing Test Hackathon submission and product line. This repository retains the earlier **Quorum** prototype, contracts, and verification trail for transparency and reproducibility — not as the competing canonical submission.
+
+- **TreasuryOS:** [github.com/loquit-tud/TreasuryOS](https://github.com/loquit-tud/TreasuryOS) · [Live app](https://treasuryos-web-production.up.railway.app/)
 
 ## License
 
