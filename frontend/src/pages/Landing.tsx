@@ -55,7 +55,7 @@ function useLiveStats() {
 
 const EVIDENCE_LINKS = [
   {
-    label: 'TreasuryVault contract (deployed — Mantlescan source verify pending)',
+    label: 'TreasuryVault contract (verified on Mantle)',
     href: 'https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0',
   },
   {

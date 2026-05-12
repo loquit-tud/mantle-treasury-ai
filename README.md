@@ -17,7 +17,7 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 | **Live Demo** | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
 | **Backend (Live)** | [https://mantle-treasury-ai-production.up.railway.app/health](https://mantle-treasury-ai-production.up.railway.app/health) |
 | **Demo Video** | _(linked in DoraHacks submission — ≥2 min walkthrough of board meeting → on-chain tx)_ |
-| **Contract Verification** | **CreditLine** source is verified on Mantlescan. **TreasuryVault** is deployed on Mantle mainnet; **source verification on Mantlescan is pending** — complete “Verify and Publish” on its contract page before claiming full explorer verification. Step-by-step: [How to verify](#how-to-verify-dorahacks-judge-checklist). |
+| **Contract Verification** | **CreditLine** and **TreasuryVault** source are verified on Mantlescan — see address links above. Step-by-step: [How to verify](#how-to-verify-dorahacks-judge-checklist). |
 
 ### Track Submission Answers
 
@@ -28,7 +28,7 @@ Three AI agents (Treasury, Credit, Risk) manage on-chain capital — yield optim
 Three autonomous LLM-powered agents (Groq LLaMA 3.3 70B) manage the full credit lifecycle: (1) Treasury Agent optimizes idle capital deployment into Aave V3 yield, (2) Credit Agent scores borrowers using on-chain data + ML default prediction, approves/rejects loans, and (3) Risk Agent enforces exposure limits and triggers autonomous debt restructuring. Every 45 seconds, agents hold a Board Meeting (structured LLM debate → consensus → on-chain execution).
 
 **How is it realized on Mantle?**
-Both contracts are **deployed** on Mantle Mainnet. **CreditLine** source is **verified** on Mantlescan. **TreasuryVault** is **live** but treat **Mantlescan source verification as pending** until published. Where the agent wallet and flows permit, decisions map to on-chain transactions — yield via Aurelius Finance (Aave V3 fork), loan disbursements, repayment tracking, and credit score updates. Mantle's low gas fees enable a high-frequency autonomous cycle (every 45s) that would be costly on L1.
+Both contracts are **deployed** on Mantle Mainnet and **source-verified** on Mantlescan. Where the agent wallet and flows permit, decisions map to on-chain transactions — yield via Aurelius Finance (Aave V3 fork), loan disbursements, repayment tracking, and credit score updates. Mantle's low gas fees enable a high-frequency autonomous cycle (every 45s) that would be costly on L1.
 
 ### RWA Context: Why This Qualifies
 
@@ -198,7 +198,7 @@ These steps are designed to be copy-paste friendly and produce **verifiable evid
 
 - **Network:** Mantle mainnet, chain ID **5000**.
 - **CreditLine** [`0xACd7…B18c`](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c): open the **Contract** tab and confirm **verified source** is published.
-- **TreasuryVault** [`0xb527…17F0`](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0): confirm the contract is **deployed** and has txs; if Mantlescan shows **Verify and Publish**, source verification is **not** done yet — do not claim “both verified” in submissions until this is closed.
+- **TreasuryVault** [`0xb527…17F0`](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0): open the **Contract** tab and confirm **verified source** is published (explorer verification used bytecode from git **`5093265`** — see below).
 
 ### 1) Backend is live and agents are running
 
@@ -355,7 +355,7 @@ Constructor: `constructor(address _usdt, address _aavePool)` with mainnet args:
 
 Match compiler settings from `foundry.toml`: Solidity **0.8.20**, optimizer **on**, **200** runs, EVM **paris**.
 
-**Bytecode mismatch on `master`:** the live TreasuryVault (`0xb527…17F0`) was deployed from creation tx [`0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b`](https://mantlescan.xyz/tx/0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b) (block time **2026-05-07** UTC). The **git commit whose `forge build` output matches that tx `input` byte-for-byte** is **`5093265`** (`feat(mnt-collateral): MntCollateralVault.sol live on Mantle…`). To verify from the matching tree: `git checkout 5093265`, then run the `forge verify-contract` command or `pwsh ./scripts/verify-treasury-vault.ps1`, then return to your branch. To re-derive this later: `node scripts/find-treasuryvault-deploy-commit.mjs`.
+**TreasuryVault bytecode vs `master`:** the live TreasuryVault (`0xb527…17F0`) was deployed from creation tx [`0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b`](https://mantlescan.xyz/tx/0x7e318123f1b107e57fd3c3feea843e08ce70ecb0705b46debcc90ea7d7a0b37b) (block time **2026-05-07** UTC). **`forge build` on current `master` may not match** that on-chain bytecode; the commit that matches the tx `input` byte-for-byte is **`5093265`**. **Mantlescan source verification** for this address was completed using that tree (`git checkout 5093265`, then `forge verify-contract` or `pwsh ./scripts/verify-treasury-vault.ps1`). Re-derive with `node scripts/find-treasuryvault-deploy-commit.mjs`.
 
 **Important:** `forge verify-contract` against `https://api.mantlescan.xyz/api` can fail with a **deprecated Etherscan V1** message on current Foundry. Use the **Etherscan API v2 multichain** endpoint with **chain id 5000** and your existing [Etherscan API key](https://etherscan.io/apis) — **no second key is required** if Quorum already uses one; pass it as `ETHERSCAN_API_KEY` in the shell (you can keep the same name in `backend/.env` for convenience, but Foundry does not load that file automatically).
 
@@ -439,7 +439,7 @@ Configure via: `OPENAI_API_KEY` (primary), `LLM_FALLBACK_API_KEY` + `LLM_FALLBAC
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
 | Smart contract on Mantle Mainnet | Done | [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) (USDT0 + Aave V3) · [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) |
-| Contract verified on Explorer | Partial | [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) verified · [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) — publish source on Mantlescan to close this row |
+| Contract verified on Explorer | Done | [CreditLine](https://mantlescan.xyz/address/0xACd7fec284d6059FB1F151BD03AbaE3cB71dB18c) · [TreasuryVault](https://mantlescan.xyz/address/0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0) — verified on Mantlescan |
 | AI-powered function callable on-chain | Done | Board Meeting consensus → on-chain loan approvals, yield deposits, credit score updates (every 45s cycle) |
 | Frontend publicly accessible | Done | [https://loquit-tud.github.io/mantle-treasury-ai/](https://loquit-tud.github.io/mantle-treasury-ai/) |
 | Deployment address in submission | Done | See table above |
