@@ -52,6 +52,7 @@ contracts/out/
 .cache/
 .temp/
 tmp/
+treasuryvault-standard-json.json
 
 # Build artifacts & debug outputs
 build*.log

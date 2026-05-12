@@ -346,6 +346,40 @@ OpenClaw config (`openclaw.config.json`):
 - Penalty interest tiers: +5% (1-7d overdue), +10% (8-14d), +15% (15+d)
 - Credit freeze on default
 
+### Verify TreasuryVault on Mantlescan (Foundry)
+
+Constructor: `constructor(address _usdt, address _aavePool)` with mainnet args:
+
+- USDT0: `0x779Ded0c9e1022225f8E0630b35a9b54bE713736`
+- Aave V3 pool: `0x458F293454fE0d67EC0655f3672301301DD51422`
+
+Match compiler settings from `foundry.toml`: Solidity **0.8.20**, optimizer **on**, **200** runs, EVM **paris**.
+
+**Important:** `forge verify-contract` against `https://api.mantlescan.xyz/api` can fail with a **deprecated Etherscan V1** message on current Foundry. Use the **Etherscan API v2 multichain** endpoint with **chain id 5000** and an [Etherscan API key](https://etherscan.io/apis) (same key works across [supported chains](https://docs.etherscan.io/contract-verification/supported-chains), including Mantle mainnet).
+
+```bash
+cd mantle-treasury-ai
+forge build
+
+export CONSTRUCTOR_ARGS=$(cast abi-encode "constructor(address,address)" \
+  0x779Ded0c9e1022225f8E0630b35a9b54bE713736 \
+  0x458F293454fE0d67EC0655f3672301301DD51422)
+
+forge verify-contract \
+  --chain-id 5000 \
+  --verifier etherscan \
+  --verifier-url "https://api.etherscan.io/v2/api?chainid=5000" \
+  --etherscan-api-key "$ETHERSCAN_API_KEY" \
+  --constructor-args "$CONSTRUCTOR_ARGS" \
+  --num-of-optimizations 200 \
+  0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0 \
+  contracts/TreasuryVault.sol:TreasuryVault
+```
+
+Contract path must include the `contracts/` prefix (project `src` is `contracts/`).
+
+**Manual fallback (Standard JSON):** `forge verify-contract --show-standard-json-input 0xb52718aEc4Bc8459Ac97A276CB2d0798B25b17F0 contracts/TreasuryVault.sol:TreasuryVault > treasuryvault-standard-json.json` then upload on [Mantlescan Verify](https://mantlescan.xyz/verifyContract) as **Solidity (Standard-Json-Input)** with the same compiler settings; paste **constructor arguments** as the hex from `cast abi-encode` above (with `0x` prefix).
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
